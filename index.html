@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GS Sangatta — Command Center 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── DARK THEME (default, used for Anggaran module) ── */
+:root{
+  --prd:#E8192C;--prd2:#F04454;--prd3:#C0001E;
+  --pbg:#1C1F26;--pbg2:#23272F;--pbg3:#2A2F3A;--pbg4:#313743;--pbg5:#3A4050;
+  --tx:#E8EDF5;--t2:#A0ABBE;--t3:#5C6880;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.12);
+  --green:#10B981;--green2:#34D399;
+  --amber:#F59E0B;--amber2:#FCD34D;
+  --blue:#3B82F6;--blue2:#60A5FA;
+  --violet:#8B5CF6;--cyan:#22D3EE;
+  --r:12px;--rs:8px;
+}
+
+/* ── COMMAND SHELL ── */
+.app-shell{display:flex;flex-direction:column;min-height:100vh;background:var(--pbg)}
+
+/* ── TOP NAV ── */
+.cmd-nav{
+  position:sticky;top:0;z-index:300;
+  background:linear-gradient(135deg,#0C0508 0%,#1E060C 55%,#0C0508 100%);
+  border-bottom:1px solid rgba(232,25,44,.22);
+  height:58px;display:flex;align-items:center;padding:0 24px;gap:14px;
+  box-shadow:0 4px 24px rgba(0,0,0,.45)
+}
+.cmd-logo{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--prd3),var(--prd));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:16px;color:#fff;
+  box-shadow:0 0 16px rgba(232,25,44,.45)
+}
+.cmd-brand{flex-shrink:0}
+.cmd-brand h1{font-size:13px;font-weight:700;color:var(--tx);letter-spacing:-.2px}
+.cmd-brand p{font-size:9px;color:rgba(232,25,44,.65);text-transform:uppercase;letter-spacing:1.2px;margin-top:1px}
+.cmd-sep{width:1px;height:28px;background:rgba(255,255,255,.07);margin:0 4px}
+
+/* ── MODULE SWITCHER ── */
+.mod-pills{display:flex;background:rgba(255,255,255,.05);border-radius:99px;padding:3px;gap:3px}
+.mod-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 18px;border-radius:99px;font-size:12px;font-weight:600;
+  cursor:pointer;border:none;background:none;color:var(--t3);
+  transition:all .22s;font-family:inherit;white-space:nowrap
+}
+.mod-pill:hover{color:var(--t2);background:rgba(255,255,255,.04)}
+.mod-pill.active{
+  background:linear-gradient(135deg,var(--prd3),var(--prd));
+  color:#fff;box-shadow:0 2px 14px rgba(232,25,44,.4)
+}
+.mod-pill .pill-ico{font-size:14px}
+
+/* ── NAV RIGHT ── */
+.cmd-nav-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.live-tag{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;
+  background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+  color:var(--green2);padding:4px 10px;border-radius:99px}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green2);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.ts-tag{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;
+  background:var(--pbg2);border:1px solid var(--bd);padding:4px 9px;border-radius:6px}
+.cmd-btn{background:var(--pbg2);border:1px solid var(--bd);color:var(--t2);padding:6px 13px;
+  border-radius:var(--rs);font-size:11px;cursor:pointer;font-family:inherit;font-weight:500;
+  transition:all .18s;display:flex;align-items:center;gap:5px}
+.cmd-btn:hover{background:var(--pbg3);color:var(--tx)}
+.cmd-btn.primary{background:var(--prd);border-color:var(--prd);color:#fff}
+.cmd-btn.primary:hover{background:var(--prd3)}
+.spin{display:inline-block}.spinning{animation:rot .6s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── MODULE CONTAINERS ── */
+.module{display:none;flex:1;animation:fadeIn .18s ease}
+.module.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ══════════════════════════════════════════════════
+   GS CARE MODULE — Light Pertamina Blue Theme
+══════════════════════════════════════════════════ */
+#mod-gs{
+  --bg:#F2F5FA;--s1:#FFFFFF;--s2:#F2F5FA;--s3:#E5EBF5;--s4:#D6DFF0;
+  --bd:rgba(0,48,135,.09);--bd2:rgba(0,48,135,.06);
+  --tx:#0D1B3E;--t2:#4A5D8A;--t3:#8A9BBE;
+  --brand:#003087;--brand2:#0052CC;--brand3:#4D7FD9;
+  --red:#E8001D;--red2:#FF3348;
+  background:var(--bg);min-height:calc(100vh - 58px)
+}
+
+/* GS top stripe */
+.gs-stripe{height:4px;background:linear-gradient(90deg,#003087 0%,#E8001D 50%,#003087 100%)}
+
+/* GS Setup screen */
+.gs-setup-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 80px);padding:24px}
+.gs-sc{background:var(--s1);border-radius:18px;max-width:660px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,48,135,.12),0 0 0 1px var(--bd)}
+.gs-sc-hdr{background:linear-gradient(135deg,#001A50 0%,#003087 100%);padding:28px 32px 24px}
+.gs-sc-hdr h1{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.gs-sc-hdr p{font-size:12px;color:rgba(255,255,255,.65)}
+.gs-sc-body{padding:24px 32px}
+.gs-field label{display:block;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.gs-field input{width:100%;background:var(--s2);border:1.5px solid var(--bd);border-radius:10px;padding:11px 14px;color:var(--tx);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;transition:border .2s;margin-bottom:12px}
+.gs-field input:focus{border-color:var(--brand)}
+.gs-btn-primary{width:100%;background:var(--brand);color:#fff;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:opacity .2s}
+.gs-btn-primary:hover{opacity:.88}
+
+/* GS Tabs */
+.gs-tabs{background:var(--s1);border-bottom:1.5px solid var(--bd);padding:0 24px;display:flex;gap:0;
+  box-shadow:0 1px 4px rgba(0,48,135,.05)}
+.gs-tab{padding:13px 20px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;
+  color:var(--t3);transition:all .18s;font-family:inherit;border-bottom:3px solid transparent;letter-spacing:.1px}
+.gs-tab:hover{color:var(--t2);background:rgba(0,48,135,.03)}
+.gs-tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+.gs-page{display:none}.gs-page.active{display:block}
+
+/* GS Content */
+.gs-content{padding:22px 26px;max-width:1500px;margin:0 auto}
+
+/* GS Stats */
+.gs-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.gs-stat{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,48,135,.06)}
+.gs-stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
+.gs-stat.tot::after{background:linear-gradient(90deg,#003087,#0052CC)}
+.gs-stat.don::after{background:linear-gradient(90deg,#00875A,#00C896)}
+.gs-stat.pen::after{background:linear-gradient(90deg,#C0001E,#FF3348)}
+.gs-stat.rat::after{background:linear-gradient(90deg,#6B21A8,#A855F7)}
+.gs-stat .gs-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.gs-stat .gs-num{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-1px}
+.gs-stat.tot .gs-num{color:var(--brand)} .gs-stat.don .gs-num{color:#00875A}
+.gs-stat.pen .gs-num{color:var(--red)} .gs-stat.rat .gs-num{color:#7C3AED}
+
+/* GS Table */
+.gs-tcard{background:var(--s1);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,48,135,.05)}
+.gs-tcard table{width:100%;border-collapse:collapse}
+.gs-tcard th{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;
+  padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--bd);text-align:left}
+.gs-tcard td{padding:11px 14px;font-size:12px;color:var(--t2);border-bottom:1px solid var(--bd)}
+.gs-tcard tr:last-child td{border-bottom:none}
+.gs-tcard tr:hover td{background:rgba(0,48,135,.02);color:var(--tx)}
+.gs-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700}
+.gs-badge.ok{background:rgba(0,135,90,.1);color:#00875A;border:1px solid rgba(0,135,90,.2)}
+.gs-badge.no{background:rgba(232,0,29,.08);color:var(--red);border:1px solid rgba(232,0,29,.15)}
+.gs-chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--bd2);background:var(--s2);
+  cursor:pointer;font-size:13px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.gs-chk.on{background:#00875A;border-color:#00875A;color:#fff}
+.gs-pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;
+  background:rgba(0,48,135,.08);color:var(--brand);border:1px solid rgba(0,48,135,.12)}
+
+/* GS Progress */
+.gs-prog-bar{height:7px;background:var(--s3);border-radius:99px;overflow:hidden;margin:10px 0 4px}
+.gs-prog-fill{height:100%;border-radius:99px;transition:width 1s ease}
+
+/* GS Filters */
+.gs-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.gs-sel{background:var(--s1);border:1.5px solid var(--bd);color:var(--tx);padding:7px 11px;
+  border-radius:9px;font-size:12px;font-family:inherit;cursor:pointer;outline:none;transition:border .2s}
+.gs-sel:focus{border-color:var(--brand)}
+.gs-input{background:var(--s1);border:1.5px solid var(--bd);color:var(--tx);padding:7px 11px;
+  border-radius:9px;font-size:12px;font-family:inherit;outline:none;transition:border .2s;min-width:200px}
+.gs-input:focus{border-color:var(--brand)}
+
+/* GS date nav */
+.gs-date-nav{display:flex;align-items:center;gap:8px}
+.gs-dnav-btn{width:30px;height:30px;border-radius:8px;background:var(--s1);border:1px solid var(--bd);
+  color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
+.gs-dnav-btn:hover{background:var(--s2);border-color:var(--bd2)}
+.gs-today-btn{padding:6px 13px;background:var(--s1);border:1px solid var(--bd);color:var(--t2);
+  border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.gs-today-btn:hover{background:var(--s2)}
+
+/* GS History groups */
+.gs-hgrp{background:var(--s1);border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;overflow:hidden}
+.gs-hgrp-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;background:var(--s2)}
+.gs-hgrp-hdr:hover{background:var(--s3)}
+
+/* GS Alerts */
+.gs-al{display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:10px;font-size:12px;margin-bottom:14px;font-weight:500}
+.gs-al.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#B45309}
+.gs-al.good{background:rgba(0,135,90,.07);border:1px solid rgba(0,135,90,.2);color:#00875A}
+.gs-al.info{background:rgba(0,48,135,.06);border:1px solid rgba(0,48,135,.15);color:var(--brand)}
+
+/* GS Weekly */
+.gs-wks{margin-bottom:13px}
+.gs-wks-t{font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.5px;
+  padding:7px 0 5px;border-bottom:1.5px solid var(--bd);margin-bottom:7px}
+.gs-wkt{width:100%;min-height:75px;background:var(--s2);border:1.5px solid var(--bd);border-radius:9px;
+  padding:9px 12px;color:var(--tx);font-size:12px;font-family:inherit;resize:vertical;line-height:1.6;outline:none}
+.gs-wkt:focus{border-color:var(--brand)}
+.gs-wka{background:var(--s3);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--t2);
+  line-height:1.7;margin-bottom:7px;border-left:3px solid var(--brand)}
+.gs-saved-chip{padding:3px 11px;background:var(--s2);border:1px solid var(--bd);border-radius:99px;
+  font-size:11px;color:var(--t2);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.gs-saved-chip:hover{border-color:var(--brand);color:var(--tx)}
+
+/* ══════════════════════════════════════════════════
+   ANGGARAN MODULE — Dark Slate Theme
+══════════════════════════════════════════════════ */
+#mod-anggaran{background:var(--pbg);min-height:calc(100vh - 58px)}
+
+/* Reuse :root dark vars for anggaran */
+.ang-tabs{background:var(--pbg2);border-bottom:1px solid var(--bd);padding:0 24px;display:flex}
+.ang-tab{padding:13px 20px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;
+  color:var(--t3);transition:all .18s;font-family:inherit;border-bottom:3px solid transparent}
+.ang-tab:hover{color:var(--t2);background:rgba(255,255,255,.02)}
+.ang-tab.active{color:var(--prd2);border-bottom-color:var(--prd);font-weight:700}
+.ang-page{display:none}.ang-page.active{display:block}
+.ang-content{padding:20px 24px;max-width:1500px;margin:0 auto}
+
+/* Anggaran KPI cards */
+.ang-kgrid{display:grid;gap:12px;margin-bottom:14px}
+.ang-kpi{background:var(--pbg2);border:1px solid var(--bd);border-radius:var(--r);padding:17px 18px;
+  position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s;
+  box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.ang-kpi:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.28)}
+.ang-kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 var(--r) var(--r)}
+.ang-kpi.kr::after{background:linear-gradient(90deg,var(--prd3),var(--prd2))}
+.ang-kpi.kg::after{background:linear-gradient(90deg,var(--green),var(--green2))}
+.ang-kpi.kb::after{background:linear-gradient(90deg,#1D4ED8,var(--blue2))}
+.ang-kpi.ka::after{background:linear-gradient(90deg,var(--amber),var(--amber2))}
+.ang-kpi.kv::after{background:linear-gradient(90deg,#6D28D9,#A78BFA)}
+.ang-kpi.km::after{background:linear-gradient(90deg,#0891B2,var(--cyan))}
+.ang-ico{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:30px;opacity:.05}
+.ang-kl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}
+.ang-kv{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-1px;line-height:1.1}
+.ang-kpi.kr .ang-kv{color:var(--prd2)} .ang-kpi.kg .ang-kv{color:var(--green2)}
+.ang-kpi.kb .ang-kv{color:var(--blue2)} .ang-kpi.ka .ang-kv{color:var(--amber2)}
+.ang-kpi.kv .ang-kv{color:#C4B5FD}     .ang-kpi.km .ang-kv{color:var(--cyan)}
+.ang-ksub{font-size:10px;color:var(--t3);margin-top:4px}
+.ang-kbar{margin-top:9px}
+.ang-kbar-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:4px}
+.ang-kbar-t{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.ang-kbar-f{height:100%;border-radius:99px;transition:width 1.2s ease}
+
+/* Anggaran cards */
+.ang-card{background:var(--pbg2);border:1px solid var(--bd);border-radius:var(--r);padding:17px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.ang-cardf{background:var(--pbg2);border:1px solid var(--bd);border-radius:var(--r);padding:17px;margin-bottom:14px}
+.ang-ct{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.ang-ct i{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.ang-g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.ang-g3{display:grid;grid-template-columns:1.3fr .7fr;gap:14px;margin-bottom:14px}
+@media(max-width:900px){.ang-g2,.ang-g3{grid-template-columns:1fr}}
+.ang-ch{position:relative;height:220px}
+.ang-chl{position:relative;height:270px}
+
+/* Anggaran RK chips */
+.ang-mc{padding:4px 11px;background:var(--pbg3);border:1px solid var(--bd);border-radius:99px;
+  font-size:11px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .15s}
+.ang-mc:hover{border-color:var(--bd2);color:var(--tx)}
+.ang-mc.on{background:rgba(232,25,44,.12);border-color:rgba(232,25,44,.4);color:var(--prd2)}
+.ang-mc.has{border-color:rgba(16,185,129,.25);color:var(--green2)}
+
+/* Month strip */
+.ang-mstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-bottom:18px}
+.ang-mt{background:var(--pbg2);border:1px solid var(--bd);border-radius:9px;padding:10px 5px;
+  text-align:center;cursor:pointer;transition:all .2s}
+.ang-mt:hover{border-color:rgba(232,25,44,.3);transform:translateY(-2px)}
+.ang-mt.on{border-color:var(--prd);background:rgba(232,25,44,.06)}
+.ang-mt.has{border-color:rgba(16,185,129,.2)}
+.ang-mn{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.ang-mv{font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.ang-mv.z{color:var(--t3)}
+.ang-mdot{width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:var(--t3)}
+.ang-mt.has .ang-mdot{background:var(--green);box-shadow:0 0 5px var(--green)}
+.ang-mt.on .ang-mdot{background:var(--prd);box-shadow:0 0 5px var(--prd)}
+
+/* Anggaran table */
+.ang-tcard{background:var(--pbg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.ang-tcard-hdr{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;
+  justify-content:space-between;background:var(--pbg3)}
+.ang-tcard table{width:100%;border-collapse:collapse;min-width:1000px}
+.ang-tcard th{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;
+  padding:9px 12px;text-align:left;background:var(--pbg3);border-bottom:1px solid var(--bd);white-space:nowrap}
+.ang-tcard td{padding:10px 12px;font-size:12px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.03)}
+.ang-tcard tr:hover td{background:rgba(255,255,255,.02);color:var(--tx)}
+.ang-tcard tr.tot td{background:rgba(232,25,44,.06);color:var(--tx);font-weight:700;border-top:1px solid rgba(232,25,44,.2)}
+.ang-tcard .r{text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px}
+.ang-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700}
+.ang-pill.g{background:rgba(16,185,129,.1);color:var(--green2);border:1px solid rgba(16,185,129,.2)}
+.ang-pill.y{background:rgba(245,158,11,.1);color:var(--amber2);border:1px solid rgba(245,158,11,.2)}
+.ang-pill.r{background:rgba(232,25,44,.1);color:var(--prd2);border:1px solid rgba(232,25,44,.2)}
+.ang-pill.b{background:rgba(59,130,246,.1);color:var(--blue2);border:1px solid rgba(59,130,246,.2)}
+.ang-mbar{height:3px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;margin-top:3px;min-width:50px}
+.ang-mbf{height:100%;border-radius:99px}
+
+/* Anggaran alerts */
+.ang-al{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);font-size:12px;margin-bottom:14px;font-weight:500}
+.ang-al.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--amber2)}
+.ang-al.good{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--green2)}
+.ang-al.info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:var(--blue2)}
+.ang-al.danger{background:rgba(232,25,44,.08);border:1px solid rgba(232,25,44,.2);color:var(--prd2)}
+
+/* Kontrak progress */
+.ang-kprog{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.03)}
+.ang-kprog:last-child{border-bottom:none}
+.ang-kprog-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:10px}
+.ang-kprog-lbl{font-size:12px;font-weight:600;color:var(--tx);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ang-kprog-bar{height:6px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.ang-kprog-fill{height:100%;border-radius:99px;transition:width .6s ease}
+.ang-kprog-sub{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--t3)}
+
+/* ── SHARED ── */
+.ang-sec{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;
+  margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.ang-sec::before{content:'';width:3px;height:13px;border-radius:2px;background:var(--prd);display:block}
+
+/* Modal */
+.ang-modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;
+  align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.ang-modal-ov.open{display:flex}
+.ang-modal-box{background:var(--pbg2);border:1px solid var(--bd2);border-radius:16px;
+  width:100%;max-width:760px;max-height:90vh;overflow-y:auto;
+  box-shadow:0 40px 80px rgba(0,0,0,.6);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.ang-modal-hdr{padding:18px 22px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;
+  justify-content:space-between;position:sticky;top:0;background:var(--pbg2);z-index:1;border-radius:16px 16px 0 0}
+.ang-modal-body{padding:18px 22px}
+.ang-mkpi{background:var(--pbg3);border:1px solid var(--bd);border-radius:10px;padding:13px;position:relative;overflow:hidden}
+.ang-mkpi .ang-ml{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.ang-mkpi .ang-mv2{font-size:15px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.ang-mkpi.red .ang-mv2{color:var(--prd2)} .ang-mkpi.green .ang-mv2{color:var(--green2)}
+.ang-mkpi.blue .ang-mv2{color:var(--blue2)} .ang-mkpi.amber .ang-mv2{color:var(--amber2)}
+.ang-det-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.ang-det-key{font-size:11px;color:var(--t3);font-weight:500}
+.ang-det-val{font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.ang-monthly-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:14px}
+
+/* Loading spinner */
+.ang-spin-ring{width:46px;height:46px;border:3px solid rgba(232,25,44,.12);border-top-color:var(--prd);border-radius:50%;animation:rot .75s linear infinite}
+
+/* Setup screen for anggaran */
+.ang-setup-wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 90px);padding:24px}
+.ang-sc{background:var(--pbg2);border:1px solid var(--bd2);border-radius:18px;max-width:660px;width:100%;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.ang-sc-hdr{background:linear-gradient(135deg,#0D0508 0%,#200510 100%);padding:28px 32px 24px;border-bottom:1px solid var(--bd)}
+.ang-sc-body{padding:24px 32px}
+.ang-field label{display:block;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:7px}
+.ang-field input{width:100%;background:var(--pbg3);border:1.5px solid var(--bd);border-radius:10px;padding:11px 14px;color:var(--tx);font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;transition:border .2s;margin-bottom:12px}
+.ang-field input:focus{border-color:var(--prd)}
+.ang-btn-primary{width:100%;background:var(--prd);color:#fff;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:opacity .2s}
+.ang-btn-primary:hover{opacity:.88}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--pbg)}
+::-webkit-scrollbar-thumb{background:var(--pbg4);border-radius:3px}
+
+/* Footer */
+.cmd-footer{background:var(--pbg2);border-top:1px solid var(--bd);padding:12px 24px;
+  display:flex;justify-content:space-between;font-size:10px;color:var(--t3)}
+
+/* ══════════════════════════════════════════════════
+   TODO & CATATAN MODULE
+══════════════════════════════════════════════════ */
+#mod-todo{background:#F2F5FA;min-height:calc(100vh - 58px)}
+.todo-stripe{height:4px;background:linear-gradient(90deg,#6B21A8 0%,#A855F7 50%,#6B21A8 100%)}
+.todo-tabs{background:#fff;border-bottom:1.5px solid rgba(0,0,0,.08);padding:0 24px;display:flex;gap:0;box-shadow:0 1px 4px rgba(107,33,168,.06)}
+.todo-tab{padding:13px 20px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:#8A9BBE;transition:all .18s;font-family:inherit;border-bottom:3px solid transparent}
+.todo-tab:hover{color:#6B21A8;background:rgba(107,33,168,.03)}
+.todo-tab.active{color:#6B21A8;border-bottom-color:#6B21A8;font-weight:700}
+.todo-page{display:none}.todo-page.active{display:block}
+.todo-content{padding:22px 26px;max-width:1200px;margin:0 auto}
+
+/* Firebase Setup Banner */
+.fb-banner{background:linear-gradient(135deg,#3d1f6e,#6B21A8);border-radius:14px;padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.fb-banner-ico{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.fb-banner-body{flex:1;min-width:200px}
+.fb-banner-body h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.fb-banner-body p{font-size:11px;opacity:.8;line-height:1.5}
+.fb-setup-form{background:#fff;border:1px solid rgba(107,33,168,.15);border-radius:14px;padding:20px;margin-bottom:20px}
+.fb-setup-form label{display:block;font-size:10px;font-weight:700;color:#8A9BBE;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;margin-top:12px}
+.fb-setup-form label:first-child{margin-top:0}
+.fb-setup-form input{width:100%;background:#F2F5FA;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:10px 14px;color:#0D1B3E;font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;transition:border .2s}
+.fb-setup-form input:focus{border-color:#6B21A8}
+.fb-connect-btn{margin-top:14px;width:100%;background:#6B21A8;color:#fff;padding:12px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:opacity .2s}
+.fb-connect-btn:hover{opacity:.88}
+.fb-status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:99px;margin-bottom:16px;width:fit-content}
+.fb-status.ok{background:rgba(16,185,129,.1);color:#00875A;border:1px solid rgba(16,185,129,.25)}
+.fb-status.err{background:rgba(232,0,29,.08);color:#C0001E;border:1px solid rgba(232,0,29,.2)}
+.fb-status.connecting{background:rgba(107,33,168,.1);color:#6B21A8;border:1px solid rgba(107,33,168,.2)}
+
+/* Todo cards */
+.todo-add-row{display:flex;gap:10px;margin-bottom:18px}
+.todo-input{flex:1;background:#fff;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:11px 14px;color:#0D1B3E;font-size:13px;font-family:inherit;outline:none;transition:border .2s}
+.todo-input:focus{border-color:#6B21A8;box-shadow:0 0 0 3px rgba(107,33,168,.08)}
+.todo-prio-sel{background:#fff;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:11px 12px;color:#0D1B3E;font-size:12px;font-family:inherit;cursor:pointer;outline:none}
+.todo-add-btn{background:#6B21A8;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit;white-space:nowrap;transition:opacity .2s}
+.todo-add-btn:hover{opacity:.88}
+.todo-filters-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.todo-flt{background:#fff;border:1.5px solid rgba(0,0,0,.08);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;color:#8A9BBE;transition:all .18s;border-bottom:2px solid transparent}
+.todo-flt.on{color:#6B21A8;border-color:#6B21A8;background:rgba(107,33,168,.05)}
+.todo-list{display:flex;flex-direction:column;gap:8px}
+.todo-item{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:13px 16px;display:flex;align-items:flex-start;gap:12px;transition:all .2s;position:relative;overflow:hidden}
+.todo-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.todo-item.p-high::before{background:#E8001D}
+.todo-item.p-med::before{background:#F59E0B}
+.todo-item.p-low::before{background:#10B981}
+.todo-item.done{opacity:.55}
+.todo-item.done .todo-txt{text-decoration:line-through;color:#8A9BBE}
+.todo-chk{width:22px;height:22px;border-radius:7px;border:2px solid rgba(0,0,0,.15);background:#fff;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;margin-top:1px}
+.todo-chk.done{background:#00875A;border-color:#00875A;color:#fff}
+.todo-txt-wrap{flex:1;min-width:0}
+.todo-txt{font-size:13px;font-weight:500;color:#0D1B3E;line-height:1.5;word-break:break-word}
+.todo-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center}
+.todo-tag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px}
+.todo-tag.high{background:rgba(232,0,29,.08);color:#C0001E;border:1px solid rgba(232,0,29,.15)}
+.todo-tag.med{background:rgba(245,158,11,.1);color:#92400E;border:1px solid rgba(245,158,11,.2)}
+.todo-tag.low{background:rgba(16,185,129,.08);color:#065F46;border:1px solid rgba(16,185,129,.2)}
+.todo-ts{font-size:10px;color:#8A9BBE}
+.todo-del{margin-left:auto;width:26px;height:26px;border-radius:8px;background:none;border:1px solid transparent;color:#8A9BBE;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;flex-shrink:0}
+.todo-del:hover{background:rgba(232,0,29,.08);border-color:rgba(232,0,29,.15);color:#C0001E}
+.todo-empty{text-align:center;padding:50px 20px;color:#8A9BBE}
+.todo-empty-ico{font-size:40px;margin-bottom:10px}
+.todo-empty p{font-size:13px}
+.todo-sync-ind{font-size:10px;color:#8A9BBE;display:flex;align-items:center;gap:5px;margin-bottom:12px}
+.todo-sync-ind.syncing{color:#6B21A8}
+.todo-sync-ind.synced{color:#00875A}
+.todo-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.todo-kpi{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+.todo-kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px}
+.todo-kpi.all::after{background:linear-gradient(90deg,#6B21A8,#A855F7)}
+.todo-kpi.done::after{background:linear-gradient(90deg,#00875A,#10B981)}
+.todo-kpi.pend::after{background:linear-gradient(90deg,#C0001E,#F04454)}
+.todo-kpi.high::after{background:linear-gradient(90deg,#F59E0B,#FCD34D)}
+.todo-kpi .tk-lbl{font-size:10px;font-weight:700;color:#8A9BBE;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.todo-kpi .tk-num{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.todo-kpi.all .tk-num{color:#6B21A8}
+.todo-kpi.done .tk-num{color:#00875A}
+.todo-kpi.pend .tk-num{color:#C0001E}
+.todo-kpi.high .tk-num{color:#F59E0B}
+
+/* Catatan Harian */
+.note-add-row{display:flex;gap:10px;margin-bottom:18px;align-items:flex-start}
+.note-textarea{flex:1;background:#fff;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:12px 14px;color:#0D1B3E;font-size:13px;font-family:inherit;outline:none;resize:vertical;min-height:80px;line-height:1.6;transition:border .2s}
+.note-textarea:focus{border-color:#6B21A8;box-shadow:0 0 0 3px rgba(107,33,168,.08)}
+.note-add-right{display:flex;flex-direction:column;gap:8px}
+.note-tag-inp{background:#fff;border:1.5px solid rgba(0,0,0,.1);border-radius:10px;padding:9px 12px;color:#0D1B3E;font-size:12px;font-family:inherit;outline:none;width:130px;transition:border .2s}
+.note-tag-inp:focus{border-color:#6B21A8}
+.note-save-btn{background:#6B21A8;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;white-space:nowrap;transition:opacity .2s}
+.note-save-btn:hover{opacity:.88}
+.note-list{display:flex;flex-direction:column;gap:10px}
+.note-item{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:16px 18px;position:relative}
+.note-item-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.note-item-date{font-size:11px;font-weight:700;color:#6B21A8;font-family:'JetBrains Mono',monospace}
+.note-item-time{font-size:10px;color:#8A9BBE}
+.note-item-tag{font-size:9px;font-weight:700;padding:2px 9px;border-radius:99px;background:rgba(107,33,168,.1);color:#6B21A8;border:1px solid rgba(107,33,168,.2)}
+.note-item-body{font-size:13px;color:#0D1B3E;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.note-del{position:absolute;top:12px;right:14px;width:26px;height:26px;border-radius:8px;background:none;border:1px solid transparent;color:#8A9BBE;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s}
+.note-del:hover{background:rgba(232,0,29,.08);border-color:rgba(232,0,29,.15);color:#C0001E}
+.note-search{background:#fff;border:1.5px solid rgba(0,0,0,.08);border-radius:10px;padding:9px 14px;color:#0D1B3E;font-size:12px;font-family:inherit;outline:none;min-width:220px;transition:border .2s}
+.note-search:focus{border-color:#6B21A8}
+.note-date-grp{margin-bottom:14px}
+.note-date-grp-hdr{font-size:10px;font-weight:700;color:#6B21A8;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 8px;border-bottom:1.5px solid rgba(107,33,168,.12);margin-bottom:8px}
+
+/* Print */
+@media print{
+  .cmd-nav,.gs-tabs,.ang-tabs,.gs-filters,button,input[type=date]{display:none!important}
+  .module:not(#mod-gs){display:none!important}
+  #mod-gs{display:block!important}
+  .gs-page:not(#gs-pg-weekly){display:none!important}
+  #gs-pg-weekly{display:block!important}
+  body{background:#fff!important;color:#000!important}
+  .gs-wks-t{color:#003087!important;border-bottom:2px solid #003087!important}
+  .gs-wkt{background:#f9f9f9!important;border:1px solid #ccc!important;color:#000!important}
+  .gs-wka{background:#eef3ff!important;color:#333!important}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+<!-- ══ COMMAND NAV ══════════════════════════════════════════════════════ -->
+<nav class="cmd-nav">
+  <div class="cmd-logo">P</div>
+  <div class="cmd-brand">
+    <h1>GS Sangatta Field</h1>
+    <p>Pertamina EP · Command Center 2026</p>
+  </div>
+  <div class="cmd-sep"></div>
+  <div class="mod-pills">
+    <button class="mod-pill active" id="mpill-gs" onclick="switchModule('gs')">
+      <span class="pill-ico">📋</span> GS Care
+    </button>
+    <button class="mod-pill" id="mpill-anggaran" onclick="switchModule('anggaran')">
+      <span class="pill-ico">💰</span> Anggaran
+    </button>
+    <button class="mod-pill" id="mpill-todo" onclick="switchModule('todo')">
+      <span class="pill-ico">✅</span> To Do & Catatan
+    </button>
+  </div>
+  <div class="cmd-nav-r">
+    <div class="live-tag" id="live-tag">
+      <div class="ldot"></div>
+      <span id="live-txt">Offline</span>
+    </div>
+    <div class="ts-tag" id="ts-tag">—</div>
+    <button class="cmd-btn primary" id="btn-ref" onclick="refreshAll()">
+      <span class="spin" id="spin-ic">↻</span> Refresh
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODULE: GS CARE
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="module active" id="mod-gs">
+  <div class="gs-stripe"></div>
+
+  <!-- GS Loading -->
+  <div id="gs-loading" style="display:none;text-align:center;padding:80px 20px">
+    <div style="width:50px;height:50px;border:3px solid rgba(0,48,135,.12);border-top-color:#003087;border-radius:50%;animation:rot .75s linear infinite;margin:0 auto 16px"></div>
+    <p id="gs-load-msg" style="color:#4A5D8A;font-size:13px">Menghubungkan ke GS Care...</p>
+  </div>
+
+  <!-- GS Setup -->
+  <div class="gs-setup-wrap" id="gs-setup">
+    <div class="gs-sc">
+      <div class="gs-sc-hdr">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:20px">📋</div>
+          <div>
+            <h1>GS Care — Monitoring Request</h1>
+            <p>Sambungkan ke Google Sheets via Apps Script</p>
+          </div>
+        </div>
+        <div style="background:rgba(0,82,204,.15);border:1px solid rgba(0,82,204,.25);border-radius:8px;padding:10px 14px;font-size:11px;color:rgba(255,255,255,.75)">
+          💡 Paste URL Apps Script GS Care untuk mulai monitoring
+        </div>
+      </div>
+      <div class="gs-sc-body">
+        <div class="gs-field">
+          <label>Apps Script URL</label>
+          <input type="text" id="gs-url-input" placeholder="https://script.google.com/macros/s/AKfy.../exec">
+        </div>
+        <button class="gs-btn-primary" onclick="gsConnect()">🔗 Hubungkan GS Care</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GS Dashboard -->
+  <div id="gs-dash" style="display:none">
+    <div class="gs-tabs">
+      <button class="gs-tab active" id="gstab-daily"     onclick="gsTab('daily')">📋 Harian</button>
+      <button class="gs-tab"        id="gstab-history"   onclick="gsTab('history')">Rekap History</button>
+      <button class="gs-tab"        id="gstab-analytics" onclick="gsTab('analytics')">Analitik</button>
+      <button class="gs-tab"        id="gstab-weekly"    onclick="gsTab('weekly')">📄 Weekly Report</button>
+    </div>
+
+    <!-- HARIAN -->
+    <div class="gs-page active" id="gs-pg-daily">
+      <div class="gs-content">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 id="gs-date-lbl" style="font-size:18px;font-weight:700;color:#0D1B3E">—</h2>
+            <p id="gs-req-cnt" style="font-size:12px;color:#8A9BBE;margin-top:2px">—</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="gs-date-nav">
+              <button class="gs-dnav-btn" onclick="gsPrevDay()">←</button>
+              <span id="gs-nav-lbl" style="font-size:12px;color:#4A5D8A;min-width:150px;text-align:center;font-weight:600">—</span>
+              <button class="gs-dnav-btn" onclick="gsNextDay()">→</button>
+            </div>
+            <button class="gs-today-btn" onclick="gsToday()">Hari ini</button>
+            <button onclick="gsSaveAll()" style="padding:7px 14px;background:#003087;border:none;color:#fff;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600">💾 Simpan</button>
+          </div>
+        </div>
+
+        <div class="gs-stats">
+          <div class="gs-stat tot"><div class="gs-lbl">Total Request</div><div class="gs-num" id="gs-sT">—</div></div>
+          <div class="gs-stat don"><div class="gs-lbl">Selesai</div><div class="gs-num" id="gs-sD">—</div></div>
+          <div class="gs-stat pen"><div class="gs-lbl">Belum Selesai</div><div class="gs-num" id="gs-sP">—</div></div>
+          <div class="gs-stat rat"><div class="gs-lbl">Completion Rate</div><div class="gs-num" id="gs-sR">—</div></div>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#8A9BBE;margin-bottom:5px">
+            <span id="gs-pLbl">0% selesai</span><span id="gs-pFrac">0/0</span>
+          </div>
+          <div class="gs-prog-bar"><div class="gs-prog-fill" id="gs-pBar" style="width:0%;background:linear-gradient(90deg,#00875A,#00C896)"></div></div>
+        </div>
+
+        <div class="gs-filters">
+          <select class="gs-sel" id="gs-fKat" onchange="gsRenderDaily()"><option value="">Semua Kategori</option></select>
+          <select class="gs-sel" id="gs-fFun" onchange="gsRenderDaily()"><option value="">Semua Fungsi</option></select>
+          <select class="gs-sel" id="gs-fSt" onchange="gsRenderDaily()">
+            <option value="">Semua Status</option>
+            <option value="selesai">Selesai ✓</option>
+            <option value="belum">Belum Selesai</option>
+          </select>
+          <input class="gs-input" id="gs-fQ" oninput="gsRenderDaily()" placeholder="🔍 Cari WO / nama / layanan...">
+          <span id="gs-saveInd" style="font-size:11px;font-weight:500;transition:color .3s"></span>
+        </div>
+
+        <div class="gs-tcard">
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr>
+                <th style="width:40px"></th><th>WO</th><th>Nama Pemohon</th>
+                <th>Fungsi</th><th>Kategori</th><th>Layanan</th><th>Status</th>
+              </tr></thead>
+              <tbody id="gs-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="gs-page" id="gs-pg-history">
+      <div class="gs-content">
+        <div class="gs-filters" style="margin-bottom:16px">
+          <label style="font-size:12px;color:#4A5D8A;align-self:center">Dari</label>
+          <input type="date" class="gs-sel" id="gs-hFrom" onchange="gsRenderHistory()">
+          <label style="font-size:12px;color:#4A5D8A;align-self:center">s/d</label>
+          <input type="date" class="gs-sel" id="gs-hTo" onchange="gsRenderHistory()">
+          <select class="gs-sel" id="gs-hKat" onchange="gsRenderHistory()"><option value="">Semua Kategori</option></select>
+          <select class="gs-sel" id="gs-hSt" onchange="gsRenderHistory()"><option value="">Semua Status</option><option value="belum">Belum</option><option value="selesai">Selesai</option></select>
+        </div>
+        <div id="gs-h-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+        <div id="gs-h-body"></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="gs-page" id="gs-pg-analytics">
+      <div class="gs-content">
+        <div class="gs-filters" style="margin-bottom:16px">
+          <input type="date" class="gs-sel" id="gs-aFrom" onchange="gsRenderAnalytics()">
+          <input type="date" class="gs-sel" id="gs-aTo" onchange="gsRenderAnalytics()">
+        </div>
+        <div id="gs-aStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="gs-tcard" style="padding:16px">
+            <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Per Kategori</div>
+            <div style="position:relative;height:220px"><canvas id="gs-cKat"></canvas></div>
+          </div>
+          <div class="gs-tcard" style="padding:16px">
+            <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Per Fungsi</div>
+            <div style="position:relative;height:220px"><canvas id="gs-cFun"></canvas></div>
+          </div>
+        </div>
+        <div class="gs-tcard" style="padding:16px">
+          <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Top Layanan</div>
+          <div style="position:relative;height:220px"><canvas id="gs-cLay"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEEKLY REPORT -->
+    <div class="gs-page" id="gs-pg-weekly">
+      <div class="gs-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <h2 style="font-size:15px;font-weight:700;color:#0D1B3E">📄 Weekly Report — GS Sangatta Field</h2>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+            <input type="date" class="gs-sel" id="gs-wkFrom">
+            <span style="color:#8A9BBE;font-size:11px">s/d</span>
+            <input type="date" class="gs-sel" id="gs-wkTo">
+            <button onclick="gsWkLoad()" style="padding:6px 13px;background:#003087;color:#fff;border:none;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600">📊 Load</button>
+            <button onclick="gsWkSave()" style="padding:6px 12px;background:#fff;border:1px solid #D6DFF0;color:#4A5D8A;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit">💾 Simpan</button>
+            <button onclick="gsWkPrint()" style="padding:6px 12px;background:#fff;border:1px solid #D6DFF0;color:#4A5D8A;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit">🖨️ Print</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+          <span style="font-size:10px;color:#8A9BBE;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Tersimpan:</span>
+          <div id="gs-wk-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #E5EBF5;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,48,135,.06)">
+          <div style="background:linear-gradient(135deg,#001A50,#003087);padding:14px 20px">
+            <div id="gs-wk-title" style="color:#fff;font-size:14px;font-weight:700">Weekly Report — GS Sangatta Field</div>
+            <div id="gs-wk-sub" style="color:rgba(255,255,255,.65);font-size:11px;margin-top:2px">Pilih periode dan klik Load</div>
+          </div>
+          <div style="padding:16px">
+            <div id="gs-wk-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+            <div id="gs-wk-breakdown" style="margin-bottom:12px"></div>
+            <div class="gs-wks"><div class="gs-wks-t">A. UMUM</div><textarea id="gs-wk-a" class="gs-wkt" placeholder="Kegiatan umum minggu ini...&#10;- Support kegiatan..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">B. BUDGET / ANGGARAN</div><div id="gs-wk-b-auto" class="gs-wka" style="display:none"></div><textarea id="gs-wk-b" class="gs-wkt" placeholder="Catatan budget..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">C. KONTRAK</div><textarea id="gs-wk-c" class="gs-wkt" placeholder="Update kontrak..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">D. RDP & FASILITAS (FM)</div><div id="gs-wk-d-auto" class="gs-wka" style="display:none"></div><textarea id="gs-wk-d" class="gs-wkt" placeholder="Pemeliharaan, perbaikan..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">E. GENERAL SERVICES</div><div id="gs-wk-e-auto" class="gs-wka" style="display:none"></div><textarea id="gs-wk-e" class="gs-wkt" placeholder="Meeting, catering, event..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">F. KRP & TRANSPORTASI</div><div id="gs-wk-f-auto" class="gs-wka" style="display:none"></div><textarea id="gs-wk-f" class="gs-wkt" placeholder="SUV, Hiace, DC..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">G. MESS & AKOMODASI</div><div id="gs-wk-g-auto" class="gs-wka" style="display:none"></div><textarea id="gs-wk-g" class="gs-wkt" placeholder="Status kamar mess..."></textarea></div>
+            <div class="gs-wks"><div class="gs-wks-t">H. CATATAN & KENDALA</div><textarea id="gs-wk-h" class="gs-wkt" placeholder="Kendala, tindak lanjut..."></textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /gs-dash -->
+</div><!-- /mod-gs -->
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODULE: ANGGARAN
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="module" id="mod-anggaran">
+
+  <!-- Loading -->
+  <div id="ang-loading" style="display:none;text-align:center;padding:80px 20px">
+    <div class="ang-spin-ring" style="margin:0 auto 16px"></div>
+    <p style="color:var(--t2);font-size:13px">Menghubungkan ke Monitoring Anggaran...</p>
+  </div>
+
+  <!-- Setup -->
+  <div class="ang-setup-wrap" id="ang-setup">
+    <div class="ang-sc">
+      <div class="ang-sc-hdr">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="width:44px;height:44px;border-radius:12px;background:var(--prd);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(232,25,44,.35)">💰</div>
+          <div>
+            <div style="font-size:17px;font-weight:800;color:var(--tx)">Monitoring Anggaran 2026</div>
+            <div style="font-size:11px;color:var(--t2);margin-top:3px">Kontrak GS & Prognosa Realtime</div>
+          </div>
+        </div>
+      </div>
+      <div class="ang-sc-body">
+        <div class="ang-field">
+          <label>Apps Script URL — Monitoring Anggaran</label>
+          <input type="text" id="ang-url-input" placeholder="https://script.google.com/macros/s/AKfy.../exec">
+        </div>
+        <button class="ang-btn-primary" onclick="angConnect()">🔗 Hubungkan Anggaran</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="ang-dash" style="display:none">
+    <div class="ang-tabs">
+      <button class="ang-tab active" id="angtab-p" onclick="angTab('p')">📊 Prognosa Anggaran</button>
+      <button class="ang-tab"        id="angtab-k" onclick="angTab('k')">📋 Kontrak GS</button>
+    </div>
+
+    <!-- PROGNOSA PAGE -->
+    <div class="ang-page active" id="ang-pg-p">
+      <div class="ang-content">
+        <div id="ang-pg-al"></div>
+
+        <!-- RK Filter chips -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+          <span style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">RENCANA KERJA:</span>
+          <div id="ang-rk-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+          <button onclick="angClearRK()" id="ang-rk-clear" style="display:none;padding:3px 9px;background:transparent;border:1px solid var(--bd);border-radius:99px;font-size:10px;color:var(--t3);cursor:pointer;font-family:inherit">✕ Semua</button>
+        </div>
+
+        <!-- KPI Rows -->
+        <div class="ang-kgrid" style="grid-template-columns:repeat(4,1fr)" id="ang-kpi1"></div>
+        <div class="ang-kgrid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px" id="ang-kpi2"></div>
+
+        <!-- Charts row 1 -->
+        <div class="ang-g2">
+          <div class="ang-card"><div class="ang-ct"><i style="background:var(--prd)"></i>Realisasi Bulanan</div><div class="ang-ch"><canvas id="ang-c-bln"></canvas></div></div>
+          <div class="ang-card"><div class="ang-ct"><i style="background:var(--green)"></i>Kumulatif Serapan</div><div class="ang-ch"><canvas id="ang-c-kum"></canvas></div></div>
+        </div>
+
+        <!-- Month strip -->
+        <div class="ang-sec">Realisasi per Bulan — Klik untuk Filter</div>
+        <div class="ang-mstrip" id="ang-mstrip"></div>
+
+        <!-- Charts row 2 -->
+        <div class="ang-g2">
+          <div class="ang-card"><div class="ang-ct"><i style="background:var(--blue)"></i>RKAP vs Pleno vs Prognosa</div><div class="ang-chl"><canvas id="ang-c-cmp"></canvas></div></div>
+          <div class="ang-card"><div class="ang-ct"><i style="background:var(--amber)"></i>Komposisi Pleno</div><div class="ang-chl"><canvas id="ang-c-don"></canvas></div></div>
+        </div>
+
+        <!-- Table -->
+        <div class="ang-tcard">
+          <div class="ang-tcard-hdr">
+            <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px">Detail Prognosa per Item</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div id="ang-rk-chips2" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+              <span id="ang-pg-count" style="font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace">—</span>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="ang-tcard" style="border-radius:0;border:none;box-shadow:none">
+              <thead><tr>
+                <th>#</th><th>Rencana Kerja</th><th>Item</th>
+                <th class="r">RKAP</th><th class="r">Pleno WP&B</th>
+                <th class="r">Upload SAP</th><th class="r">Prognosa YTD</th>
+                <th class="r">Kekurangan</th><th>% Serap</th>
+                <th class="r">Available</th><th>Ketahanan</th>
+              </tr></thead>
+              <tbody id="ang-pg-tb"></tbody>
+              <tfoot><tr class="tot">
+                <td colspan="3">TOTAL</td>
+                <td class="r" id="ang-pt1">—</td><td class="r" id="ang-pt2">—</td>
+                <td class="r" id="ang-pt-sap">—</td><td class="r" id="ang-pt3">—</td>
+                <td class="r" id="ang-pt4">—</td><td id="ang-pt5">—</td>
+                <td class="r" id="ang-pt6">—</td><td></td>
+              </tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KONTRAK PAGE -->
+    <div class="ang-page" id="ang-pg-k">
+      <div class="ang-content">
+        <div id="ang-kt-al"></div>
+        <div class="ang-kgrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px" id="ang-kt-krow"></div>
+        <div class="ang-g2">
+          <div class="ang-card"><div class="ang-ct"><i style="background:var(--prd)"></i>Nilai vs Realisasi 2026</div><div class="ang-chl"><canvas id="ang-kt-c1"></canvas></div></div>
+          <div class="ang-card"><div class="ang-ct"><i style="background:var(--green)"></i>Status Kontrak</div><div class="ang-ch"><canvas id="ang-kt-c2"></canvas></div></div>
+        </div>
+        <div class="ang-cardf">
+          <div class="ang-sec">Progress Serapan per Kontrak</div>
+          <div id="ang-kt-prog"></div>
+        </div>
+        <div class="ang-tcard">
+          <div class="ang-tcard-hdr">
+            <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px">Daftar Kontrak GS</div>
+            <span id="ang-kt-count" style="font-size:11px;color:var(--t3)">—</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="ang-tcard" style="min-width:1100px;border-radius:0;border:none;box-shadow:none">
+              <thead><tr>
+                <th>No.</th><th>No. Kontrak</th><th>Pekerjaan</th><th>Vendor</th>
+                <th>Mulai</th><th>Akhir</th><th>Sisa Hari</th>
+                <th class="r">Nilai Kontrak</th><th class="r">Realisasi 2026</th>
+                <th class="r">Sisa Nilai</th><th>Status</th>
+              </tr></thead>
+              <tbody id="ang-kt-tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /ang-dash -->
+</div><!-- /mod-anggaran -->
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODULE: TO DO LIST & CATATAN HARIAN
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="module" id="mod-todo">
+  <div class="todo-stripe"></div>
+
+  <!-- Dashboard -->
+  <div id="todo-dash">
+    <div class="todo-tabs">
+      <button class="todo-tab active" id="ttab-todo" onclick="todoTab('todo')">✅ To Do List</button>
+      <button class="todo-tab" id="ttab-catatan" onclick="todoTab('catatan')">📝 Catatan Harian</button>
+    </div>
+
+    <!-- ── TO DO LIST ── -->
+    <div class="todo-page active" id="todo-pg-todo">
+      <div class="todo-content">
+        <div id="todo-sync-status" class="todo-sync-ind synced">
+          <span>●</span> <span id="todo-sync-txt">Terhubung & sync realtime</span>
+        </div>
+
+        <!-- KPI -->
+        <div class="todo-kpi-row">
+          <div class="todo-kpi all"><div class="tk-lbl">Total Task</div><div class="tk-num" id="td-kAll">0</div></div>
+          <div class="todo-kpi done"><div class="tk-lbl">Selesai</div><div class="tk-num" id="td-kDone">0</div></div>
+          <div class="todo-kpi pend"><div class="tk-lbl">Belum Selesai</div><div class="tk-num" id="td-kPend">0</div></div>
+          <div class="todo-kpi high"><div class="tk-lbl">Prioritas Tinggi</div><div class="tk-num" id="td-kHigh">0</div></div>
+        </div>
+
+        <!-- Add task -->
+        <div class="todo-add-row">
+          <input class="todo-input" id="td-inp" placeholder="✏️ Tambah task baru... (Enter untuk simpan)" onkeydown="if(event.key==='Enter')tdAdd()">
+          <select class="todo-prio-sel" id="td-prio">
+            <option value="med">🟡 Medium</option>
+            <option value="high">🔴 Tinggi</option>
+            <option value="low">🟢 Rendah</option>
+          </select>
+          <button class="todo-add-btn" onclick="tdAdd()">+ Tambah</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="todo-filters-row">
+          <button class="todo-flt on" id="tf-all" onclick="tdFilter('all')">Semua</button>
+          <button class="todo-flt" id="tf-pending" onclick="tdFilter('pending')">Belum Selesai</button>
+          <button class="todo-flt" id="tf-done" onclick="tdFilter('done')">Selesai</button>
+          <button class="todo-flt" id="tf-high" onclick="tdFilter('high')">🔴 Prioritas Tinggi</button>
+          <button style="margin-left:auto;padding:6px 12px;background:rgba(232,0,29,.07);border:1px solid rgba(232,0,29,.15);border-radius:8px;font-size:11px;font-weight:600;color:#C0001E;cursor:pointer;font-family:inherit" onclick="tdClearDone()">🗑 Hapus yang Selesai</button>
+        </div>
+
+        <!-- List -->
+        <div class="todo-list" id="td-list">
+          <div class="todo-empty"><div class="todo-empty-ico">📋</div><p>Belum ada task. Tambahkan di atas!</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATATAN HARIAN ── -->
+    <div class="todo-page" id="todo-pg-catatan">
+      <div class="todo-content">
+        <div id="note-sync-status" class="todo-sync-ind synced">
+          <span>●</span> <span id="note-sync-txt">Terhubung & sync realtime</span>
+        </div>
+
+        <!-- Add note -->
+        <div class="note-add-row">
+          <textarea class="note-textarea" id="note-inp" placeholder="📝 Tulis catatan harian... (Ctrl+Enter untuk simpan)"></textarea>
+          <div class="note-add-right">
+            <input class="note-tag-inp" id="note-tag" placeholder="Tag (opsional)">
+            <button class="note-save-btn" onclick="noteAdd()">💾 Simpan Catatan</button>
+          </div>
+        </div>
+
+        <!-- Filter/Search -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+          <input class="note-search" id="note-search" oninput="noteRender()" placeholder="🔍 Cari catatan...">
+          <input type="date" class="note-search" id="note-date-flt" style="min-width:unset;width:auto" onchange="noteRender()">
+          <button style="padding:7px 12px;background:#fff;border:1.5px solid rgba(0,0,0,.08);border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;color:#8A9BBE" onclick="document.getElementById('note-date-flt').value='';noteRender()">Reset</button>
+        </div>
+
+        <!-- Notes list -->
+        <div id="note-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /todo-dash -->
+</div><!-- /mod-todo -->
+
+<!-- MODAL DETAIL PROGNOSA -->
+<div class="ang-modal-ov" id="ang-modal" onclick="angCloseModal(event)">
+  <div class="ang-modal-box">
+    <div class="ang-modal-hdr">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:700;color:var(--tx)" id="ang-m-title">—</span>
+          <span id="ang-m-rk-badge" style="display:none;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(232,25,44,.12);color:var(--prd2)"></span>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px" id="ang-m-sub">—</div>
+      </div>
+      <button onclick="angCloseDetailModal()" style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--t2);font-size:16px;cursor:pointer;flex-shrink:0">✕</button>
+    </div>
+    <div class="ang-modal-body">
+      <div id="ang-m-kpi" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"></div>
+      <div style="background:var(--pbg3);border-radius:10px;padding:13px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:7px">
+          <span style="font-size:11px;color:var(--t2);font-weight:600">Serapan Prognosa vs Pleno WP&B</span>
+          <span style="font-size:14px;font-weight:800;font-family:'JetBrains Mono',monospace" id="ang-m-pct">0%</span>
+        </div>
+        <div style="height:10px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden">
+          <div id="ang-m-pct-bar" style="height:100%;border-radius:99px;width:0%;transition:width .8s ease"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:var(--t3)">
+          <span>Rp 0</span><span id="ang-m-pleno-lbl">—</span>
+        </div>
+      </div>
+      <div class="ang-sec">Realisasi per Bulan</div>
+      <div style="height:160px;margin-bottom:14px"><canvas id="ang-m-chart"></canvas></div>
+      <div class="ang-monthly-grid" id="ang-m-monthly"></div>
+      <div class="ang-sec">Informasi Detail</div>
+      <div id="ang-m-detail"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="cmd-footer">
+  <span>© 2026 Pertamina EP — GS Sangatta Field · Command Center</span>
+  <span id="ang-fts">—</span>
+</footer>
+
+</div><!-- /app-shell -->
+
+<script>
+'use strict';
+// ══ GLOBAL CONFIG ═══════════════════════════════════════════════════════════
+const GS_URL_DEFAULT  = 'https://script.google.com/macros/s/AKfycbw_jZXUO1JVe5BXdQBFUBSt2ZuiUvA-eHpaDJgdbd76TNzYgQL36E75yNAiEEzq1H5X/exec';
+const ANG_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbxQkKig3yXedxxddhajVrkBbWsnNUeRL6rrWSSUUSW0Egb27tWo8ih364SdSK4O_kFt/exec';
+const LS_GS_URL  = 'cc_gs_url_v1';
+const LS_ANG_URL = 'cc_ang_url_v1';
+const LS_GS_CACHE= 'cc_gs_cache_v1';
+const LS_OVR     = 'cc_ovr_v1';
+const LS_WK      = 'cc_wk_v1';
+const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const MFULL  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const CO = {
+  plugins:{legend:{labels:{color:'#A0ABBE',font:{family:"'Inter'",size:10}}}},
+  scales:{x:{ticks:{color:'#5C6880',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}},
+          y:{ticks:{color:'#5C6880',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}}}
+};
+const CO_GS = {
+  plugins:{legend:{labels:{color:'#4A5D8A',font:{family:"'Inter'",size:10}}}},
+  scales:{x:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.06)'}},
+          y:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.06)'}}}
+};
+
+// ══ STATE ════════════════════════════════════════════════════════════════════
+let curModule = 'gs', gsUrl = '', angUrl = '';
+let GS_DATA = [], OVR = {}, gsDate = null, curGsTab = 'daily';
+let K = [], P = [], selRK = '', selM = -1;
+let CH = {}, CHK = {}, GS_CH = {}, modalChart = null;
+let wkReports = {}, saveTimer = null;
+
+// ══ INIT ═════════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  try { OVR = JSON.parse(localStorage.getItem(LS_OVR) || '{}'); } catch(e) {}
+  try { wkReports = JSON.parse(localStorage.getItem(LS_WK) || '{}'); } catch(e) {}
+
+  gsUrl  = localStorage.getItem(LS_GS_URL)  || GS_URL_DEFAULT;
+  angUrl = localStorage.getItem(LS_ANG_URL) || ANG_URL_DEFAULT;
+  localStorage.setItem(LS_GS_URL, gsUrl);
+  localStorage.setItem(LS_ANG_URL, angUrl);
+  document.getElementById('gs-url-input').value  = gsUrl;
+  document.getElementById('ang-url-input').value = angUrl;
+
+  gsInit();
+  angInit();
+  // Pre-connect Firebase for todo (so data loads instantly when tab clicked)
+  fbStartListeners();
+});
+
+// ══ MODULE SWITCH ════════════════════════════════════════════════════════════
+function switchModule(m) {
+  curModule = m;
+  document.querySelectorAll('.module').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.mod-pill').forEach(el => el.classList.remove('active'));
+  document.getElementById('mod-' + m).classList.add('active');
+  document.getElementById('mpill-' + m).classList.add('active');
+  if (m === 'todo') todoInit();
+}
+
+function refreshAll() {
+  const ic = document.getElementById('spin-ic');
+  ic.classList.add('spinning');
+  Promise.all([gsRefresh(), angRefresh()]).finally(() => {
+    setTimeout(() => ic.classList.remove('spinning'), 800);
+  });
+}
+
+function updateTs() {
+  const t = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('ts-tag').textContent = t;
+  document.getElementById('ang-fts').textContent = 'Update: ' + t;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GS CARE
+// ══════════════════════════════════════════════════════════════════════════════
+function getTodayWITA() {
+  const now = new Date();
+  const wita = new Date(now.getTime() + (8*60 + now.getTimezoneOffset()) * 60000);
+  return new Date(wita.getFullYear(), wita.getMonth(), wita.getDate());
+}
+function dateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getSt(r) { return OVR[r.wo] !== undefined ? OVR[r.wo] : (r.status || 'belum'); }
+function saveOVR() { try { localStorage.setItem(LS_OVR, JSON.stringify(OVR)); } catch(e) {} }
+
+function autoCompleteOld() {
+  const today = dateStr(getTodayWITA());
+  let cnt = 0;
+  GS_DATA.forEach(r => { if (r.tanggal < today && OVR[r.wo] === undefined) { OVR[r.wo] = 'selesai'; cnt++; } });
+  if (cnt > 0) saveOVR();
+}
+
+async function gsInit() {
+  document.getElementById('gs-loading').style.display = 'block';
+  document.getElementById('gs-setup').style.display = 'none';
+  document.getElementById('gs-dash').style.display = 'none';
+  try {
+    const res = await fetch(gsUrl + '?t=' + Date.now(), {redirect:'follow'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    GS_DATA = cleanGsData(json);
+    if (!GS_DATA.length) throw new Error('data kosong');
+    localStorage.setItem(LS_GS_CACHE, JSON.stringify(GS_DATA));
+    autoCompleteOld();
+    gsShowDash();
+  } catch(e) {
+    try {
+      const c = localStorage.getItem(LS_GS_CACHE);
+      if (c) { GS_DATA = JSON.parse(c); autoCompleteOld(); gsShowDash(); return; }
+    } catch(ex) {}
+    document.getElementById('gs-loading').style.display = 'none';
+    document.getElementById('gs-setup').style.display = 'flex';
+  }
+}
+
+async function gsRefresh() {
+  try {
+    const res = await fetch(gsUrl + '?t=' + Date.now(), {redirect:'follow'});
+    const json = await res.json();
+    GS_DATA = cleanGsData(json);
+    localStorage.setItem(LS_GS_CACHE, JSON.stringify(GS_DATA));
+    autoCompleteOld();
+    gsRenderCurrent();
+    document.getElementById('live-txt').textContent = 'Live';
+    updateTs();
+  } catch(e) {}
+}
+
+function cleanGsData(arr) {
+  const M = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  return (arr||[]).filter(r=>r.wo).map(r => {
+    let tgl = r.tanggal || '';
+    if (!tgl || tgl.length < 10) {
+      try {
+        const p = (r.timestamp||'').toString().split(' ');
+        const mm=M[p[1]], dd=p[2]?.padStart(2,'0'), yy=p[3];
+        if (mm&&dd&&yy&&yy.length===4) tgl = yy+'-'+mm+'-'+dd;
+      } catch(e) {}
+    }
+    return {wo:String(r.wo||''),tanggal:tgl,nama:String(r.nama||''),fungsi:String(r.fungsi||''),
+            kategori:String(r.kategori||''),layanan:String(r.layanan||''),status:String(r.status||'')};
+  }).filter(r=>r.tanggal&&r.tanggal.length>=10);
+}
+
+function gsConnect() {
+  const url = document.getElementById('gs-url-input').value.trim();
+  if (!url) { alert('Masukkan URL'); return; }
+  gsUrl = url; localStorage.setItem(LS_GS_URL, url);
+  document.getElementById('gs-setup').style.display = 'none';
+  gsInit();
+}
+
+function gsShowDash() {
+  document.getElementById('gs-loading').style.display = 'none';
+  document.getElementById('gs-setup').style.display = 'none';
+  document.getElementById('gs-dash').style.display = 'block';
+  if (!gsDate) gsDate = getTodayWITA();
+  gsPopulateFilters();
+  gsRenderCurrent();
+  document.getElementById('live-txt').textContent = 'Live';
+  updateTs();
+}
+
+function gsTab(t) {
+  curGsTab = t;
+  ['daily','history','analytics','weekly'].forEach(id => {
+    document.getElementById('gstab-' + id)?.classList.toggle('active', id === t);
+    document.getElementById('gs-pg-' + id)?.classList.remove('active');
+  });
+  document.getElementById('gs-pg-' + t)?.classList.add('active');
+  if (t === 'weekly') gsWkInit();
+}
+
+function gsRenderCurrent() {
+  if (curGsTab === 'daily') gsRenderDaily();
+  else if (curGsTab === 'history') gsRenderHistory();
+  else if (curGsTab === 'analytics') gsRenderAnalytics();
+}
+
+function gsPrevDay() { gsDate.setDate(gsDate.getDate()-1); gsRenderDaily(); }
+function gsNextDay() { gsDate.setDate(gsDate.getDate()+1); gsRenderDaily(); }
+function gsToday()   { gsDate = getTodayWITA(); gsRenderDaily(); }
+
+function gsPopulateFilters() {
+  const kats = [...new Set(GS_DATA.map(r=>r.kategori).filter(Boolean))].sort();
+  const funs = [...new Set(GS_DATA.map(r=>r.fungsi).filter(Boolean))].sort();
+  ['gs-fKat','gs-hKat'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const cur = el.value; el.innerHTML = '<option value="">Semua Kategori</option>';
+    kats.forEach(k => el.insertAdjacentHTML('beforeend', `<option value="${k}">${k}</option>`));
+    el.value = cur;
+  });
+  const fFun = document.getElementById('gs-fFun'); if (fFun) {
+    fFun.innerHTML = '<option value="">Semua Fungsi</option>';
+    funs.forEach(f => fFun.insertAdjacentHTML('beforeend', `<option value="${f}">${f}</option>`));
+  }
+}
+
+function gsRenderDaily() {
+  if (!gsDate) return;
+  const ds = dateStr(gsDate);
+  const fmt = gsDate.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('gs-date-lbl').textContent = fmt;
+  document.getElementById('gs-nav-lbl').textContent  = fmt;
+
+  const all = GS_DATA.filter(r => r.tanggal === ds);
+  document.getElementById('gs-req-cnt').textContent = all.length + ' request masuk';
+
+  const st  = document.getElementById('gs-fSt').value;
+  const kat = document.getElementById('gs-fKat').value;
+  const fun = document.getElementById('gs-fFun').value;
+  const q   = document.getElementById('gs-fQ').value.toLowerCase();
+  const rows = all.filter(r => {
+    if (kat && r.kategori !== kat) return false;
+    if (fun && r.fungsi !== fun) return false;
+    if (st && getSt(r) !== st) return false;
+    if (q && !r.wo.toLowerCase().includes(q) && !r.nama.toLowerCase().includes(q) && !r.layanan.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const done = all.filter(r => getSt(r) === 'selesai').length;
+  const tot = all.length, pct = tot > 0 ? Math.round(done/tot*100) : 0;
+  document.getElementById('gs-sT').textContent = tot;
+  document.getElementById('gs-sD').textContent = done;
+  document.getElementById('gs-sP').textContent = tot - done;
+  document.getElementById('gs-sR').textContent = pct + '%';
+  document.getElementById('gs-pLbl').textContent = pct + '% selesai';
+  document.getElementById('gs-pFrac').textContent = done + '/' + tot;
+  setTimeout(() => document.getElementById('gs-pBar').style.width = pct + '%', 80);
+
+  const tb = document.getElementById('gs-tbody'); tb.innerHTML = '';
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#8A9BBE">Tidak ada request untuk tanggal ini</td></tr>';
+    return;
+  }
+  rows.forEach(r => {
+    const s = getSt(r);
+    const tr = document.createElement('tr');
+    if (s === 'selesai') tr.style.opacity = '.6';
+    tr.innerHTML = `<td><button class="gs-chk ${s==='selesai'?'on':''}" onclick="gsToggle('${r.wo}')">${s==='selesai'?'✓':' '}</button></td>
+      <td style="font-weight:700;color:#0D1B3E">${r.wo}</td>
+      <td>${r.nama}</td>
+      <td><span class="gs-pill">${r.fungsi}</span></td>
+      <td style="font-size:11px;color:#4A5D8A">${r.kategori}</td>
+      <td style="font-weight:600;color:#0D1B3E">${r.layanan}</td>
+      <td><span class="gs-badge ${s==='selesai'?'ok':'no'}">${s==='selesai'?'✓ Selesai':'● Belum'}</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function gsToggle(wo) {
+  const r = GS_DATA.find(x => x.wo === wo); if (!r) return;
+  OVR[wo] = getSt(r) === 'selesai' ? 'belum' : 'selesai';
+  saveOVR();
+  gsRenderDaily();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => gsSendToSheet(), 1200);
+}
+
+async function gsSendToSheet() {
+  const ind = document.getElementById('gs-saveInd');
+  if (!gsUrl) return;
+  try {
+    ind.textContent = '⏳ Menyimpan...'; ind.style.color = '#F59E0B';
+    await fetch(gsUrl, {method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'updateStatus',overrides:OVR}),redirect:'follow'});
+    ind.textContent = '✓ Tersimpan'; ind.style.color = '#00875A';
+  } catch(e) { ind.textContent = '✓ Lokal'; ind.style.color = '#8A9BBE'; }
+  setTimeout(() => ind.textContent = '', 3000);
+}
+
+function gsSaveAll() { gsSendToSheet(); }
+
+function gsRenderHistory() {
+  const from = document.getElementById('gs-hFrom').value;
+  const to   = document.getElementById('gs-hTo').value;
+  if (!from || !to) return;
+  const kat = document.getElementById('gs-hKat').value;
+  const st  = document.getElementById('gs-hSt').value;
+  const allR = GS_DATA.filter(r => r.tanggal >= from && r.tanggal <= to);
+  const tot = allR.length, done = allR.filter(r => getSt(r) === 'selesai').length;
+  document.getElementById('gs-h-stats').innerHTML = `
+    <div class="gs-stat tot" style="border-radius:10px"><div class="gs-lbl">Total</div><div class="gs-num" style="font-size:22px">${tot}</div></div>
+    <div class="gs-stat don" style="border-radius:10px"><div class="gs-lbl">Selesai</div><div class="gs-num" style="font-size:22px">${done}</div></div>
+    <div class="gs-stat pen" style="border-radius:10px"><div class="gs-lbl">Belum</div><div class="gs-num" style="font-size:22px">${tot-done}</div></div>
+    <div class="gs-stat rat" style="border-radius:10px"><div class="gs-lbl">Completion</div><div class="gs-num" style="font-size:22px">${tot>0?Math.round(done/tot*100):0}%</div></div>`;
+  const byDate = {};
+  allR.filter(r => (!kat||r.kategori===kat) && (!st||getSt(r)===st)).forEach(r => {
+    byDate[r.tanggal] = byDate[r.tanggal] || [];
+    byDate[r.tanggal].push(r);
+  });
+  const body = document.getElementById('gs-h-body'); body.innerHTML = '';
+  Object.keys(byDate).sort().reverse().forEach(d => {
+    const rows = byDate[d], dd = rows.filter(r=>getSt(r)==='selesai').length;
+    const pct = rows.length > 0 ? Math.round(dd/rows.length*100) : 0;
+    const div = document.createElement('div'); div.className = 'gs-hgrp';
+    div.innerHTML = `<div class="gs-hgrp-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+      <span style="font-size:12px;font-weight:700;color:#0D1B3E">${new Date(d+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'})}</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:11px;color:#8A9BBE">${rows.length} request · ${pct}% selesai</span>
+        <div style="width:80px;height:4px;background:#E5EBF5;border-radius:99px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:#00875A;border-radius:99px"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:none">
+    <table style="width:100%">
+      <thead><tr><th>WO</th><th>Nama</th><th>Kategori</th><th>Layanan</th><th>Status</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td style="font-weight:600;color:#0D1B3E">${r.wo}</td><td>${r.nama}</td>
+        <td>${r.kategori}</td><td>${r.layanan}</td>
+        <td><span class="gs-badge ${getSt(r)==='selesai'?'ok':'no'}">${getSt(r)==='selesai'?'✓ Selesai':'● Belum'}</span></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+    body.appendChild(div);
+  });
+}
+
+function gsRenderAnalytics() {
+  const from = document.getElementById('gs-aFrom').value;
+  const to   = document.getElementById('gs-aTo').value;
+  const data = GS_DATA.filter(r => (!from||r.tanggal>=from) && (!to||r.tanggal<=to));
+  const tot = data.length, done = data.filter(r=>getSt(r)==='selesai').length;
+  document.getElementById('gs-aStats').innerHTML = `
+    <div class="gs-stat tot" style="border-radius:10px"><div class="gs-lbl">Total Request</div><div class="gs-num">${tot}</div></div>
+    <div class="gs-stat don" style="border-radius:10px"><div class="gs-lbl">Selesai</div><div class="gs-num">${done}</div></div>
+    <div class="gs-stat pen" style="border-radius:10px"><div class="gs-lbl">Belum</div><div class="gs-num">${tot-done}</div></div>
+    <div class="gs-stat rat" style="border-radius:10px"><div class="gs-lbl">Completion</div><div class="gs-num">${tot>0?Math.round(done/tot*100):0}%</div></div>`;
+
+  const katMap={}, funMap={}, layMap={};
+  data.forEach(r => {
+    katMap[r.kategori]=(katMap[r.kategori]||0)+1;
+    funMap[r.fungsi]=(funMap[r.fungsi]||0)+1;
+    layMap[r.layanan]=(layMap[r.layanan]||0)+1;
+  });
+  const GS_CLRS = ['#003087','#E8001D','#0052CC','#10B981','#F59E0B','#8B5CF6','#06B6D4','#EC4899'];
+  ['gs-cKat','gs-cFun','gs-cLay'].forEach(id => { const c=document.getElementById(id); if(c._ch){c._ch.destroy();} });
+
+  const kE=document.getElementById('gs-cKat'), kD=Object.entries(katMap).sort((a,b)=>b[1]-a[1]);
+  kE._ch=new Chart(kE,{type:'doughnut',data:{labels:kD.map(x=>x[0]),datasets:[{data:kD.map(x=>x[1]),backgroundColor:GS_CLRS,borderColor:'#F2F5FA',borderWidth:2,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:'#4A5D8A',font:{size:10},boxWidth:10,padding:5}}}}});
+
+  const fD=Object.entries(funMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const fE=document.getElementById('gs-cFun');
+  fE._ch=new Chart(fE,{type:'bar',data:{labels:fD.map(x=>x[0]),datasets:[{data:fD.map(x=>x[1]),backgroundColor:'rgba(0,48,135,.6)',borderColor:'#003087',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.05)'}},y:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.05)'}}}}});
+
+  const lD=Object.entries(layMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const lE=document.getElementById('gs-cLay');
+  lE._ch=new Chart(lE,{type:'bar',indexAxis:'y',data:{labels:lD.map(x=>x[0].slice(0,35)),datasets:[{data:lD.map(x=>x[1]),backgroundColor:'rgba(16,185,129,.6)',borderColor:'#10B981',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.05)'}},y:{ticks:{color:'#4A5D8A',font:{size:9}},grid:{display:false}}}}});
+}
+
+// ── WEEKLY ──────────────────────────────────────────────────────────────────
+function gsWkInit() {
+  gsWkRenderChips();
+  if (!document.getElementById('gs-wkFrom').value) {
+    const now=new Date(), day=now.getDay(), mon=new Date(now);
+    mon.setDate(now.getDate() - (day===0?6:day-1));
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    document.getElementById('gs-wkFrom').value = mon.toISOString().slice(0,10);
+    document.getElementById('gs-wkTo').value   = sun.toISOString().slice(0,10);
+  }
+}
+
+function gsWkLoad() {
+  const from=document.getElementById('gs-wkFrom').value, to=document.getElementById('gs-wkTo').value;
+  if (!from||!to) { alert('Pilih periode'); return; }
+  if (!GS_DATA.length) { alert('Load data GS Care dahulu'); return; }
+  const filtered=GS_DATA.filter(r=>r.tanggal>=from&&r.tanggal<=to);
+  const fmt=d=>new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('gs-wk-title').textContent='Weekly Report — GS Sangatta Field';
+  document.getElementById('gs-wk-sub').textContent=fmt(from)+' s/d '+fmt(to)+' ('+filtered.length+' request)';
+  const tot=filtered.length, done=filtered.filter(r=>getSt(r)==='selesai').length;
+  document.getElementById('gs-wk-stats').innerHTML=`
+    <div class="gs-stat tot" style="border-radius:10px"><div class="gs-lbl">Total</div><div class="gs-num" style="font-size:20px">${tot}</div></div>
+    <div class="gs-stat don" style="border-radius:10px"><div class="gs-lbl">Selesai</div><div class="gs-num" style="font-size:20px">${done}</div></div>
+    <div class="gs-stat pen" style="border-radius:10px"><div class="gs-lbl">Belum</div><div class="gs-num" style="font-size:20px">${tot-done}</div></div>
+    <div class="gs-stat rat" style="border-radius:10px"><div class="gs-lbl">Rate</div><div class="gs-num" style="font-size:20px">${tot>0?Math.round(done/tot*100):0}%</div></div>`;
+  const katMap={};
+  filtered.forEach(r => { const k=r.kategori||'Lainnya'; katMap[k]=(katMap[k]||0)+1; });
+  document.getElementById('gs-wk-breakdown').innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:7px">'+
+    Object.entries(katMap).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<div style="background:#fff;border:1px solid #E5EBF5;border-radius:9px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:#0D1B3E">${k}</span><span style="font-size:14px;font-weight:800;color:#003087">${n}</span></div>`).join('')+'</div>';
+
+  const autoFill=(id,cat,items)=>{
+    const el=document.getElementById(id); if(!el)return;
+    const grp={};items.forEach(r=>{const l=r.layanan||r.kategori;grp[l]=(grp[l]||0)+1;});
+    if(Object.keys(grp).length){el.innerHTML='<strong>'+cat+' ('+items.length+' request):</strong><br>'+Object.entries(grp).map(([l,n])=>`• ${l} (${n})`).join('<br>');el.style.display='block';}
+  };
+  autoFill('gs-wk-d-auto','FM',filtered.filter(r=>r.kategori?.toLowerCase().includes('facility')));
+  autoFill('gs-wk-e-auto','GS',filtered.filter(r=>r.kategori?.toLowerCase().includes('general')));
+  autoFill('gs-wk-f-auto','Transportasi',filtered.filter(r=>r.kategori?.toLowerCase().includes('transport')||r.kategori?.toLowerCase().includes('light')));
+  autoFill('gs-wk-g-auto','Mess',filtered.filter(r=>r.kategori?.toLowerCase().includes('mess')||r.kategori?.toLowerCase().includes('accom')));
+
+  const key=from+'_'+to;
+  if(wkReports[key]){const sv=wkReports[key];['a','b','c','d','e','f','g','h'].forEach(s=>{const el=document.getElementById('gs-wk-'+s);if(el)el.value=sv[s]||'';});}
+}
+
+function gsWkSave() {
+  const from=document.getElementById('gs-wkFrom').value, to=document.getElementById('gs-wkTo').value;
+  if(!from||!to){alert('Pilih periode dahulu');return;}
+  const key=from+'_'+to, data={from,to,savedAt:new Date().toISOString()};
+  ['a','b','c','d','e','f','g','h'].forEach(s=>{const el=document.getElementById('gs-wk-'+s);if(el)data[s]=el.value;});
+  wkReports[key]=data;
+  try{localStorage.setItem(LS_WK,JSON.stringify(wkReports));}catch(e){}
+  gsWkRenderChips();
+  alert('✅ Tersimpan: '+from+' s/d '+to);
+}
+
+function gsWkPrint() {
+  document.querySelectorAll('.gs-page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('gs-pg-weekly').classList.add('active');
+  setTimeout(()=>window.print(),100);
+}
+
+function gsWkRenderChips() {
+  const c=document.getElementById('gs-wk-chips'); if(!c)return;
+  const keys=Object.keys(wkReports).sort().reverse();
+  if(!keys.length){c.innerHTML='<span style="font-size:11px;color:#8A9BBE">Belum ada tersimpan</span>';return;}
+  c.innerHTML=keys.map(k=>`<span class="gs-saved-chip" onclick="gsWkLoadSaved('${k}')">${wkReports[k].from} s/d ${wkReports[k].to}<span onclick="event.stopPropagation();gsWkDelete('${k}')" style="color:#8A9BBE;cursor:pointer;font-size:10px;margin-left:3px">✕</span></span>`).join('');
+}
+
+function gsWkLoadSaved(k) {
+  const r=wkReports[k]; if(!r)return;
+  document.getElementById('gs-wkFrom').value=r.from; document.getElementById('gs-wkTo').value=r.to;
+  ['a','b','c','d','e','f','g','h'].forEach(s=>{const el=document.getElementById('gs-wk-'+s);if(el)el.value=r[s]||'';});
+  gsWkLoad();
+}
+function gsWkDelete(k){if(!confirm('Hapus?'))return;delete wkReports[k];try{localStorage.setItem(LS_WK,JSON.stringify(wkReports));}catch(e){}gsWkRenderChips();}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANGGARAN
+// ══════════════════════════════════════════════════════════════════════════════
+function rp(v){if(!v&&v!==0)return'—';const a=Math.abs(v);if(a>=1e12)return'Rp '+(v/1e12).toFixed(2)+'T';if(a>=1e9)return'Rp '+(v/1e9).toFixed(2)+'M';if(a>=1e6)return'Rp '+(v/1e6).toFixed(1)+'jt';return'Rp '+Math.round(v).toLocaleString('id-ID');}
+function ff(v){return'Rp '+Math.round(v||0).toLocaleString('id-ID');}
+function pcs(v){return(Math.round((v||0)*1000)/10).toFixed(1)+'%';}
+function stK(due,status){const s=(status||'').toLowerCase();if(s&&!s.includes('aktif'))return{l:status,c:'r',col:'#E8192C'};if(due<=0)return{l:'Aktif',c:'g',col:'#10B981'};if(due<=30)return{l:'Kritis ⚠',c:'r',col:'#E8192C'};if(due<=90)return{l:'Perhatian',c:'y',col:'#F59E0B'};return{l:'Aktif',c:'g',col:'#10B981'};}
+function angDestroyCharts(){Object.values(CH).forEach(c=>c&&c.destroy());CH={};}
+function angDestroyKCharts(){Object.values(CHK).forEach(c=>c&&c.destroy());CHK={};}
+
+async function angInit() {
+  document.getElementById('ang-loading').style.display = 'block';
+  document.getElementById('ang-dash').style.display = 'none';
+  try {
+    const res = await fetch(angUrl + '?t=' + Date.now(), {redirect:'follow'});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!json||(!json.kontrak&&!json.prognosa)) throw new Error('format salah');
+    K = json.kontrak||[]; P = json.prognosa||[];
+    K = K.filter(k=>k.no&&!String(k.no).toLowerCase().includes('no'));
+    P.forEach(p=>{p._ytd=Object.values(p.monthly||{}).reduce((a,b)=>a+(b||0),0);if(p._ytd===0)p._ytd=p.totalPrognosa_idr||0;});
+    angShowDash();
+  } catch(e) {
+    document.getElementById('ang-loading').style.display = 'none';
+    document.getElementById('ang-setup').style.display = 'flex';
+  }
+}
+
+async function angRefresh() {
+  try {
+    const res = await fetch(angUrl + '?t=' + Date.now(), {redirect:'follow'});
+    const json = await res.json();
+    K = json.kontrak||[]; P = json.prognosa||[];
+    K = K.filter(k=>k.no&&!String(k.no).toLowerCase().includes('no'));
+    P.forEach(p=>{p._ytd=Object.values(p.monthly||{}).reduce((a,b)=>a+(b||0),0);if(p._ytd===0)p._ytd=p.totalPrognosa_idr||0;});
+    angDestroyCharts(); angDestroyKCharts();
+    angBuildRKChips(); angRenderAll(); updateTs();
+  } catch(e) {}
+}
+
+function angConnect() {
+  const url = document.getElementById('ang-url-input').value.trim();
+  if (!url) { alert('Masukkan URL'); return; }
+  angUrl = url; localStorage.setItem(LS_ANG_URL, url);
+  document.getElementById('ang-setup').style.display = 'none';
+  angInit();
+}
+
+function angShowDash() {
+  document.getElementById('ang-loading').style.display = 'none';
+  document.getElementById('ang-setup').style.display = 'none';
+  document.getElementById('ang-dash').style.display = 'block';
+  angBuildRKChips();
+  angRenderAll();
+  updateTs();
+}
+
+function angTab(t) {
+  ['p','k'].forEach(id => {
+    document.getElementById('angtab-'+id)?.classList.toggle('active', id===t);
+    document.getElementById('ang-pg-'+id)?.classList.remove('active');
+  });
+  document.getElementById('ang-pg-'+t)?.classList.add('active');
+  if (t==='k') angRenderKontrak();
+}
+
+function angClickMonth(i){selM=selM===i?-1:i;document.querySelectorAll('.ang-mt').forEach((el,j)=>el.classList.toggle('on',j===selM));angDestroyCharts();angRenderPrognosa();}
+function angClearRK(){selRK='';document.querySelectorAll('.ang-mc').forEach(el=>el.classList.remove('on'));const cl=document.getElementById('ang-rk-clear');if(cl)cl.style.display='none';angDestroyCharts();angRenderPrognosa();}
+function angClickRK(rk){selRK=selRK===rk?'':rk;document.querySelectorAll('.ang-mc').forEach(el=>el.classList.toggle('on',el.dataset.rk===selRK));const cl=document.getElementById('ang-rk-clear');if(cl)cl.style.display=selRK?'block':'none';angDestroyCharts();angRenderPrognosa();}
+
+function angBuildRKChips() {
+  const rks=[...new Set(P.map(p=>p.kategori||'').filter(Boolean))].sort();
+  ['ang-rk-chips','ang-rk-chips2'].forEach(cid => {
+    const wrap=document.getElementById(cid); if(!wrap)return;
+    wrap.innerHTML='';
+    rks.forEach(rk=>{
+      const el=document.createElement('button');
+      el.className='ang-mc'+(rk===selRK?' on':'');
+      el.dataset.rk=rk;
+      el.style.cssText='font-size:10px;padding:3px 9px';
+      el.textContent=rk.replace(/ EXPENSE| SERVICE/,'').replace('MANAGEMENT','MGMT').slice(0,20);
+      el.onclick=()=>angClickRK(rk);
+      wrap.appendChild(el);
+    });
+  });
+}
+
+function angRenderAll(){angRenderPrognosa();/* kontrak lazy */}
+
+function angRenderPrognosa(){
+  if(!P.length)return;
+  const Pf=selRK?P.filter(p=>(p.kategori||'')===selRK):P;
+  if(!Pf.length)return;
+  const mT=MFULL.map(m=>Pf.reduce((s,p)=>s+(p.monthly&&p.monthly[m]||0),0));
+  const tR=Pf.reduce((s,p)=>s+(p.rkap_idr||0),0);
+  const tPl=Pf.reduce((s,p)=>s+(p.pleno_idr||0),0);
+  const tPr=Pf.reduce((s,p)=>s+(p._ytd||0),0);
+  const tK=Pf.reduce((s,p)=>s+(p.kekurangan_idr||0),0);
+  const tSAP=Pf.reduce((s,p)=>s+(p.sap_idr||0),0);
+  const pct=tPl>0?tPr/tPl:0;
+  const pctSAP=tPl>0?tSAP/tPl:0;
+  const sisaSAP=Math.max(0,tSAP-tPr);
+
+  // Alert
+  const aa=document.getElementById('ang-pg-al');
+  if(pct<0.25)aa.innerHTML=`<div class="ang-al warn">⚠️ Serapan baru <strong>${pcs(pct)}</strong> dari Pleno WP&B — perlu akselerasi.</div>`;
+  else if(pct>=0.8)aa.innerHTML=`<div class="ang-al good">✅ Serapan <strong>${pcs(pct)}</strong> kondisi baik.</div>`;
+  else aa.innerHTML=`<div class="ang-al info">📊 Serapan prognosa <strong>${pcs(pct)}</strong> dari Pleno WP&B 2026.</div>`;
+
+  // KPI row 1
+  document.getElementById('ang-kpi1').innerHTML=`
+    <div class="ang-kpi kr"><div class="ang-ico">💰</div><div class="ang-kl">Total RKAP 2026</div><div class="ang-kv">${rp(tR)}</div><div class="ang-ksub">${Pf.length} item anggaran</div></div>
+    <div class="ang-kpi kb"><div class="ang-ico">📋</div><div class="ang-kl">Pleno WP&B 2026</div><div class="ang-kv">${rp(tPl)}</div><div class="ang-ksub">anggaran disetujui</div></div>
+    <div class="ang-kpi km"><div class="ang-ico">📤</div><div class="ang-kl">Upload SAP</div><div class="ang-kv">${rp(tSAP)}</div><div class="ang-kbar"><div class="ang-kbar-lbl"><span>vs Pleno</span><span>${pcs(pctSAP)}</span></div><div class="ang-kbar-t"><div class="ang-kbar-f" style="width:${Math.min(100,pctSAP*100)}%;background:linear-gradient(90deg,#0891B2,#22D3EE)"></div></div></div></div>
+    <div class="ang-kpi kg"><div class="ang-ico">✅</div><div class="ang-kl">Sisa Anggaran (SAP)</div><div class="ang-kv">${rp(sisaSAP)}</div><div class="ang-ksub">${pcs(tSAP>0?sisaSAP/tSAP:0)} sisa dari SAP</div></div>`;
+
+  // Ketahanan
+  const activeMos=MFULL.filter(m=>Pf.some(p=>(p.monthly&&p.monthly[m]||0)>0)).length;
+  const avgPerMo=activeMos>0?tPr/activeMos:0;
+  const tSisaSAP=Math.max(0,tSAP-tPr);
+  let ketLabel='—',ketSub='belum ada data',blnKet=0;
+  if(avgPerMo>0&&tSisaSAP>0){
+    blnKet=tSisaSAP/avgPerMo;
+    const nm=new Date().getMonth(),tm=nm+Math.ceil(blnKet);
+    ketLabel=(tm<=11?MONTHS[tm]+' 2026':tm<=23?MONTHS[tm-12]+' 2027':'>2027');
+    ketSub='~'+blnKet.toFixed(1)+' bln · avg '+rp(avgPerMo)+'/bln';
+  } else if(tSisaSAP<=0){ketLabel='Habis';ketSub='sisa SAP=0';}
+  const bDes=Math.max(0,11-new Date().getMonth());
+  const blnKosong=Math.max(0,bDes-blnKet);
+  const kurang=avgPerMo>0&&blnKosong>0?avgPerMo*blnKosong:0;
+
+  document.getElementById('ang-kpi2').innerHTML=`
+    <div class="ang-kpi kg"><div class="ang-ico">📊</div><div class="ang-kl">Prognosa YTD</div><div class="ang-kv">${rp(tPr)}</div><div class="ang-kbar"><div class="ang-kbar-lbl"><span>vs Pleno WP&B</span><span>${pcs(pct)}</span></div><div class="ang-kbar-t"><div class="ang-kbar-f" style="width:${Math.min(100,pct*100)}%;background:linear-gradient(90deg,#10B981,#34D399)"></div></div></div></div>
+    <div class="ang-kpi kv"><div class="ang-ico">🕐</div><div class="ang-kl">Ketahanan Anggaran</div><div class="ang-kv" style="font-size:16px;color:${ketLabel==='Habis'?'var(--prd2)':'#C4B5FD'}">${ketLabel}</div><div class="ang-ksub">${ketSub}</div></div>
+    <div class="ang-kpi kr"><div class="ang-ico">📉</div><div class="ang-kl">Kekurangan s/d Des</div><div class="ang-kv" style="font-size:16px">${kurang>0?rp(kurang):'Cukup'}</div><div class="ang-ksub">${kurang>0?Math.ceil(blnKosong)+' bln kosong':'SAP cukup s/d Des 2026'}</div></div>`;
+
+  // Month strip
+  const strip=document.getElementById('ang-mstrip'); strip.innerHTML='';
+  let cum=0;
+  mT.forEach((v,i)=>{
+    cum+=v;
+    const el=document.createElement('div');
+    el.className='ang-mt'+(v>0?' has':'')+(i===selM?' on':'');
+    el.onclick=()=>angClickMonth(i);
+    el.innerHTML=`<div class="ang-mn">${MONTHS[i]}</div><div class="ang-mv ${v===0?'z':''}">${v>0?rp(v):'—'}</div><div style="font-size:8px;color:var(--t3);margin-top:1px">${v>0&&tPl>0?(v/tPl*100).toFixed(1)+'%':''}</div><div class="ang-mdot"></div>`;
+    strip.appendChild(el);
+  });
+
+  // Charts
+  angDestroyCharts();
+  const mD=selM>=0?[mT[selM]]:mT;
+  const lbl=selM>=0?[MFULL[selM]]:MONTHS;
+  let cumC=0; const cumD=mT.map(v=>{cumC+=v;return cumC;});
+  const cumShow=selM>=0?[cumD[selM]]:cumD;
+
+  CH.c1=new Chart(document.getElementById('ang-c-bln'),{type:'bar',data:{labels:lbl,datasets:[{label:'Realisasi',data:mD,backgroundColor:mD.map(v=>v>0?'rgba(232,25,44,.75)':'rgba(232,25,44,.1)'),borderColor:mD.map(v=>v>0?'#C0001E':'transparent'),borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>rp(v)}}}}});
+
+  const cPct=cumShow.map(v=>tPl>0?+(v/tPl*100).toFixed(2):0);
+  const tgt=lbl.map((_,i)=>+((selM>=0?selM+1:i+1)/12*100).toFixed(1));
+  CH.c2=new Chart(document.getElementById('ang-c-kum'),{type:'line',data:{labels:lbl,datasets:[{label:'Kumulatif',data:cPct,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.08)',tension:.4,fill:true,pointBackgroundColor:'#10B981',pointRadius:4},{label:'Target',data:tgt,borderColor:'#F59E0B',backgroundColor:'transparent',tension:.4,borderDash:[5,3],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>v+'%'},max:110}}}});
+
+  const top8=[...Pf].sort((a,b)=>(b.pleno_idr||0)-(a.pleno_idr||0)).slice(0,8);
+  CH.c3=new Chart(document.getElementById('ang-c-cmp'),{type:'bar',data:{labels:top8.map(p=>(p.item||'').replace('Biaya ','').slice(0,22)),datasets:[{label:'RKAP',data:top8.map(p=>p.rkap_idr||0),backgroundColor:'rgba(59,130,246,.4)',borderColor:'#3B82F6',borderWidth:1,borderRadius:3},{label:'Pleno',data:top8.map(p=>p.pleno_idr||0),backgroundColor:'rgba(139,92,246,.5)',borderColor:'#8B5CF6',borderWidth:1,borderRadius:3},{label:'Prognosa',data:top8.map(p=>p._ytd||0),backgroundColor:'rgba(16,185,129,.65)',borderColor:'#10B981',borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>rp(v)}}}}});
+
+  const d7=[...Pf].sort((a,b)=>(b.pleno_idr||0)-(a.pleno_idr||0)).slice(0,7);
+  const otherV=Pf.filter(p=>!d7.includes(p)).reduce((s,p)=>s+(p.pleno_idr||0),0);
+  const CLR=['#E8192C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#22D3EE','#34D399','#4B6280'];
+  CH.c4=new Chart(document.getElementById('ang-c-don'),{type:'doughnut',data:{labels:[...d7.map(p=>(p.item||'').replace('Biaya ','')),otherV>0?'Lainnya':null].filter(Boolean),datasets:[{data:[...d7.map(p=>p.pleno_idr||0),otherV>0?otherV:null].filter(Boolean),backgroundColor:CLR,borderColor:'#1C1F26',borderWidth:2,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:'#A0ABBE',font:{size:10},boxWidth:10,padding:5}}}}});
+
+  // Table
+  const tb=document.getElementById('ang-pg-tb'); tb.innerHTML='';
+  let s1=0,s2=0,sSAP=0,s3=0,s4=0,s5=0;
+  Pf.forEach((p,i)=>{
+    const pIdx=P.indexOf(p);
+    const sp=p.pleno_idr>0?(p._ytd||0)/p.pleno_idr:0;
+    s1+=p.rkap_idr||0; s2+=p.pleno_idr||0; sSAP+=p.sap_idr||0; s3+=p._ytd||0; s4+=p.kekurangan_idr||0; s5+=p.available_idr||0;
+    const mActv=Object.values(p.monthly||{}).filter(v=>v>0).length;
+    const avgM=mActv>0?(p._ytd||0)/mActv:0;
+    const sisaS=Math.max(0,(p.sap_idr||0)-(p._ytd||0));
+    let ketH='—';
+    if(avgM>0&&sisaS>0){const bl=sisaS/avgM,nm=new Date().getMonth(),tm=nm+Math.round(bl);ketH=(tm<=11?MONTHS[tm]+' 2026':tm<=23?MONTHS[tm-12]+' 2027':'>2027');}else if(sisaS<=0)ketH='Habis';
+    const tr=document.createElement('tr');
+    tr.style.cursor='pointer'; tr.onclick=()=>angOpenDetail(pIdx);
+    tr.innerHTML=`<td style="color:var(--t3)">${i+1}</td>
+      <td style="font-size:10px;color:var(--t3)">${p.kategori||'—'}</td>
+      <td style="color:var(--tx);font-weight:600">${p.item||''} <span style="font-size:9px;color:var(--prd2);opacity:.5">↗</span></td>
+      <td class="r">${ff(p.rkap_idr)}</td><td class="r">${ff(p.pleno_idr)}</td>
+      <td class="r" style="color:var(--cyan)">${(p.sap_idr||0)>0?ff(p.sap_idr):'—'}</td>
+      <td class="r" style="color:var(--green2)">${ff(p._ytd)}</td>
+      <td class="r" style="color:${(p.kekurangan_idr||0)>0?'var(--prd2)':'var(--t2)'}">${(p.kekurangan_idr||0)>0?ff(p.kekurangan_idr):'—'}</td>
+      <td><span class="ang-pill ${sp>=.8?'g':sp>=.4?'y':'r'}">${pcs(sp)}</span><div class="ang-mbar"><div class="ang-mbf" style="width:${Math.min(100,sp*100)}%;background:${sp>=.8?'#10B981':sp>=.4?'#F59E0B':'#E8192C'}"></div></div></td>
+      <td class="r">${(p.available_idr||0)>0?ff(p.available_idr):'—'}</td>
+      <td style="font-size:11px;font-weight:600;color:${ketH==='Habis'?'var(--prd2)':ketH==='—'?'var(--t3)':'var(--green2)'}">${ketH}</td>`;
+    tb.appendChild(tr);
+  });
+  const ts2=s2>0?s3/s2:0;
+  document.getElementById('ang-pt1').textContent=ff(s1); document.getElementById('ang-pt2').textContent=ff(s2);
+  document.getElementById('ang-pt-sap').textContent=ff(sSAP); document.getElementById('ang-pt3').textContent=ff(s3);
+  document.getElementById('ang-pt4').textContent=ff(s4); document.getElementById('ang-pt6').textContent=s5>0?ff(s5):'—';
+  document.getElementById('ang-pt5').innerHTML=`<span class="ang-pill ${ts2>=.8?'g':ts2>=.4?'y':'r'}">${pcs(ts2)}</span>`;
+  document.getElementById('ang-pg-count').textContent=Pf.length+(selRK?' ('+selRK.replace(/ EXPENSE| SERVICE/,'')+')':'')+' item';
+}
+
+function angRenderKontrak(){
+  if(!K.length)return;
+  angDestroyKCharts();
+  const tN=K.reduce((s,k)=>s+(k.nilaiKontrak||0),0), tR=K.reduce((s,k)=>s+(k.realisasi2026||0),0);
+  const isAktif=k=>(k.status||'').toLowerCase().includes('aktif');
+  const aktif=K.filter(k=>isAktif(k)).length, pht=K.filter(k=>isAktif(k)&&(k.due||0)>0&&(k.due||0)<=90).length;
+  const kritis=K.filter(k=>isAktif(k)&&(k.due||0)>0&&(k.due||0)<=30).length, exp=K.filter(k=>!isAktif(k)).length;
+  document.getElementById('ang-kt-count').textContent=K.length+' kontrak';
+  document.getElementById('ang-kt-krow').innerHTML=`
+    <div class="ang-kpi kr"><div class="ang-ico">📋</div><div class="ang-kl">Total Kontrak</div><div class="ang-kv">${K.length}</div><div class="ang-ksub">${aktif} aktif · ${K.length-aktif} non-aktif</div></div>
+    <div class="ang-kpi kg"><div class="ang-ico">✅</div><div class="ang-kl">Kontrak Aktif</div><div class="ang-kv">${aktif}</div><div class="ang-ksub">${K.length===aktif?'semua aktif':pht+' mendekati jatuh tempo'}</div></div>
+    <div class="ang-kpi ka"><div class="ang-ico">⚠</div><div class="ang-kl">Kritis / Expired</div><div class="ang-kv">${kritis+exp}</div><div class="ang-ksub">${exp} non-aktif · ${kritis} ≤30hr</div></div>
+    <div class="ang-kpi km"><div class="ang-ico">💰</div><div class="ang-kl">Total Nilai Kontrak</div><div class="ang-kv">${rp(tN)}</div><div class="ang-ksub">Realisasi: ${rp(tR)}</div></div>`;
+
+  const crit=K.filter(k=>isAktif(k)&&(k.due||0)>0&&(k.due||0)<=30);
+  const realExp=K.filter(k=>!isAktif(k));
+  const aa=document.getElementById('ang-kt-al');
+  if(crit.length)aa.innerHTML=`<div class="ang-al danger">🚨 ${crit.length} kontrak kritis: ${crit.map(k=>(k.pekerjaan||'').slice(0,25)).join(' · ')}</div>`;
+  else if(realExp.length)aa.innerHTML=`<div class="ang-al warn">⚠️ ${realExp.length} kontrak non-aktif.</div>`;
+  else aa.innerHTML=`<div class="ang-al good">✅ Semua kontrak aktif kondisi baik.</div>`;
+
+  const sv=[...K].sort((a,b)=>(b.nilaiKontrak||0)-(a.nilaiKontrak||0)).filter(k=>(k.nilaiKontrak||0)>0||(k.realisasi2026||0)>0);
+  CHK.c1=new Chart(document.getElementById('ang-kt-c1'),{type:'bar',data:{labels:sv.map(k=>(k.pekerjaan||'').replace(/^(Jasa |Biaya |Penyediaan )/,'').slice(0,22)),datasets:[{label:'Nilai',data:sv.map(k=>k.nilaiKontrak||0),backgroundColor:'rgba(59,130,246,.45)',borderColor:'#3B82F6',borderWidth:1,borderRadius:4},{label:'Realisasi',data:sv.map(k=>k.realisasi2026||0),backgroundColor:'rgba(16,185,129,.65)',borderColor:'#10B981',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,...CO,scales:{...CO.scales,y:{...CO.scales.y,ticks:{...CO.scales.y.ticks,callback:v=>rp(v)}}}}});
+
+  CHK.c2=new Chart(document.getElementById('ang-kt-c2'),{type:'doughnut',data:{labels:['Aktif','Perhatian','Kritis','Expired'],datasets:[{data:[aktif,Math.max(0,pht-kritis),kritis,exp],backgroundColor:['#10B981','#F59E0B','#E8192C','#475569'],borderColor:'#1C1F26',borderWidth:2,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:'#A0ABBE',font:{size:11},boxWidth:12,padding:8}}}}});
+
+  const pg=document.getElementById('ang-kt-prog'); pg.innerHTML='';
+  [...K].filter(k=>(k.nilaiKontrak||0)>0).sort((a,b)=>(b.nilaiKontrak||0)-(a.nilaiKontrak||0)).forEach(k=>{
+    const pct=Math.min(100,(k.nilaiKontrak||0)>0?(k.realisasi2026||0)/(k.nilaiKontrak||0)*100:0);
+    const st=stK(k.due||0,k.status), fillC=pct>=80?'#10B981':pct>=40?'#F59E0B':'#E8192C';
+    const div=document.createElement('div'); div.className='ang-kprog';
+    div.innerHTML=`<div class="ang-kprog-hdr"><span class="ang-kprog-lbl">${k.pekerjaan||''}</span><div style="display:flex;align-items:center;gap:8px"><span class="ang-pill ${st.c}">${st.l}</span><span style="font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${fillC}">${pct.toFixed(1)}%</span></div></div><div class="ang-kprog-bar"><div class="ang-kprog-fill" style="width:${pct}%;background:${fillC}"></div></div><div class="ang-kprog-sub"><span>${k.vendor||''}</span><span>${rp(k.realisasi2026)} / ${rp(k.nilaiKontrak)}</span></div>`;
+    pg.appendChild(div);
+  });
+
+  const tb=document.getElementById('ang-kt-tb'); tb.innerHTML='';
+  K.forEach((k,i)=>{
+    const st=stK(k.due||0,k.status);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="color:var(--t3)">${k.no||i+1}</td><td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2)">${k.noKontrak||'—'}</td><td style="color:var(--tx);font-weight:600">${k.pekerjaan||''}</td><td style="font-size:11px">${k.vendor||''}</td><td style="font-size:11px;color:var(--t3)">${k.mulai||'—'}</td><td style="font-size:11px;color:var(--t3)">${k.akhir||'—'}</td><td style="font-size:12px;font-weight:700;color:${st.col}">${(k.due||0)>0?k.due+'h':'—'}</td><td class="r">${(k.nilaiKontrak||0)>0?ff(k.nilaiKontrak):'—'}</td><td class="r" style="color:var(--green2)">${ff(k.realisasi2026)}</td><td class="r">${(k.sisaNilai||0)>0?ff(k.sisaNilai):'—'}</td><td><span class="ang-pill ${st.c}">${st.l}</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── MODAL DETAIL ─────────────────────────────────────────────────────────────
+function angOpenDetail(idx){
+  const p=P[idx]; if(!p)return;
+  const pleno=p.pleno_idr||0,rkap=p.rkap_idr||0,prog=p._ytd||0,sap=p.sap_idr||0,avail=p.available_idr||0;
+  const serap=pleno>0?Math.min(1.5,prog/pleno):0;
+  const fillC=serap>=.8?'#10B981':serap>=.4?'#F59E0B':'#E8192C';
+  document.getElementById('ang-m-title').textContent=p.item||'—';
+  const badge=document.getElementById('ang-m-rk-badge');
+  badge.textContent=p.kategori||''; badge.style.display=p.kategori?'inline-flex':'none';
+  document.getElementById('ang-m-sub').textContent='GL: '+(p.glAccount||'—')+' · CC: '+(p.costCenter||'—');
+  document.getElementById('ang-m-kpi').innerHTML=`
+    <div class="ang-mkpi red"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--prd);border-radius:2px 2px 0 0"></div><div class="ang-ml">RKAP 2026</div><div class="ang-mv2">${rp(rkap)}</div></div>
+    <div class="ang-mkpi blue"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);border-radius:2px 2px 0 0"></div><div class="ang-ml">Pleno WP&B</div><div class="ang-mv2">${rp(pleno)}</div></div>
+    <div class="ang-mkpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan);border-radius:2px 2px 0 0"></div><div class="ang-ml">Upload SAP</div><div class="ang-mv2" style="color:var(--cyan)">${sap>0?rp(sap):'—'}</div><div style="font-size:10px;color:var(--t3);margin-top:3px">${pleno>0?pcs(sap/pleno)+' dari Pleno':''}</div></div>
+    <div class="ang-mkpi green"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green);border-radius:2px 2px 0 0"></div><div class="ang-ml">Prognosa YTD</div><div class="ang-mv2">${rp(prog)}</div></div>
+    <div class="ang-mkpi amber"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--amber);border-radius:2px 2px 0 0"></div><div class="ang-ml">Sisa SAP</div><div class="ang-mv2">${rp(Math.max(0,sap-prog))}</div></div>
+    <div class="ang-mkpi amber"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--amber2);border-radius:2px 2px 0 0"></div><div class="ang-ml">Available</div><div class="ang-mv2">${avail>0?rp(avail):'—'}</div></div>`;
+  document.getElementById('ang-m-pct').textContent=pcs(serap); document.getElementById('ang-m-pct').style.color=fillC;
+  document.getElementById('ang-m-pleno-lbl').textContent=rp(pleno);
+  const bar=document.getElementById('ang-m-pct-bar'); bar.style.background=fillC;
+  const vals=MFULL.map(m=>(p.monthly&&p.monthly[m])||0);
+  const ytd=vals.reduce((a,b)=>a+b,0), actMon=vals.filter(v=>v>0).length, avgMon=actMon>0?ytd/actMon:0;
+  const maxV=Math.max(...vals,1);
+  if(modalChart){modalChart.destroy();modalChart=null;}
+  modalChart=new Chart(document.getElementById('ang-m-chart'),{type:'bar',data:{labels:MONTHS,datasets:[{data:vals,backgroundColor:vals.map(v=>v>0?'rgba(232,25,44,.7)':'rgba(232,25,44,.1)'),borderColor:vals.map(v=>v>0?'#E8192C':'transparent'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5C6880',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#5C6880',callback:v=>rp(v),font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}}}}});
+  document.getElementById('ang-m-monthly').innerHTML=MFULL.map((m,i)=>{const v=vals[i],w=maxV>0?v/maxV*100:0,act=v>0;return`<div style="background:var(--pbg3);border:1px solid ${act?'rgba(232,25,44,.25)':'var(--bd)'};border-radius:8px;padding:8px 6px;text-align:center;opacity:${act?1:.45}"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">${MONTHS[i]}</div><div style="font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${act?'var(--tx)':'var(--t3)'}">${v>0?rp(v):'—'}</div><div style="height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-top:5px"><div style="width:${w}%;height:100%;border-radius:99px;background:${act?fillC:'var(--t3)'}"></div></div></div>`;}).join('');
+  const mSisa=Math.max(0,(p.sap_idr||0)-ytd);
+  let mKet='—',blnS=0;
+  if(avgMon>0&&mSisa>0){blnS=mSisa/avgMon;const nm=new Date().getMonth(),tm=nm+Math.round(blnS);mKet=(tm<=11?MONTHS[tm]+' 2026':tm<=23?MONTHS[tm-12]+' 2027':'>2027');}
+  else if(mSisa<=0)mKet='Habis';
+  const ketC=mKet==='Habis'?'var(--prd2)':mKet==='—'?'var(--t3)':'var(--green2)';
+  document.getElementById('ang-m-detail').innerHTML=[
+    ['Rencana Kerja',`<span style="color:var(--prd2)">${p.kategori||'—'}</span>`],
+    ['Prognosa YTD',`<span style="color:var(--green2)">${rp(ytd)}</span>`],
+    ['Upload SAP',`<span style="color:var(--cyan)">${sap>0?rp(sap):'—'}</span>`],
+    ['Sisa Upload SAP',`<span style="color:var(--amber2)">${rp(mSisa)}</span>`],
+    ['Serapan SAP vs Pleno',`${pleno>0?pcs(sap/pleno):'—'}`],
+    ['Serapan Prognosa vs SAP',`<span style="color:var(--green2)">${sap>0?pcs(ytd/sap):'—'}</span>`],
+    ['Bulan aktif',`${actMon} dari 12 · avg ${rp(avgMon)}/bln`],
+    ['Ketahanan (hitung)',`<span style="color:${ketC}">${mKet}${avgMon>0?' · ~'+Math.round(blnS)+' bln':''}</span>`],
+  ].map(([k,v])=>`<div class="ang-det-row"><span class="ang-det-key">${k}</span><span class="ang-det-val">${v}</span></div>`).join('');
+
+  document.getElementById('ang-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>bar.style.width=Math.min(100,serap*100)+'%',100);
+}
+
+function angCloseDetailModal(){
+  document.getElementById('ang-modal').classList.remove('open');
+  document.body.style.overflow='';
+  if(modalChart){modalChart.destroy();modalChart=null;}
+  document.getElementById('ang-m-pct-bar').style.width='0%';
+}
+function angCloseModal(e){if(e.target===document.getElementById('ang-modal'))angCloseDetailModal();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')angCloseDetailModal();});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TODO & CATATAN HARIAN — Firebase Realtime Database Sync
+// ══════════════════════════════════════════════════════════════════════════════
+const FB_URL  = 'https://gs-care-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FB_TEAM = 'gs_sgt';
+let TODO_DATA = {}, NOTE_DATA = {};
+let td_filter = 'all';
+
+function todoInit() {
+  fbStartListeners();
+}
+
+// ── Firebase REST helpers ────────────────────────────────────────────────────
+function fbPath(sub) { return `${FB_URL}/${FB_TEAM}/${sub}.json`; }
+
+async function fbGet(sub) {
+  try {
+    const r = await fetch(fbPath(sub));
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function fbPut(sub, data) {
+  try {
+    await fetch(fbPath(sub), { method: 'PUT', body: JSON.stringify(data), headers: {'Content-Type':'application/json'} });
+  } catch(e) {}
+}
+
+async function fbPatch(sub, data) {
+  try {
+    await fetch(fbPath(sub), { method: 'PATCH', body: JSON.stringify(data), headers: {'Content-Type':'application/json'} });
+  } catch(e) {}
+}
+
+async function fbDelete(sub) {
+  try { await fetch(fbPath(sub), { method: 'DELETE' }); } catch(e) {}
+}
+
+// ── Realtime polling (Firebase SSE not available without SDK, use polling) ──
+let fbListenersStarted = false;
+function fbStartListeners() {
+  if (fbListenersStarted) return;
+  fbListenersStarted = true;
+  setSyncStatus('todo', 'connecting', 'Menghubungkan...');
+  setSyncStatus('note', 'connecting', 'Menghubungkan...');
+  fbPollTodo();
+  fbPollNote();
+  setInterval(fbPollTodo, 4000);
+  setInterval(fbPollNote, 4000);
+}
+
+async function fbPollTodo() {
+  const data = await fbGet('todos');
+  const prev = JSON.stringify(TODO_DATA);
+  TODO_DATA = data || {};
+  if (JSON.stringify(TODO_DATA) !== prev) tdRender();
+  setSyncStatus('todo', 'synced', 'Sync realtime aktif');
+}
+
+async function fbPollNote() {
+  const data = await fbGet('notes');
+  const prev = JSON.stringify(NOTE_DATA);
+  NOTE_DATA = data || {};
+  if (JSON.stringify(NOTE_DATA) !== prev) noteRender();
+  setSyncStatus('note', 'synced', 'Sync realtime aktif');
+}
+
+function setSyncStatus(type, cls, txt) {
+  const el  = document.getElementById(type === 'todo' ? 'todo-sync-status' : 'note-sync-status');
+  const txt2= document.getElementById(type === 'todo' ? 'todo-sync-txt' : 'note-sync-txt');
+  if (el) { el.className = 'todo-sync-ind ' + cls; }
+  if (txt2) txt2.textContent = txt;
+}
+
+// ── Tab switch ────────────────────────────────────────────────────────────────
+function todoTab(t) {
+  document.querySelectorAll('.todo-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.todo-page').forEach(el => el.classList.remove('active'));
+  document.getElementById('ttab-' + t).classList.add('active');
+  document.getElementById('todo-pg-' + t).classList.add('active');
+}
+
+// ── TODO CRUD ─────────────────────────────────────────────────────────────────
+async function tdAdd() {
+  const inp  = document.getElementById('td-inp');
+  const prio = document.getElementById('td-prio');
+  const txt  = inp.value.trim();
+  if (!txt) return;
+  setSyncStatus('todo', 'connecting', 'Menyimpan...');
+  const id = 'td_' + Date.now();
+  const item = { id, txt, prio: prio.value, done: false, ts: new Date().toISOString() };
+  TODO_DATA[id] = item;
+  await fbPatch('todos', { [id]: item });
+  inp.value = '';
+  tdRender();
+  setSyncStatus('todo', 'synced', 'Tersimpan ✓');
+}
+
+async function tdToggle(id) {
+  if (!TODO_DATA[id]) return;
+  TODO_DATA[id].done = !TODO_DATA[id].done;
+  await fbPatch('todos', { [id]: TODO_DATA[id] });
+  tdRender();
+}
+
+async function tdDelete(id) {
+  delete TODO_DATA[id];
+  await fbDelete('todos/' + id);
+  tdRender();
+}
+
+async function tdClearDone() {
+  const done = Object.keys(TODO_DATA).filter(id => TODO_DATA[id].done);
+  if (!done.length) { alert('Tidak ada task selesai!'); return; }
+  if (!confirm(`Hapus ${done.length} task yang sudah selesai?`)) return;
+  for (const id of done) { delete TODO_DATA[id]; await fbDelete('todos/' + id); }
+  tdRender();
+}
+
+function tdFilter(f) {
+  td_filter = f;
+  ['all','pending','done','high'].forEach(k => document.getElementById('tf-'+k).classList.toggle('on', k === f));
+  tdRender();
+}
+
+function tdRender() {
+  let items = Object.values(TODO_DATA).sort((a,b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const po = {high:0, med:1, low:2};
+    if (po[a.prio] !== po[b.prio]) return po[a.prio] - po[b.prio];
+    return new Date(b.ts) - new Date(a.ts);
+  });
+  if (td_filter === 'pending') items = items.filter(i => !i.done);
+  if (td_filter === 'done')    items = items.filter(i =>  i.done);
+  if (td_filter === 'high')    items = items.filter(i =>  i.prio === 'high');
+
+  const all  = Object.values(TODO_DATA);
+  const done = all.filter(i => i.done).length;
+  document.getElementById('td-kAll').textContent  = all.length;
+  document.getElementById('td-kDone').textContent = done;
+  document.getElementById('td-kPend').textContent = all.length - done;
+  document.getElementById('td-kHigh').textContent = all.filter(i => i.prio === 'high' && !i.done).length;
+
+  const list = document.getElementById('td-list');
+  if (!items.length) {
+    list.innerHTML = '<div class="todo-empty"><div class="todo-empty-ico">🎉</div><p>Tidak ada task di filter ini!</p></div>';
+    return;
+  }
+  const pLabel = {high:'Tinggi', med:'Medium', low:'Rendah'};
+  list.innerHTML = items.map(item => {
+    const dt = new Date(item.ts).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="todo-item p-${item.prio} ${item.done?'done':''}">
+      <div class="todo-chk ${item.done?'done':''}" onclick="tdToggle('${item.id}')">${item.done?'✓':''}</div>
+      <div class="todo-txt-wrap">
+        <div class="todo-txt">${escHtml(item.txt)}</div>
+        <div class="todo-meta">
+          <span class="todo-tag ${item.prio}">${pLabel[item.prio]||item.prio}</span>
+          <span class="todo-ts">${dt}</span>
+        </div>
+      </div>
+      <button class="todo-del" onclick="tdDelete('${item.id}')" title="Hapus">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── CATATAN HARIAN CRUD ───────────────────────────────────────────────────────
+async function noteAdd() {
+  const inp = document.getElementById('note-inp');
+  const tag = document.getElementById('note-tag');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  setSyncStatus('note', 'connecting', 'Menyimpan...');
+  const id = 'note_' + Date.now();
+  const item = { id, txt, tag: tag.value.trim(), ts: new Date().toISOString() };
+  NOTE_DATA[id] = item;
+  await fbPatch('notes', { [id]: item });
+  inp.value = '';
+  tag.value = '';
+  noteRender();
+  setSyncStatus('note', 'synced', 'Tersimpan ✓');
+}
+
+async function noteDelete(id) {
+  delete NOTE_DATA[id];
+  await fbDelete('notes/' + id);
+  noteRender();
+}
+
+function noteRender() {
+  const q    = (document.getElementById('note-search')?.value || '').toLowerCase();
+  const df   = document.getElementById('note-date-flt')?.value || '';
+  let items  = Object.values(NOTE_DATA).sort((a,b) => new Date(b.ts) - new Date(a.ts));
+  if (q)  items = items.filter(i => i.txt.toLowerCase().includes(q) || (i.tag||'').toLowerCase().includes(q));
+  if (df) items = items.filter(i => i.ts.startsWith(df));
+
+  const list = document.getElementById('note-list');
+  if (!items.length) {
+    list.innerHTML = '<div class="todo-empty"><div class="todo-empty-ico">📝</div><p>Belum ada catatan. Tulis di atas!</p></div>';
+    return;
+  }
+  // Group by date
+  const groups = {};
+  items.forEach(item => {
+    const d = item.ts.slice(0,10);
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(item);
+  });
+  list.innerHTML = Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(d => {
+    const dateLabel = new Date(d + 'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    const rows = groups[d].map(item => {
+      const t = new Date(item.ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="note-item">
+        <div class="note-item-hdr">
+          <span class="note-item-date">${item.ts.slice(0,10)}</span>
+          <span class="note-item-time">${t}</span>
+          ${item.tag ? `<span class="note-item-tag">${escHtml(item.tag)}</span>` : ''}
+        </div>
+        <div class="note-item-body">${escHtml(item.txt)}</div>
+        <button class="note-del" onclick="noteDelete('${item.id}')" title="Hapus">✕</button>
+      </div>`;
+    }).join('');
+    return `<div class="note-date-grp"><div class="note-date-grp-hdr">📅 ${dateLabel}</div>${rows}</div>`;
+  }).join('');
+}
+
+// Handle Ctrl+Enter on note textarea
+document.addEventListener('DOMContentLoaded', () => {
+  const ni = document.getElementById('note-inp');
+  if (ni) ni.addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'Enter') noteAdd(); });
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+
+</script>
+</body>
+</html>
