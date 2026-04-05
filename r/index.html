@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var wo = params.get('w') || '';
+  var hp = params.get('h') || '';
+  if (wo) {
+    window.location.replace(
+      'https://gs-sgt.github.io/gs-sangatta/rating.html' +
+      '?wo=' + encodeURIComponent(wo) +
+      '&hp=' + encodeURIComponent(hp)
+    );
+  } else {
+    window.location.replace('https://gs-sgt.github.io/gs-sangatta/');
+  }
+</script>
+</head>
+<body><p>Mengalihkan...</p></body>
+</html>
