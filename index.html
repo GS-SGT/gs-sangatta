@@ -669,6 +669,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
       <button class="gs-tab active" id="gstab-daily"     onclick="gsTab('daily')">📋 Harian</button>
       <button class="gs-tab"        id="gstab-history"   onclick="gsTab('history')">Rekap History</button>
       <button class="gs-tab"        id="gstab-analytics" onclick="gsTab('analytics')">Analitik</button>
+      <button class="gs-tab"        id="gstab-rating"    onclick="gsTab('rating')">⭐ Rating</button>
       <button class="gs-tab"        id="gstab-weekly"    onclick="gsTab('weekly')">📄 Weekly Report</button>
     </div>
 
@@ -695,7 +696,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
           <div class="gs-stat tot"><div class="gs-lbl">Total Request</div><div class="gs-num" id="gs-sT">—</div></div>
           <div class="gs-stat don"><div class="gs-lbl">Selesai</div><div class="gs-num" id="gs-sD">—</div></div>
           <div class="gs-stat pen"><div class="gs-lbl">Belum Selesai</div><div class="gs-num" id="gs-sP">—</div></div>
-          <div class="gs-stat rat"><div class="gs-lbl">Completion Rate</div><div class="gs-num" id="gs-sR">—</div></div>
+          <div class="gs-stat rat"><div class="gs-lbl">Avg Rating</div><div class="gs-num" id="gs-sR" style="font-size:18px">—</div></div>
         </div>
 
         <div style="margin-bottom:18px">
@@ -722,7 +723,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
             <table>
               <thead><tr>
                 <th style="width:40px"></th><th>WO</th><th>Nama Pemohon</th>
-                <th>Fungsi</th><th>Kategori</th><th>Layanan</th><th>Status</th>
+                <th>Fungsi</th><th>Kategori</th><th>Layanan</th><th>Status</th><th>Rating</th>
               </tr></thead>
               <tbody id="gs-tbody"></tbody>
             </table>
@@ -768,6 +769,37 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
         <div class="gs-tcard" style="padding:16px">
           <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Top Layanan</div>
           <div style="position:relative;height:220px"><canvas id="gs-cLay"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RATING -->
+    <div class="gs-page" id="gs-pg-rating">
+      <div class="gs-content">
+        <div id="gs-rating-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="gs-tcard" style="padding:16px">
+            <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px">Distribusi Bintang</div>
+            <div id="gs-rating-dist"></div>
+          </div>
+          <div class="gs-tcard" style="padding:16px">
+            <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Tren Rating</div>
+            <div style="position:relative;height:180px"><canvas id="gs-cRating"></canvas></div>
+          </div>
+        </div>
+        <div class="gs-tcard" style="padding:16px">
+          <div style="font-size:10px;font-weight:700;color:#4A5D8A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">History Penilaian</div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr style="background:#F2F5FA">
+                <th style="padding:8px 12px;text-align:left;color:#4A5D8A;font-weight:700;border-bottom:1px solid #E5EBF5">Tanggal</th>
+                <th style="padding:8px 12px;text-align:left;color:#4A5D8A;font-weight:700;border-bottom:1px solid #E5EBF5">No. WO</th>
+                <th style="padding:8px 12px;text-align:left;color:#4A5D8A;font-weight:700;border-bottom:1px solid #E5EBF5">Rating</th>
+                <th style="padding:8px 12px;text-align:left;color:#4A5D8A;font-weight:700;border-bottom:1px solid #E5EBF5">Komentar</th>
+              </tr></thead>
+              <tbody id="gs-rating-tbody"><tr><td colspan="4" style="padding:30px;text-align:center;color:#8A9BBE">Memuat data rating...</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1587,7 +1619,7 @@ function gsShowDash() {
 
 function gsTab(t) {
   curGsTab = t;
-  ['daily','history','analytics','weekly'].forEach(id => {
+  ['daily','history','analytics','rating','weekly'].forEach(id => {
     document.getElementById('gstab-' + id)?.classList.toggle('active', id === t);
     document.getElementById('gs-pg-' + id)?.classList.remove('active');
   });
@@ -1599,6 +1631,7 @@ function gsRenderCurrent() {
   if (curGsTab === 'daily') gsRenderDaily();
   else if (curGsTab === 'history') gsRenderHistory();
   else if (curGsTab === 'analytics') gsRenderAnalytics();
+  else if (curGsTab === 'rating') gsRenderRating();
 }
 
 function gsPrevDay() { gsDate.setDate(gsDate.getDate()-1); gsRenderDaily(); }
@@ -1648,26 +1681,37 @@ function gsRenderDaily() {
   document.getElementById('gs-sD').textContent = done;
   document.getElementById('gs-sP').textContent = tot - done;
   document.getElementById('gs-sR').textContent = pct + '%';
+  // Update avg rating card
+  const avgR = RATING_DATA.summary.avg;
+  const totalR = RATING_DATA.summary.total;
+  if (totalR > 0) {
+    document.getElementById('gs-sR').textContent = avgR.toFixed(1) + ' ⭐';
+  }
   document.getElementById('gs-pLbl').textContent = pct + '% selesai';
   document.getElementById('gs-pFrac').textContent = done + '/' + tot;
   setTimeout(() => document.getElementById('gs-pBar').style.width = pct + '%', 80);
 
   const tb = document.getElementById('gs-tbody'); tb.innerHTML = '';
   if (!rows.length) {
-    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#8A9BBE">Tidak ada request untuk tanggal ini</td></tr>';
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:#8A9BBE">Tidak ada request untuk tanggal ini</td></tr>';
     return;
   }
   rows.forEach(r => {
     const s = getSt(r);
     const tr = document.createElement('tr');
     if (s === 'selesai') tr.style.opacity = '.6';
+    const ratingEntry = RATING_DATA.data.find(x => x.wo === r.wo);
+    const ratingHtml = ratingEntry
+      ? `<span style="color:#F59E0B;font-size:13px">${'⭐'.repeat(ratingEntry.rating)}${'☆'.repeat(5-ratingEntry.rating)}</span>`
+      : `<span style="color:#d1d5db;font-size:11px">—</span>`;
     tr.innerHTML = `<td><button class="gs-chk ${s==='selesai'?'on':''}" onclick="gsToggle('${r.wo}')">${s==='selesai'?'✓':' '}</button></td>
       <td style="font-weight:700;color:#0D1B3E">${r.wo}</td>
       <td>${r.nama}</td>
       <td><span class="gs-pill">${r.fungsi}</span></td>
       <td style="font-size:11px;color:#4A5D8A">${r.kategori}</td>
       <td style="font-weight:600;color:#0D1B3E">${r.layanan}</td>
-      <td><span class="gs-badge ${s==='selesai'?'ok':'no'}">${s==='selesai'?'✓ Selesai':'● Belum'}</span></td>`;
+      <td><span class="gs-badge ${s==='selesai'?'ok':'no'}">${s==='selesai'?'✓ Selesai':'● Belum'}</span></td>
+      <td style="text-align:center">${ratingHtml}</td>`;
     tb.appendChild(tr);
   });
 }
@@ -3137,3 +3181,176 @@ document.addEventListener('keydown', function(e) {
 </script>
 </body>
 </html>
+<script>
+// ── RATING MODULE ────────────────────────────────────────────────────────────
+// URL khusus deployment Rating — hardcode agar tidak bergantung URL GS Care
+const RATING_URL = 'https://script.google.com/macros/s/AKfycbzLL1yDu5E7TxzilIXARyFOcckV2pT8NjnFLFaIx7Dri4BJowSmqzfei9XvQ2uq9bd5/exec';
+
+let RATING_DATA = { summary: { total: 0, avg: 0, distribution: {1:0,2:0,3:0,4:0,5:0} }, data: [] };
+let ratingLoaded = false;
+
+async function gsLoadRatings() {
+  const rUrl = RATING_URL || gsUrl;
+  if (!rUrl) return;
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const cb = 'ratingCb_' + Date.now();
+      window[cb] = (d) => { resolve(d); delete window[cb]; };
+      const s = document.createElement('script');
+      s.src = rUrl + '?action=getRatings&callback=' + cb + '&t=' + Date.now();
+      s.onerror = reject;
+      document.body.appendChild(s);
+      setTimeout(() => reject('timeout'), 10000);
+    });
+    if (data && data.ok) {
+      RATING_DATA = data;
+      ratingLoaded = true;
+    }
+  } catch(e) {
+    console.log('Rating load error:', e);
+  }
+}
+
+function starsHtml(n) {
+  const full = Math.round(n);
+  return '⭐'.repeat(full) + '☆'.repeat(5 - full);
+}
+
+async function gsRenderRating() {
+  if (!ratingLoaded) await gsLoadRatings();
+
+  const s = RATING_DATA.summary;
+  const avg = s.avg || 0;
+  const total = s.total || 0;
+  const dist = s.distribution || {1:0,2:0,3:0,4:0,5:0};
+
+  // Stats cards
+  document.getElementById('gs-rating-stats').innerHTML = `
+    <div class="gs-stat tot" style="border-radius:10px">
+      <div class="gs-lbl">Total Rating</div>
+      <div class="gs-num">${total}</div>
+    </div>
+    <div class="gs-stat don" style="border-radius:10px">
+      <div class="gs-lbl">Rata-rata</div>
+      <div class="gs-num">${avg > 0 ? avg.toFixed(1) : '—'}</div>
+    </div>
+    <div class="gs-stat rat" style="border-radius:10px">
+      <div class="gs-lbl">Bintang</div>
+      <div class="gs-num" style="font-size:16px">${avg > 0 ? starsHtml(avg) : '—'}</div>
+    </div>
+    <div class="gs-stat pen" style="border-radius:10px">
+      <div class="gs-lbl">5 Bintang</div>
+      <div class="gs-num">${dist[5] || 0}</div>
+    </div>`;
+
+  // Star distribution bars
+  const distEl = document.getElementById('gs-rating-dist');
+  const maxVal = Math.max(...Object.values(dist), 1);
+  distEl.innerHTML = [5,4,3,2,1].map(star => {
+    const count = dist[star] || 0;
+    const pct = Math.round((count / maxVal) * 100);
+    const colors = {5:'#10B981',4:'#34D399',3:'#F59E0B',2:'#FB923C',1:'#EF4444'};
+    return `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:16px;text-align:right;font-size:11px;color:#4A5D8A;font-weight:700">${star}</div>
+        <div style="font-size:11px">⭐</div>
+        <div style="flex:1;background:#F2F5FA;border-radius:6px;height:10px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${colors[star]};border-radius:6px;transition:width .5s"></div>
+        </div>
+        <div style="width:24px;font-size:11px;color:#4A5D8A;font-weight:700">${count}</div>
+      </div>`;
+  }).join('');
+
+  // Trend chart
+  const data = RATING_DATA.data || [];
+  const sorted = [...data].sort((a,b) => a.timestamp.localeCompare(b.timestamp));
+  const labels = sorted.map(r => {
+    const d = new Date(r.timestamp);
+    return d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'});
+  });
+  const values = sorted.map(r => r.rating);
+
+  const cEl = document.getElementById('gs-cRating');
+  if (cEl._ch) cEl._ch.destroy();
+  if (values.length > 0) {
+    cEl._ch = new Chart(cEl, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245,158,11,0.1)',
+          borderWidth: 2,
+          pointBackgroundColor: '#F59E0B',
+          pointRadius: 4,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 1, max: 5, ticks: { stepSize: 1, color: '#8A9BBE', font: { size: 9 } }, grid: { color: 'rgba(0,48,135,.05)' } },
+          x: { ticks: { color: '#8A9BBE', font: { size: 9 }, maxTicksLimit: 8 }, grid: { display: false } }
+        }
+      }
+    });
+  } else {
+    cEl.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#8A9BBE;font-size:13px">Belum ada data rating</div>';
+  }
+
+  // Table
+  const tbody = document.getElementById('gs-rating-tbody');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:30px;text-align:center;color:#8A9BBE">Belum ada data rating</td></tr>';
+    return;
+  }
+  const sorted2 = [...data].sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+  tbody.innerHTML = sorted2.map(r => {
+    const d = new Date(r.timestamp);
+    const tgl = d.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+    const starColor = r.rating >= 4 ? '#10B981' : r.rating >= 3 ? '#F59E0B' : '#EF4444';
+    return `<tr style="border-bottom:1px solid #F2F5FA">
+      <td style="padding:10px 12px;color:#4A5D8A;font-size:12px">${tgl}</td>
+      <td style="padding:10px 12px;font-weight:700;color:#0D1B3E;font-size:12px">${r.wo}</td>
+      <td style="padding:10px 12px">
+        <span style="color:${starColor};font-size:14px">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+        <span style="color:#4A5D8A;font-size:11px;margin-left:4px">(${r.rating}/5)</span>
+      </td>
+      <td style="padding:10px 12px;color:#4A5D8A;font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.comment || '<span style="color:#b0bac8;font-style:italic">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Auto-load rating when tab clicked
+const _origGsTab = gsTab;
+gsTab = function(t) {
+  _origGsTab(t);
+  if (t === 'rating') gsRenderRating();
+};
+
+// Also add avg rating card to analytics stats
+const _origGsRenderAnalytics = gsRenderAnalytics;
+gsRenderAnalytics = function() {
+  _origGsRenderAnalytics();
+  // inject rating card into analytics stats
+  const statsEl = document.getElementById('gs-aStats');
+  if (statsEl && RATING_DATA.summary.total > 0) {
+    const avg = RATING_DATA.summary.avg;
+    const ratingCard = `<div class="gs-stat rat" style="border-radius:10px">
+      <div class="gs-lbl">Avg Rating</div>
+      <div class="gs-num" style="font-size:16px">${avg.toFixed(1)} ⭐</div>
+    </div>`;
+    // replace last card with rating
+    const cards = statsEl.querySelectorAll('div.gs-stat');
+    if (cards.length >= 4) cards[3].outerHTML = ratingCard;
+  }
+};
+
+// Load rating data on startup too
+setTimeout(async () => {
+  await gsLoadRatings(); // selalu load rating pakai RATING_URL
+}, 2000);
+</script>
