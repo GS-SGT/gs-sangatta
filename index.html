@@ -4,6 +4,103 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GS Sangatta — Command Center 2026</title>
+<script>
+(function(){
+  // ── PASSWORD CONFIGURATION ──
+  const PASSWORD_HASH = "ec0cd2fc1d83b803a7e696e2f28210ce77cfacdd5b91c7c4e62baa47ff90dc91"; // password: mimisan
+  // Untuk ganti password, generate hash SHA-256 dari password baru di: https://emn178.github.io/online-tools/sha256.html
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+
+  async function checkAuth() {
+    if (sessionStorage.getItem("gs_sgt_auth") === "ok") return;
+
+    // Inject overlay
+    document.documentElement.style.overflow = "hidden";
+    const overlay = document.createElement("div");
+    overlay.id = "gs-auth-overlay";
+    overlay.innerHTML = `
+      <style>
+        #gs-auth-overlay {
+          position:fixed;inset:0;z-index:99999;
+          background:linear-gradient(135deg,#0C0508 0%,#1E060C 55%,#0C0508 100%);
+          display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;
+        }
+        #gs-auth-box {
+          background:#23272F;border:1px solid rgba(232,25,44,.3);border-radius:16px;
+          padding:40px 36px;width:100%;max-width:380px;text-align:center;
+          box-shadow:0 0 60px rgba(232,25,44,.15),0 24px 48px rgba(0,0,0,.6);
+        }
+        #gs-auth-logo {
+          width:56px;height:56px;border-radius:14px;margin:0 auto 20px;
+          background:linear-gradient(135deg,#C0001E,#E8192C);
+          display:flex;align-items:center;justify-content:center;
+          font-size:26px;font-weight:900;color:#fff;
+          box-shadow:0 0 24px rgba(232,25,44,.5);
+        }
+        #gs-auth-box h2{color:#E8EDF5;font-size:18px;font-weight:700;margin-bottom:4px}
+        #gs-auth-box p{color:#5C6880;font-size:12px;margin-bottom:28px;letter-spacing:.5px;text-transform:uppercase}
+        #gs-auth-input {
+          width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+          background:#1C1F26;color:#E8EDF5;font-size:15px;font-family:'Inter',sans-serif;
+          outline:none;text-align:center;letter-spacing:3px;margin-bottom:14px;
+          transition:border .2s;
+        }
+        #gs-auth-input:focus{border-color:rgba(232,25,44,.6)}
+        #gs-auth-btn {
+          width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,#C0001E,#E8192C);color:#fff;
+          font-size:14px;font-weight:700;font-family:'Inter',sans-serif;
+          letter-spacing:.5px;transition:opacity .2s;
+        }
+        #gs-auth-btn:hover{opacity:.85}
+        #gs-auth-err{color:#F04454;font-size:12px;margin-top:12px;min-height:18px;font-weight:500}
+        #gs-auth-lock{font-size:36px;margin-bottom:8px}
+      </style>
+      <div id="gs-auth-box">
+        <div id="gs-auth-lock">🔐</div>
+        <div id="gs-auth-logo">P</div>
+        <h2>GS Sangatta</h2>
+        <p>Command Center 2026 · Pertamina EP</p>
+        <input id="gs-auth-input" type="password" placeholder="Masukkan Password" autocomplete="current-password" />
+        <button id="gs-auth-btn">MASUK</button>
+        <div id="gs-auth-err"></div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    // Focus input
+    setTimeout(()=>document.getElementById("gs-auth-input").focus(), 100);
+
+    await new Promise(resolve => {
+      async function tryLogin() {
+        const val = document.getElementById("gs-auth-input").value;
+        const errEl = document.getElementById("gs-auth-err");
+        if (!val) { errEl.textContent = "Password tidak boleh kosong."; return; }
+        const hash = await sha256(val);
+        if (hash === PASSWORD_HASH) {
+          sessionStorage.setItem("gs_sgt_auth","ok");
+          overlay.style.opacity="0";overlay.style.transition="opacity .4s";
+          setTimeout(()=>{overlay.remove();document.documentElement.style.overflow="";resolve();},400);
+        } else {
+          errEl.textContent = "❌ Password salah. Coba lagi.";
+          const inp = document.getElementById("gs-auth-input");
+          inp.value="";inp.focus();
+          inp.style.borderColor="rgba(232,25,44,.8)";
+          setTimeout(()=>inp.style.borderColor="",1500);
+        }
+      }
+      document.getElementById("gs-auth-btn").addEventListener("click", tryLogin);
+      document.getElementById("gs-auth-input").addEventListener("keydown", e=>{ if(e.key==="Enter") tryLogin(); });
+    });
+  }
+
+  // Run immediately
+  document.addEventListener("DOMContentLoaded", ()=>checkAuth());
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -610,7 +707,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     <button class="mod-pill" id="mpill-anggaran" onclick="switchModule('anggaran')">
       <span class="pill-ico">💰</span> Anggaran
     </button>
-    <button class="mod-pill edit-only" id="mpill-links" onclick="switchModule('links')">
+    <button class="mod-pill" id="mpill-links" onclick="switchModule('links')">
       <span class="pill-ico">🔗</span> Quick Links
     </button>
     <button class="mod-pill" id="mpill-datapekerja" onclick="switchModule('datapekerja')">
@@ -694,7 +791,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
               <button class="gs-dnav-btn" onclick="gsNextDay()">→</button>
             </div>
             <button class="gs-today-btn" onclick="gsToday()">Hari ini</button>
-            <button onclick="gsSaveAll()" class="edit-only" style="padding:7px 14px;background:#003087;border:none;color:#fff;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600">💾 Simpan</button>
+            <button onclick="gsSaveAll()" style="padding:7px 14px;background:#003087;border:none;color:#fff;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600">💾 Simpan</button>
           </div>
         </div>
 
@@ -820,7 +917,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
             <span style="color:#8A9BBE;font-size:11px">s/d</span>
             <input type="date" class="gs-sel" id="gs-wkTo">
             <button onclick="gsWkLoad()" style="padding:6px 13px;background:#003087;color:#fff;border:none;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600">📊 Load</button>
-            <button onclick="gsWkSave()" class="edit-only" style="padding:6px 12px;background:#fff;border:1px solid #D6DFF0;color:#4A5D8A;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit">💾 Simpan</button>
+            <button onclick="gsWkSave()" style="padding:6px 12px;background:#fff;border:1px solid #D6DFF0;color:#4A5D8A;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit">💾 Simpan</button>
             <button onclick="gsWkPrint()" style="padding:6px 12px;background:#fff;border:1px solid #D6DFF0;color:#4A5D8A;border-radius:9px;font-size:11px;cursor:pointer;font-family:inherit">🖨️ Print</button>
           </div>
         </div>
@@ -1026,7 +1123,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
             <option value="high">🔴 Tinggi</option>
             <option value="low">🟢 Rendah</option>
           </select>
-          <button class="todo-add-btn edit-only" onclick="tdAdd()">+ Tambah</button>
+          <button class="todo-add-btn" onclick="tdAdd()">+ Tambah</button>
         </div>
 
         <!-- Filters -->
@@ -1057,7 +1154,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
           <textarea class="note-textarea" id="note-inp" placeholder="📝 Tulis catatan harian... (Ctrl+Enter untuk simpan)"></textarea>
           <div class="note-add-right">
             <input class="note-tag-inp" id="note-tag" placeholder="Tag (opsional)">
-            <button class="note-save-btn edit-only" onclick="noteAdd()">💾 Simpan Catatan</button>
+            <button class="note-save-btn" onclick="noteAdd()">💾 Simpan Catatan</button>
           </div>
         </div>
 
@@ -1407,7 +1504,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
         <input id="ql-search" oninput="ql_render()" placeholder="🔍 Cari link..." style="background:#fff;border:1.5px solid rgba(0,48,135,.14);border-radius:10px;padding:9px 14px;font-size:12px;font-family:inherit;outline:none;color:#0D1B3E;min-width:220px;flex:1;max-width:320px">
         <div style="display:flex;gap:8px">
           <button onclick="ql_resetDefaults()" title="Reset ke link default" style="background:#fff;color:#8A9BBE;border:1.5px solid rgba(0,48,135,.12);border-radius:10px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">↩ Reset</button>
-          <button onclick="ql_openAdd()" class="edit-only" style="background:#003087;color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ Tambah Link</button>
+          <button onclick="ql_openAdd()" style="background:#003087;color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ Tambah Link</button>
         </div>
       </div>
 
@@ -1614,7 +1711,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     </div>
     <div class="dp-topbar-right">
       <div class="dp-top-date" id="dp-topDate"></div>
-      <button class="dp-btn-add-top edit-only" onclick="dp_openModal()">
+      <button class="dp-btn-add-top" onclick="dp_openModal()">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Pekerja
       </button>
@@ -2058,7 +2155,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
       <span id=&quot;syncText&quot;>Menghubungkan…</span>
     </div>
     <!-- Last save -->
-    <button class=&quot;btn btn-p&quot; onclick=&quot;doSave()&quot; edit-only-rdp style=&quot;gap:5px&quot;>💾 Save</button>
+    <button class=&quot;btn btn-p&quot; onclick=&quot;doSave()&quot; style=&quot;gap:5px&quot;>💾 Save</button>
     <button class=&quot;btn btn-s&quot; onclick=&quot;doRefresh()&quot; style=&quot;gap:5px&quot;>🔄 Refresh</button>
     <div id=&quot;lastSaveBox&quot; style=&quot;display:none;flex-direction:column;align-items:flex-end;line-height:1.4&quot;>
       <span style=&quot;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px&quot;>Last Save</span>
@@ -2115,7 +2212,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
     <select id=&quot;dStat&quot; onchange=&quot;rdD()&quot;><option value=&quot;&quot;>Semua Status</option><option value=&quot;terisi&quot;>🏠 Terisi (semua)</option><option>Terisi Pekerja</option><option>Terisi Pihak Ketiga</option><option>Terisi OJT</option><option>Layak Huni</option><option>Tidak Layak Huni</option></select>
     <select id=&quot;dJln&quot; onchange=&quot;rdD()&quot;><option value=&quot;&quot;>Semua Jalan</option></select>
     <select id=&quot;dPRL&quot; onchange=&quot;rdD()&quot;><option value=&quot;&quot;>Semua PRL</option></select>
-    <button class=&quot;btn btn-p&quot; onclick=&quot;openAddRDP()&quot; edit-only-rdp style=&quot;white-space:nowrap&quot;>+ Tambah RDP</button>
+    <button class=&quot;btn btn-p&quot; onclick=&quot;openAddRDP()&quot; style=&quot;white-space:nowrap&quot;>+ Tambah RDP</button>
   </div>
   <div class=&quot;fi&quot; id=&quot;dInfo&quot;>–</div>
   <div class=&quot;tcard&quot;><div class=&quot;scr&quot;>
@@ -2257,7 +2354,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
         <option value=&quot;penting&quot;>🔴 Penting</option>
         <option value=&quot;info&quot;>🔵 Info</option>
       </select>
-      <button class=&quot;btn btn-p&quot; onclick=&quot;addTodo()&quot; edit-only-rdp style=&quot;white-space:nowrap&quot;>+ Tambah</button>
+      <button class=&quot;btn btn-p&quot; onclick=&quot;addTodo()&quot; style=&quot;white-space:nowrap&quot;>+ Tambah</button>
     </div>
     <div style=&quot;display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap&quot;>
       <button class=&quot;btn btn-xs btn-s&quot; onclick=&quot;filterTodo('all')&quot; id=&quot;tf-all&quot; style=&quot;font-weight:700&quot;>Semua</button>
@@ -2283,7 +2380,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
           <option value=&quot;penting&quot;>🔴 Penting</option>
         </select>
         <textarea id=&quot;noteBody&quot; placeholder=&quot;Isi catatan...&quot; rows=&quot;5&quot; style=&quot;background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:7px 11px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;width:100%;box-sizing:border-box;resize:vertical;line-height:1.6;transition:border-color .15s&quot; onfocus=&quot;this.style.borderColor='var(--accent)'&quot; onblur=&quot;this.style.borderColor='var(--bd)'&quot;></textarea>
-        <button class=&quot;btn btn-p&quot; onclick=&quot;addNote()&quot; edit-only-rdp style=&quot;align-self:flex-end&quot;>💾 Simpan Catatan</button>
+        <button class=&quot;btn btn-p&quot; onclick=&quot;addNote()&quot; style=&quot;align-self:flex-end&quot;>💾 Simpan Catatan</button>
       </div>
     </div>
 
@@ -2341,7 +2438,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
         <span>✅ Checklist Fasilitas &amp; Sensus</span>
         <div style=&quot;display:flex;gap:6px;flex-wrap:wrap;align-items:center&quot;>
           <span id=&quot;fasProgress&quot; style=&quot;font-size:10px;color:var(--t3)&quot;>–</span>
-          <button class=&quot;btn btn-xs btn-p&quot; onclick=&quot;addFasManual()&quot; edit-only-rdp>+ Tambah Item</button>
+          <button class=&quot;btn btn-xs btn-p&quot; onclick=&quot;addFasManual()&quot;>+ Tambah Item</button>
         </div>
       </div>
       <!-- Status Sensus Banner -->
@@ -2356,7 +2453,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
       </div>
       <div style=&quot;display:flex;gap:8px;flex-wrap:wrap&quot;>
         <button class=&quot;btn btn-s&quot; onclick=&quot;closeModal()&quot;>Tutup</button>
-        <button class=&quot;btn btn-p&quot; onclick=&quot;saveModal()&quot; edit-only-rdp>💾 Simpan</button>
+        <button class=&quot;btn btn-p&quot; onclick=&quot;saveModal()&quot;>💾 Simpan</button>
       </div>
     </div>
   </div>
@@ -2413,7 +2510,7 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
     <p style=&quot;font-size:10px;color:var(--t3);margin-top:10px&quot;>* No. RDP wajib diisi. Unit baru langsung sync ke Firebase dan muncul di semua tab.</p>
     <div style=&quot;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--bd);padding-top:14px;margin-top:14px&quot;>
       <button class=&quot;btn btn-s&quot; onclick=&quot;closeAddRDP()&quot;>Batal</button>
-      <button class=&quot;btn btn-p&quot; onclick=&quot;saveAddRDP()&quot; edit-only-rdp>💾 Simpan Unit Baru</button>
+      <button class=&quot;btn btn-p&quot; onclick=&quot;saveAddRDP()&quot;>💾 Simpan Unit Baru</button>
     </div>
   </div>
 </div>
@@ -2480,7 +2577,7 @@ const LS_VACANT   = 'rdp_vacant_v10';
 const LS_SEMBERAH = 'rdp_semberah_v10';
 
 function doSave() {
-  if (!CAN_EDIT) return;
+  // Nama user untuk tracking siapa yang save
   const user = prompt('Nama Anda:', localStorage.getItem('rdp_fb_user')||fbUser) || fbUser;
   localStorage.setItem('rdp_fb_user', user);
   fbUser = user;
@@ -2525,14 +2622,14 @@ function rdOvExtras() {
           <tr style=&quot;border-bottom:1px solid var(--bd2)&quot;>
             <td style=&quot;padding:6px 11px;font-weight:600;font-size:11px&quot;>${p.penghuni}</td>
             <td style=&quot;padding:6px 11px;font-size:10px;color:var(--t2)&quot;>${p.jabatan}</td>
-            <td style=&quot;padding:6px 8px;text-align:right&quot;>${CAN_EDIT ? '<button class=&quot;btn-xs btn-d&quot; onclick=&quot;delSemberah('+i+')&quot;>✕</button>' : ''}</td>
+            <td style=&quot;padding:6px 8px;text-align:right&quot;><button class=&quot;btn-xs btn-d&quot; onclick=&quot;delSemberah(${i})&quot;>✕</button></td>
           </tr>`).join('')||'<tr><td colspan=&quot;3&quot; style=&quot;padding:10px;text-align:center;color:var(--t3);font-size:11px&quot;>–</td></tr>'}
         </tbody>
       </table>
       <div style=&quot;display:flex;gap:6px;margin-top:8px;flex-wrap:wrap&quot;>
         <input id=&quot;sm-nama&quot; placeholder=&quot;Nama pekerja&quot; style=&quot;background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:5px 9px;font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;flex:1;min-width:110px&quot;>
         <input id=&quot;sm-jab&quot;  placeholder=&quot;Jabatan&quot;       style=&quot;background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:5px 9px;font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;flex:1;min-width:110px&quot;>
-        <button class=&quot;btn btn-p&quot; style=&quot;padding:5px 12px;font-size:11px&quot; onclick=&quot;addSemberah()&quot; edit-only-rdp>+ Tambah</button>
+        <button class=&quot;btn btn-p&quot; style=&quot;padding:5px 12px;font-size:11px&quot; onclick=&quot;addSemberah()&quot;>+ Tambah</button>
       </div>`;
   }
   const vcEl=document.getElementById('ovVacant');
@@ -2548,33 +2645,31 @@ function rdOvExtras() {
           <tr style=&quot;border-bottom:1px solid var(--bd2)&quot;>
             <td style=&quot;padding:6px 11px;font-weight:600;font-size:11px&quot;>${p.jabatan}</td>
             <td style=&quot;padding:6px 11px&quot;>${p.prl_pc?`<span class=&quot;prl&quot;>PRL ${p.prl_pc}</span>`:'–'}</td>
-            <td style=&quot;padding:6px 8px;text-align:right&quot;>${CAN_EDIT ? '<button class=&quot;btn-xs btn-d&quot; onclick=&quot;delVacant('+i+')&quot;>✕</button>' : ''}</td>
+            <td style=&quot;padding:6px 8px;text-align:right&quot;><button class=&quot;btn-xs btn-d&quot; onclick=&quot;delVacant(${i})&quot;>✕</button></td>
           </tr>`).join('')||'<tr><td colspan=&quot;3&quot; style=&quot;padding:10px;text-align:center;color:var(--t3);font-size:11px&quot;>–</td></tr>'}
         </tbody>
       </table>
       <div style=&quot;display:flex;gap:6px;margin-top:8px;flex-wrap:wrap&quot;>
         <input id=&quot;vc-jab&quot; placeholder=&quot;Jabatan / Posisi&quot; style=&quot;background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:5px 9px;font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;flex:1;min-width:130px&quot;>
         <input id=&quot;vc-prl&quot; placeholder=&quot;PRL&quot;              style=&quot;background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:5px 9px;font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;width:55px&quot;>
-        <button class=&quot;btn btn-p&quot; style=&quot;padding:5px 12px;font-size:11px&quot; onclick=&quot;addVacant()&quot; edit-only-rdp>+ Tambah</button>
+        <button class=&quot;btn btn-p&quot; style=&quot;padding:5px 12px;font-size:11px&quot; onclick=&quot;addVacant()&quot;>+ Tambah</button>
       </div>`;
   }
 }
 function addSemberah(){
-  if (!CAN_EDIT) return;
   const nama=document.getElementById('sm-nama')?.value.trim(), jab=document.getElementById('sm-jab')?.value.trim();
   if(!nama){toast('Nama wajib diisi!','var(--red)');return;}
   SEMBERAH_STATE.push({id:Date.now(),penghuni:nama,jabatan:jab||''});
   saveSemberahState();rdOvExtras();toast('✓ Ditambahkan!');
 }
-function delSemberah(i){if(!CAN_EDIT)return;SEMBERAH_STATE.splice(i,1);saveSemberahState();rdOvExtras();toast('Dihapus.','var(--amber)');}
+function delSemberah(i){SEMBERAH_STATE.splice(i,1);saveSemberahState();rdOvExtras();toast('Dihapus.','var(--amber)');}
 function addVacant(){
-  if (!CAN_EDIT) return;
   const jab=document.getElementById('vc-jab')?.value.trim(), prl=document.getElementById('vc-prl')?.value.trim();
   if(!jab){toast('Jabatan wajib diisi!','var(--red)');return;}
   VACANT_STATE.push({id:Date.now(),jabatan:jab,prl_pc:prl});
   saveVacantState();rdAll();toast('✓ Posisi vacant ditambahkan!');
 }
-function delVacant(i){if(!CAN_EDIT)return;VACANT_STATE.splice(i,1);saveVacantState();rdAll();toast('Dihapus.','var(--amber)');}
+function delVacant(i){VACANT_STATE.splice(i,1);saveVacantState();rdAll();toast('Dihapus.','var(--amber)');}
 
 // ═══════════════════════════════════════════════════
 // GAP ANALISIS — reactive
@@ -3365,7 +3460,7 @@ function rdD(){
       <td style=&quot;text-align:center&quot;>${fasc>0?`<span style=&quot;font-size:10px;color:${u.sensusSelesai?'var(--green)':'var(--accent)'};font-weight:700&quot;>${u.sensusSelesai?'✅':'🛋'} ${fasc}</span>${pg>0?` <span style=&quot;font-size:10px;color:var(--red);font-weight:700&quot;>⚠${pg}</span>`:''}` :`<span style=&quot;font-size:10px;color:var(--t3)&quot;>–</span>`}</td>
       <td style=&quot;font-size:10px;color:var(--t2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap&quot;>${r.rencana||'–'}</td>
       <td onclick=&quot;event.stopPropagation()&quot;>
-        ${CAN_EDIT ? '<button class=&quot;btn-xs btn-d&quot; onclick=&quot;deleteRDP('+r.no+')&quot;' : '<!--'} title=&quot;${isCustom?'Hapus unit ini':'Hapus data sensus unit ini'}&quot; style=&quot;white-space:nowrap&quot;>
+        <button class=&quot;btn-xs btn-d&quot; onclick=&quot;deleteRDP(${r.no})&quot; title=&quot;${isCustom?'Hapus unit ini':'Hapus data sensus unit ini'}&quot; style=&quot;white-space:nowrap&quot;>
           ${isCustom?'✕ Hapus':'✕ Reset'}
         </button>
       </td>
@@ -3516,7 +3611,7 @@ function renderStd(){
 
     // Tambah item baru
     html+=`<div style=&quot;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center&quot;>
-      ${CAN_EDIT ? '<button class=&quot;btn btn-s&quot; style=&quot;font-size:11px&quot; onclick=&quot;addStdItem(&bsol;&apos;'+prlKey+'&bsol;&apos;)&quot;>+ Tambah Item</button>' : ''}
+      <button class=&quot;btn btn-s&quot; style=&quot;font-size:11px&quot; onclick=&quot;addStdItem('${prlKey}')&quot;>+ Tambah Item</button>
       <button class=&quot;btn btn-s&quot; style=&quot;font-size:11px&quot; onclick=&quot;addStdCat('${prlKey}')&quot;>+ Tambah Kategori</button>
       <span style=&quot;font-size:10px;color:var(--t3)&quot;>Klik sel untuk edit langsung</span>
     </div>`;
@@ -3543,7 +3638,6 @@ function delStdItem(prlKey, idx){
 }
 
 function addStdItem(prlKey){
-  if (!CAN_EDIT) return;
   // Cari kategori terakhir
   const items=STD_EDIT[prlKey]||[];
   let lastCat='🛏 Ruang Tidur';
@@ -3561,7 +3655,6 @@ function addStdItem(prlKey){
 }
 
 function addStdCat(prlKey){
-  if (!CAN_EDIT) return;
   const nama=prompt('Nama kategori baru (contoh: 🛏 Ruang Tidur):');
   if(!nama||!nama.trim()) return;
   STD_EDIT[prlKey]=STD_EDIT[prlKey]||[];
@@ -3644,7 +3737,6 @@ function onPRLChange(newPrl){
 }
 
 function saveModal(){
-  if (!CAN_EDIT) return;
   if(curNo===null) return;
   // Save edits
   const fields=['no_rdp','penghuni','jabatan','sub_divisi','nik','jalan','tipe','prl','prl_pc','kondisi','status','rencana'];
@@ -3895,7 +3987,6 @@ function delFasItem(i){ if(confirm('Hapus item ini?')){ tmpFas.splice(i,1); rend
 function delFasFoto(i,fi){ if(!tmpFas[i].fotos) tmpFas[i].fotos=[]; tmpFas[i].fotos.splice(fi,1); renderFasList(); }
 
 function addFasManual(){
-  if (!CAN_EDIT) return;
   tmpFas.push({nama:'Item Baru',jumlah:1,satuan:'Unit',kondFas:'Bagus',rek:'OK',thnPasang:'',umurIdeal:'',catatan:'',fotos:[]});
   renderFasList();
 }
@@ -3923,7 +4014,6 @@ function closeLb(){ document.getElementById('lb').classList.remove('on'); }
 
 // ── Tambah / Hapus RDP ────────────────────────────────
 function openAddRDP(){
-  if (!CAN_EDIT) return;
   document.getElementById('ovAddRDP').style.display='flex';
   // Reset semua field
   ['ar-no_rdp','ar-penghuni','ar-nik','ar-jabatan','ar-sub_divisi','ar-jalan','ar-tipe','ar-rencana'].forEach(id=>{
@@ -3940,7 +4030,6 @@ function closeAddRDP(){
   document.body.style.overflow='';
 }
 function saveAddRDP(){
-  if (!CAN_EDIT) return;
   const no_rdp = document.getElementById('ar-no_rdp').value.trim();
   if(!no_rdp){ toast('No. RDP wajib diisi!','var(--red)'); return; }
   const allNos = getAllRDP().map(r=>getR(r.id||r.no).no_rdp);
@@ -4011,7 +4100,6 @@ function previewAddStatus(val) {
   });
 }
 function deleteRDP(no){
-  if (!CAN_EDIT) return;
   const r=getR(no);
   const isCustom=CUSTOM_RDP.some(c=>c.no===no);
   if(isCustom){
@@ -4221,7 +4309,6 @@ function loadNotes() {
 
 // ── Simpan ke Firebase + localStorage ─────────────────
 async function saveNotes() {
-  if (!CAN_EDIT) return;
   try { localStorage.setItem('rdp_todos',  JSON.stringify(TODO_LIST));  } catch(e){}
   try { localStorage.setItem('rdp_notes',  JSON.stringify(NOTES_LIST)); } catch(e){}
   if (db) {
@@ -4246,7 +4333,6 @@ function rdNotes() {
 // TO-DO LIST
 // ═══════════════════════════════════════════════════════
 function addTodo() {
-  if (!CAN_EDIT) return;
   const input = document.getElementById('todoInput');
   const prio  = document.getElementById('todoPriority');
   const text  = input?.value.trim();
@@ -4275,7 +4361,6 @@ function toggleTodo(id) {
 }
 
 function deleteTodo(id) {
-  if (!CAN_EDIT) return;
   TODO_LIST = TODO_LIST.filter(t => t.id !== id);
   saveNotes();
   renderTodos();
@@ -4332,7 +4417,7 @@ function renderTodos() {
           ${t.done&amp;&amp;t.doneAt?`<span style=&quot;font-size:9px;color:var(--green)&quot;>✓ selesai ${new Date(t.doneAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short'})}</span>`:''}
         </div>
       </div>
-      ${CAN_EDIT ? '<button onclick=&quot;deleteTodo('+t.id+')&quot;' : '<!--'} style=&quot;background:none;border:none;cursor:pointer;color:var(--t3);font-size:14px;padding:0;flex-shrink:0;line-height:1&quot; title=&quot;Hapus&quot;>✕</button>
+      <button onclick=&quot;deleteTodo(${t.id})&quot; style=&quot;background:none;border:none;cursor:pointer;color:var(--t3);font-size:14px;padding:0;flex-shrink:0;line-height:1&quot; title=&quot;Hapus&quot;>✕</button>
     </div>`).join('');
 }
 
@@ -4340,7 +4425,6 @@ function renderTodos() {
 // CATATAN
 // ═══════════════════════════════════════════════════════
 function addNote() {
-  if (!CAN_EDIT) return;
   const title = document.getElementById('noteTitle')?.value.trim();
   const body  = document.getElementById('noteBody')?.value.trim();
   const tag   = document.getElementById('noteTag')?.value || 'umum';
@@ -4365,7 +4449,6 @@ function addNote() {
 }
 
 function deleteNote(id) {
-  if (!CAN_EDIT) return;
   if (!confirm('Hapus catatan ini?')) return;
   NOTES_LIST = NOTES_LIST.filter(n => n.id !== id);
   saveNotes();
@@ -4429,7 +4512,7 @@ function renderNotes() {
         </div>
         <div style=&quot;display:flex;gap:4px;flex-shrink:0&quot;>
           <button onclick=&quot;pinNote(${n.id})&quot; title=&quot;${n.pinned?'Unpin':'Pin'}&quot; style=&quot;background:none;border:none;cursor:pointer;font-size:13px;color:${n.pinned?'var(--amber)':'var(--t3)'};padding:0;line-height:1&quot;>📌</button>
-          ${CAN_EDIT ? '<button onclick=&quot;deleteNote('+n.id+')&quot;' : '<!--'} title=&quot;Hapus&quot; style=&quot;background:none;border:none;cursor:pointer;font-size:13px;color:var(--t3);padding:0;line-height:1&quot;>✕</button>
+          <button onclick=&quot;deleteNote(${n.id})&quot; title=&quot;Hapus&quot; style=&quot;background:none;border:none;cursor:pointer;font-size:13px;color:var(--t3);padding:0;line-height:1&quot;>✕</button>
         </div>
       </div>
       ${n.body?`<div style=&quot;font-size:11px;color:var(--t2);line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:8px&quot;>${n.body}</div>`:''}
@@ -4571,7 +4654,6 @@ function initTypeRumah() {
 
 // Quick edit PRL/PC langsung dari tabel Daftar RDP
 function quickEditPC(no, val) {
-  if (!CAN_EDIT) return;
   const newPc = (val === '–' || val === '-') ? '' : val;
   // Update MASTER_DATA in-memory
   const mi = MASTER_DATA.findIndex(r=>r.id===no);
@@ -4647,41 +4729,6 @@ const CO_GS = {
           y:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.06)'}}}
 };
 
-// ══ EDIT ACCESS CONTROL ══════════════════════════════════════════════════════
-const EDIT_KEY   = 'gssgt2026';   // ← ganti password di sini sesuka kamu
-const EDIT_PARAM = new URLSearchParams(window.location.search).get('key');
-const CAN_EDIT   = (EDIT_PARAM === EDIT_KEY);
-
-function applyEditMode() {
-  if (CAN_EDIT) return; // editor: tampil normal
-
-  // CSS: sembunyikan semua elemen bertag .edit-only + semua input/textarea interaktif
-  const s = document.createElement('style');
-  s.textContent = `
-    .edit-only { display: none !important; }
-    .edit-only-rdp { display: none !important; }
-    .todo-add-row { display: none !important; }
-    .note-save-btn { display: none !important; }
-    input, textarea, select { pointer-events: none !important; user-select: none !important; }
-    input[type=date], input[type=text], input[type=number], textarea { opacity: 0.7 !important; }
-    input[type=checkbox], input[type=radio] { pointer-events: none !important; opacity: 0.6 !important; }
-    button:not(.mod-pill):not(.cmd-btn):not(.gs-tab):not(.ang-tab):not(.todo-tab):not(.gs-sel-btn):not(.gs-pg-btn):not(.filter-btn):not(.sort-btn):not(.gs-filter-btn) { pointer-events: none; }
-    .mod-pill, .cmd-btn, .gs-tab, .ang-tab, .todo-tab, [onclick*="switchModule"], [onclick*="gsTab"], [onclick*="angTab"], [onclick*="todoTab"], [onclick*="noteRender"], [onclick*="tdFilter"], [onclick*="gsRender"], [onclick*="angRender"], [onclick*="loadDaily"], [onclick*="goToday"], [onclick*="krp_nav"], [onclick*="rdShow"], [onclick*="rdTab"], [onclick*="filter"], [onclick*="sort"], [onclick*="openLb"], [onclick*="exportCSV"], [onclick*="dp_sort"], [onclick*="dp_filter"], [onclick*="gsWkPrint"], [onclick*="switchRdpTab"], [onclick*="refreshAll"], [onclick*="ql_render"] { pointer-events: auto !important; opacity: 1 !important; }
-    #view-only-banner { display: flex !important; }
-  `;
-  document.head.appendChild(s);
-
-  // Badge view-only
-  const b = document.createElement('div');
-  b.id = 'view-only-banner';
-  b.style.cssText = 'display:none;position:fixed;bottom:18px;right:18px;z-index:9999;'
-    + 'background:rgba(15,15,20,0.82);color:#fff;padding:7px 16px;border-radius:99px;'
-    + 'font-size:11px;font-family:Inter,sans-serif;gap:7px;align-items:center;'
-    + 'backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);pointer-events:none';
-  b.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:#60A5FA;display:inline-block"></span> View Only';
-  document.body.appendChild(b);
-}
-
 // ══ STATE ════════════════════════════════════════════════════════════════════
 let curModule = 'gs', gsUrl = '', angUrl = '';
 let GS_DATA = [], OVR = {}, gsDate = null, curGsTab = 'daily';
@@ -4691,7 +4738,6 @@ let wkReports = {}, saveTimer = null;
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  applyEditMode();
   try { OVR = JSON.parse(localStorage.getItem(LS_OVR) || '{}'); } catch(e) {}
   try { wkReports = JSON.parse(localStorage.getItem(LS_WK) || '{}'); } catch(e) {}
 
@@ -5071,7 +5117,6 @@ function gsWkLoad() {
 }
 
 function gsWkSave() {
-  if (!CAN_EDIT) return;
   const from=document.getElementById('gs-wkFrom').value, to=document.getElementById('gs-wkTo').value;
   if(!from||!to){alert('Pilih periode dahulu');return;}
   const key=from+'_'+to, data={from,to,savedAt:new Date().toISOString()};
@@ -5442,7 +5487,6 @@ async function fbPatch(sub, data) {
 }
 
 async function fbDelete(sub) {
-  if (!CAN_EDIT) return;
   try { await fetch(fbPath(sub), { method: 'DELETE' }); } catch(e) {}
 }
 
@@ -5492,7 +5536,6 @@ function todoTab(t) {
 
 // ── TODO CRUD ─────────────────────────────────────────────────────────────────
 async function tdAdd() {
-  if (!CAN_EDIT) return;
   const inp  = document.getElementById('td-inp');
   const prio = document.getElementById('td-prio');
   const txt  = inp.value.trim();
@@ -5515,7 +5558,6 @@ async function tdToggle(id) {
 }
 
 async function tdDelete(id) {
-  if (!CAN_EDIT) return;
   delete TODO_DATA[id];
   await fbDelete('todos/' + id);
   tdRender();
@@ -5570,14 +5612,13 @@ function tdRender() {
           <span class="todo-ts">${dt}</span>
         </div>
       </div>
-      ${CAN_EDIT ? '<button class="todo-del" onclick="tdDelete(\''+item.id+'\')" title="Hapus">✕</button>' : ''}
+      <button class="todo-del" onclick="tdDelete('${item.id}')" title="Hapus">✕</button>
     </div>`;
   }).join('');
 }
 
 // ── CATATAN HARIAN CRUD ───────────────────────────────────────────────────────
 async function noteAdd() {
-  if (!CAN_EDIT) return;
   const inp = document.getElementById('note-inp');
   const tag = document.getElementById('note-tag');
   const txt = inp.value.trim();
@@ -5594,7 +5635,6 @@ async function noteAdd() {
 }
 
 async function noteDelete(id) {
-  if (!CAN_EDIT) return;
   delete NOTE_DATA[id];
   await fbDelete('notes/' + id);
   noteRender();
@@ -5630,7 +5670,7 @@ function noteRender() {
           ${item.tag ? `<span class="note-item-tag">${escHtml(item.tag)}</span>` : ''}
         </div>
         <div class="note-item-body">${escHtml(item.txt)}</div>
-        ${CAN_EDIT ? `<button class="note-del" onclick="noteDelete('${item.id}')" title="Hapus">✕</button>` : ''}
+        <button class="note-del" onclick="noteDelete('${item.id}')" title="Hapus">✕</button>
       </div>`;
     }).join('');
     return `<div class="note-date-grp"><div class="note-date-grp-hdr">📅 ${dateLabel}</div>${rows}</div>`;
@@ -5929,7 +5969,7 @@ function renderKendaraan() {
     var kml  = r.kml_2025||r.kml25||0;
     var hasOv = (window._ov||{})[sgt];
     var vd = JSON.stringify({sgt:sgt, fungsi:v.fungsi||'', alokasi:v.alokasi||'', user:v.user||'', jenis:v.jenis||''}).replace(/"/g,'&quot;');
-    return (CAN_EDIT ? '<div class="vc" onclick=\'openEdit('+vd+')\''+(hasOv?' style="border-color:#0052cc"':'')+'>'+
+    return '<div class="vc" onclick=\'openEdit('+vd+')\''+(hasOv?' style="border-color:#0052cc"':'')+'>'+
       '<div class="vc-top"><div><div class="vc-lam">'+lbl+'</div><div class="vc-dept">'+krp_esc(v.fungsi||'')+(v.alokasi?' — '+krp_esc(v.alokasi):'')+'</div></div><span class="badge '+bc+'">'+(util*100).toFixed(0)+'%</span></div>'+
       (v.user?'<div style="font-size:11px;color:#64748b;margin-bottom:8px">'+krp_esc(v.user)+'</div>':'')+
       '<div class="vc-row"><span>Jenis</span><span>'+(v.jenis||'').replace('Double Cabin (DC) 4x4 Diesel','DC 4x4').replace('Sport Utility Vehicle (SUV) 4x4 Diesel','SUV 4x4').replace(' M/T','')+'</span></div>'+
@@ -5937,7 +5977,7 @@ function renderKendaraan() {
       (hk25?'<div class="vc-row"><span>Hari Kerja</span><span>'+hk25+' hari</span></div>':'')+
       (kml?'<div class="vc-row"><span>Km/Liter</span><span>'+kml.toFixed(2)+'</span></div>':'')+
       (util?'<div class="vc-prog"><div class="vc-plbl"><span>Utilisasi 2025</span><span>'+(util*100).toFixed(1)+'%</span></div><div class="prog"><div class="prog-bar '+pcol+'" style="width:'+pc+'%"></div></div></div>':'')+
-      (CAN_EDIT ? '<div class="vc-hint">✏ Klik untuk edit</div>' : '') + '</div>';
+      '<div class="vc-hint">✏ Klik untuk edit</div></div>';
   }).join('');
 }
 
@@ -6042,7 +6082,7 @@ function renderMaster() {
       +'<td><span class="badge bp">'+krp_esc(r.fungsi||'')+'</span></td>'
       +'<td class="tdl">'+krp_esc(r.alokasi||'—')+'</td>'
       +'<td class="tdl">'+krp_esc(r.user||'—')+'</td>'
-      +(CAN_EDIT ? '<td><button class="btn-sm" style="font-size:11px;padding:4px 10px" onclick=\'openEdit('+vd+')\'>✏ Edit</button></td>' : '<td></td>')+'</tr>';
+      +'<td><button class="btn-sm" style="font-size:11px;padding:4px 10px" onclick=\'openEdit('+vd+')\'>✏ Edit</button></td></tr>';
   }).join('');
 }
 
@@ -6105,7 +6145,7 @@ function krp_renderHistori() {
       +'<td>'+(d.rows||[]).length+' kendaraan</td>'
       +'<td>'+krp_fmtTime(d.ts)+'</td>'
       +'<td style="display:flex;gap:6px"><button class="btn-sm" onclick="loadDailyKey(\''+k+'\')">Lihat</button>'
-      +(CAN_EDIT ? '<button class="btn-sm" style="border-color:#003087;color:#003087" onclick="openHistEdit(\''+k+'\')">✏ Edit</button>' : '')+'</td></tr>';
+      +'<button class="btn-sm" style="border-color:#003087;color:#003087" onclick="openHistEdit(\''+k+'\')">✏ Edit</button></td></tr>';
   }).join('');
 }
 
@@ -6114,7 +6154,6 @@ function krp_renderHistori() {
 // ──────────────────────────────────────────────────
 var _editV = null;
 function openEdit(v) {
-  if (!CAN_EDIT) return;
   _editV = v;
   var hasOv = (window._ov||{})[v.sgt];
   document.getElementById('edit-title').textContent = 'Edit SGT-'+String(v.sgt).padStart(2,'0')+(hasOv?' (sudah diubah)':'');
@@ -6130,7 +6169,6 @@ function openEdit(v) {
 function closeEdit() { document.getElementById('edit-modal').classList.remove('on'); _editV=null; }
 
 function saveEdit() {
-  if (!CAN_EDIT) return;
   if (!_editV) return;
   var saving = document.getElementById('edit-saving');
   saving.style.display='block';
@@ -6167,7 +6205,6 @@ function resetEdit() {
 // ──────────────────────────────────────────────────
 var _editHKey = null;
 function openHistEdit(key) {
-  if (!CAN_EDIT) return;
   var all = window._allJadwal||{}, d = all[key];
   if (!d) { toast('Data tidak ditemukan'); return; }
   _editHKey = key;
@@ -6184,7 +6221,6 @@ function openHistEdit(key) {
 function closeHistEdit() { document.getElementById('edit-hist-modal').classList.remove('on'); _editHKey=null; }
 
 function saveHistEdit() {
-  if (!CAN_EDIT) return;
   if (!_editHKey) return;
   document.getElementById('hist-saving').style.display='block';
   var existing = (window._allJadwal||{})[_editHKey]||{};
@@ -6328,8 +6364,8 @@ function ql_card(link, idx) {
     + '</div></div>'
     + '</div></a>'
     + '<div style="position:absolute;bottom:0;left:0;right:0;display:flex;gap:0;border-top:1px solid rgba(0,48,135,.08);border-radius:0 0 14px 14px;overflow:hidden">'
-    + (CAN_EDIT ? '<button onclick="event.preventDefault();event.stopPropagation();ql_openEdit('+idx+')" style="flex:1;background:#F8FAFD;border:none;border-right:1px solid rgba(0,48,135,.08);padding:7px 0;font-size:11px;color:#4A5D8A;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#EEF2FA\'" onmouseout="this.style.background=\'#F8FAFD\'">✏ Edit</button>'
-    + '<button onclick="event.preventDefault();event.stopPropagation();ql_del('+idx+')" style="flex:1;background:#FFF8F8;border:none;padding:7px 0;font-size:11px;color:#C0001E;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#FFE8E8\'" onmouseout="this.style.background=\'#FFF8F8\'">🗑 Hapus</button>' : '')
+    + '<button onclick="event.preventDefault();event.stopPropagation();ql_openEdit('+idx+')" style="flex:1;background:#F8FAFD;border:none;border-right:1px solid rgba(0,48,135,.08);padding:7px 0;font-size:11px;color:#4A5D8A;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#EEF2FA\'" onmouseout="this.style.background=\'#F8FAFD\'">✏ Edit</button>'
+    + '<button onclick="event.preventDefault();event.stopPropagation();ql_del('+idx+')" style="flex:1;background:#FFF8F8;border:none;padding:7px 0;font-size:11px;color:#C0001E;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#FFE8E8\'" onmouseout="this.style.background=\'#FFF8F8\'">🗑 Hapus</button>'
     + '</div>'
     + '</div>';
 }
@@ -6358,7 +6394,6 @@ function ql_render() {
 }
 
 function ql_openAdd() {
-  if (!CAN_EDIT) return;
   _ql_editIdx = null;
   document.getElementById('ql-modal-title').textContent = 'Tambah Link Baru';
   document.getElementById('ql-inp-name').value = '';
@@ -6370,7 +6405,6 @@ function ql_openAdd() {
 }
 
 function ql_openEdit(idx) {
-  if (!CAN_EDIT) return;
   var arr = _ql_links;
   var l = arr[idx]; if (!l) return;
   _ql_editIdx = idx;
@@ -6385,7 +6419,6 @@ function ql_openEdit(idx) {
 function ql_closeModal() { document.getElementById('ql-modal').style.display = 'none'; }
 
 function ql_save() {
-  if (!CAN_EDIT) return;
   var name = document.getElementById('ql-inp-name').value.trim();
   var url  = document.getElementById('ql-inp-url').value.trim();
   var cat  = document.getElementById('ql-inp-cat').value.trim();
@@ -6410,7 +6443,6 @@ function ql_save() {
 }
 
 function ql_del(idx) {
-  if (!CAN_EDIT) return;
   var arr = _ql_links.slice();
   var l = arr[idx]; if (!l) return;
   if (!confirm('Hapus link "'+l.name+'"?')) return;
@@ -6419,7 +6451,6 @@ function ql_del(idx) {
 }
 
 function ql_resetDefaults() {
-  if (!CAN_EDIT) return;
   if (!confirm('Reset ke link default? Semua link tambahan akan hilang.')) return;
   ql_saveLinks(QL_DEFAULTS.map(function(l){ return Object.assign({},l); }));
 }
@@ -6785,8 +6816,8 @@ function dp_render() {
         +'<td><div class="dp-sisa-text dp-sisa-'+w.color+'">'+dp_sisaStr(w.sisa)+'</div></td>'
         +'<td><span class="dp-badge dp-badge-'+w.color+'"><span class="dp-badge-dot"></span>'+dp_getLabel(w.color)+'</span></td>'
         +'<td><div class="dp-row-btns">'
-        +(CAN_EDIT ? '<button class="dp-rbtn" onclick="dp_editWorker('+w._i+')" title="Edit"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-        +'<button class="dp-rbtn dp-del" onclick="dp_confirmDelete('+w._i+')" title="Hapus"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>' : '')
+        +'<button class="dp-rbtn" onclick="dp_editWorker('+w._i+')" title="Edit"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+        +'<button class="dp-rbtn dp-del" onclick="dp_confirmDelete('+w._i+')" title="Hapus"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>'
         +'</div></td></tr>';
     }).join('');}
     var info=dp_g('dp-tblInfo');
@@ -6832,7 +6863,6 @@ function dp_updatePreview() {
   }catch(e){}
 }
 function dp_openModal(idx) {
-  if (!CAN_EDIT) return;
   try{
     if(idx===undefined) idx=-1;
     dp_g('dp-editIdx').value=idx;
@@ -6848,7 +6878,6 @@ function dp_openModal(idx) {
 function dp_closeModal(){ try{dp_g('dp-modalBg').classList.remove('show');}catch(e){} }
 function dp_outsideClose(e){ if(e.target===dp_g('dp-modalBg')) dp_closeModal(); }
 function dp_saveWorker() {
-  if (!CAN_EDIT) return;
   try{
     var nama=dp_g('dp-f-nama').value.trim(),lahir=dp_g('dp-f-lahir').value,ok=true;
     if(!nama){dp_g('dp-e-nama').classList.add('show');ok=false;}else{dp_g('dp-e-nama').classList.remove('show');}
@@ -6862,12 +6891,10 @@ function dp_saveWorker() {
 }
 function dp_editWorker(i){ dp_openModal(i); }
 function dp_confirmDelete(i) {
-  if (!CAN_EDIT) return;
   try{dp_deleteIdx=i;dp_g('dp-confirmMsg').textContent='Hapus data "'+dp_workers[i].nama+'"? Tindakan ini tidak dapat dibatalkan.';dp_g('dp-confirmBg').classList.add('show');}catch(e){}
 }
 function dp_closeConfirm(){ try{dp_g('dp-confirmBg').classList.remove('show');dp_deleteIdx=-1;}catch(e){} }
 function dp_doDelete() {
-  if (!CAN_EDIT) return;
   if(dp_deleteIdx>=0){dp_workers.splice(dp_deleteIdx,1);dp_save();}
   dp_closeConfirm();dp_render();
 }
