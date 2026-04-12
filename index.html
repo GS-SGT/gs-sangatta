@@ -1323,7 +1323,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
   <div id="sp-master" style="display:none">
     <div class="card"><div class="card-hdr"><span class="card-ttl">Master Kendaraan — Live dari Google Sheets</span></div>
     <div class="card-body0"><div class="twrap"><table>
-      <thead><tr><th>No</th><th>SGT</th><th class="tdl">Jenis</th><th>Fungsi</th><th class="tdl">Alokasi</th><th class="tdl">User</th><th class="edit-only" style="width:60px">Edit</th></tr></thead>
+      <thead><tr><th>No</th><th>SGT</th><th class="tdl">Jenis</th><th>Fungsi</th><th class="tdl">Alokasi</th><th class="tdl">User</th><th style="width:60px">Edit</th></tr></thead>
       <tbody id="master-tbl"></tbody>
     </table></div></div></div>
   </div>
@@ -1404,7 +1404,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
         <input id="ql-search" oninput="ql_render()" placeholder="🔍 Cari link..." style="background:#fff;border:1.5px solid rgba(0,48,135,.14);border-radius:10px;padding:9px 14px;font-size:12px;font-family:inherit;outline:none;color:#0D1B3E;min-width:220px;flex:1;max-width:320px">
         <div style="display:flex;gap:8px">
           <button onclick="ql_resetDefaults()" title="Reset ke link default" style="background:#fff;color:#8A9BBE;border:1.5px solid rgba(0,48,135,.12);border-radius:10px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">↩ Reset</button>
-          <button id="ql-add-btn" onclick="ql_openAdd()" style="background:#003087;color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ Tambah Link</button>
+          <button onclick="ql_openAdd()" style="background:#003087;color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">＋ Tambah Link</button>
         </div>
       </div>
 
@@ -1611,7 +1611,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     </div>
     <div class="dp-topbar-right">
       <div class="dp-top-date" id="dp-topDate"></div>
-      <button class="dp-btn-add-top edit-only" onclick="dp_openModal()">
+      <button class="dp-btn-add-top" onclick="dp_openModal()">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Pekerja
       </button>
@@ -1813,41 +1813,6 @@ const CO_GS = {
           y:{ticks:{color:'#8A9BBE',font:{size:9}},grid:{color:'rgba(0,48,135,.06)'}}}
 };
 
-// ══ EDIT ACCESS CONTROL ══════════════════════════════════════════════════════
-const EDIT_KEY = 'gssgt2026';  // ← Ganti kata sandi di sini
-const EDIT_PARAM = new URLSearchParams(window.location.search).get('key');
-const CAN_EDIT = (EDIT_PARAM === EDIT_KEY);
-
-// Sembunyikan semua elemen edit jika bukan editor
-function applyEditMode() {
-  if (CAN_EDIT) return; // editor: semua tampil normal
-
-  // Sembunyikan elemen bertag .edit-only via CSS
-  const style = document.createElement('style');
-  style.textContent = `
-    .edit-only { display: none !important; }
-    .todo-add-row { display: none !important; }
-    .note-save-btn { display: none !important; }
-    .note-tag-inp { display: none !important; }
-    #td-inp { pointer-events: none; opacity: 0.4; }
-    .note-textarea { pointer-events: none; opacity: 0.6; }
-    [onclick*="tdAdd"],[onclick*="tdClearDone"],[onclick*="noteAdd"],
-    [onclick*="ql_openAdd"],[onclick*="ql_save"],[onclick*="ql_openEdit"],
-    [onclick*="openEdit"],[onclick*="openHistEdit"],[onclick*="saveEdit"],
-    [onclick*="gsSaveAll"],[onclick*="gsWkSave"],[onclick*="dp_openAdd"],
-    [onclick*="dp_openEdit"],[onclick*="dp_delete"],
-    .mbtn-save,.todo-add-btn,.note-save-btn { display: none !important; }
-    #ql-add-btn { display: none !important; }
-  `;
-  document.head.appendChild(style);
-
-  // Tampilkan banner VIEW ONLY
-  const banner = document.createElement('div');
-  banner.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:9999;background:rgba(0,0,0,0.75);color:#fff;padding:8px 16px;border-radius:99px;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;backdrop-filter:blur(8px)';
-  banner.textContent = '👁 View Only';
-  document.body.appendChild(banner);
-}
-
 // ══ STATE ════════════════════════════════════════════════════════════════════
 let curModule = 'gs', gsUrl = '', angUrl = '';
 let GS_DATA = [], OVR = {}, gsDate = null, curGsTab = 'daily';
@@ -1857,7 +1822,6 @@ let wkReports = {}, saveTimer = null;
 
 // ══ INIT ═════════════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  applyEditMode();
   try { OVR = JSON.parse(localStorage.getItem(LS_OVR) || '{}'); } catch(e) {}
   try { wkReports = JSON.parse(localStorage.getItem(LS_WK) || '{}'); } catch(e) {}
 
@@ -2112,7 +2076,7 @@ async function gsSendToSheet() {
   setTimeout(() => ind.textContent = '', 3000);
 }
 
-function gsSaveAll() { if (!CAN_EDIT) return; gsSendToSheet(); }
+function gsSaveAll() { gsSendToSheet(); }
 
 function gsRenderHistory() {
   const from = document.getElementById('gs-hFrom').value;
@@ -2237,7 +2201,6 @@ function gsWkLoad() {
 }
 
 function gsWkSave() {
-  if (!CAN_EDIT) return;
   const from=document.getElementById('gs-wkFrom').value, to=document.getElementById('gs-wkTo').value;
   if(!from||!to){alert('Pilih periode dahulu');return;}
   const key=from+'_'+to, data={from,to,savedAt:new Date().toISOString()};
@@ -2657,7 +2620,6 @@ function todoTab(t) {
 
 // ── TODO CRUD ─────────────────────────────────────────────────────────────────
 async function tdAdd() {
-  if (!CAN_EDIT) return;
   const inp  = document.getElementById('td-inp');
   const prio = document.getElementById('td-prio');
   const txt  = inp.value.trim();
@@ -2686,7 +2648,6 @@ async function tdDelete(id) {
 }
 
 async function tdClearDone() {
-  if (!CAN_EDIT) return;
   const done = Object.keys(TODO_DATA).filter(id => TODO_DATA[id].done);
   if (!done.length) { alert('Tidak ada task selesai!'); return; }
   if (!confirm(`Hapus ${done.length} task yang sudah selesai?`)) return;
@@ -2742,7 +2703,6 @@ function tdRender() {
 
 // ── CATATAN HARIAN CRUD ───────────────────────────────────────────────────────
 async function noteAdd() {
-  if (!CAN_EDIT) return;
   const inp = document.getElementById('note-inp');
   const tag = document.getElementById('note-tag');
   const txt = inp.value.trim();
@@ -3093,7 +3053,7 @@ function renderKendaraan() {
     var kml  = r.kml_2025||r.kml25||0;
     var hasOv = (window._ov||{})[sgt];
     var vd = JSON.stringify({sgt:sgt, fungsi:v.fungsi||'', alokasi:v.alokasi||'', user:v.user||'', jenis:v.jenis||''}).replace(/"/g,'&quot;');
-    return '<div class="vc"'+(CAN_EDIT ? ' onclick=\'openEdit('+vd+')\'' : '')+(hasOv?' style="border-color:#0052cc"':'')+'>'+
+    return '<div class="vc" onclick=\'openEdit('+vd+')\''+(hasOv?' style="border-color:#0052cc"':'')+'>'+
       '<div class="vc-top"><div><div class="vc-lam">'+lbl+'</div><div class="vc-dept">'+krp_esc(v.fungsi||'')+(v.alokasi?' — '+krp_esc(v.alokasi):'')+'</div></div><span class="badge '+bc+'">'+(util*100).toFixed(0)+'%</span></div>'+
       (v.user?'<div style="font-size:11px;color:#64748b;margin-bottom:8px">'+krp_esc(v.user)+'</div>':'')+
       '<div class="vc-row"><span>Jenis</span><span>'+(v.jenis||'').replace('Double Cabin (DC) 4x4 Diesel','DC 4x4').replace('Sport Utility Vehicle (SUV) 4x4 Diesel','SUV 4x4').replace(' M/T','')+'</span></div>'+
@@ -3101,7 +3061,7 @@ function renderKendaraan() {
       (hk25?'<div class="vc-row"><span>Hari Kerja</span><span>'+hk25+' hari</span></div>':'')+
       (kml?'<div class="vc-row"><span>Km/Liter</span><span>'+kml.toFixed(2)+'</span></div>':'')+
       (util?'<div class="vc-prog"><div class="vc-plbl"><span>Utilisasi 2025</span><span>'+(util*100).toFixed(1)+'%</span></div><div class="prog"><div class="prog-bar '+pcol+'" style="width:'+pc+'%"></div></div></div>':'')+
-      (CAN_EDIT ? '<div class="vc-hint">✏ Klik untuk edit</div>' : '')+'</div>';
+      '<div class="vc-hint">✏ Klik untuk edit</div></div>';
   }).join('');
 }
 
@@ -3206,7 +3166,7 @@ function renderMaster() {
       +'<td><span class="badge bp">'+krp_esc(r.fungsi||'')+'</span></td>'
       +'<td class="tdl">'+krp_esc(r.alokasi||'—')+'</td>'
       +'<td class="tdl">'+krp_esc(r.user||'—')+'</td>'
-      +(CAN_EDIT ? '<td><button class="btn-sm" style="font-size:11px;padding:4px 10px" onclick=\'openEdit('+vd+')\'>✏ Edit</button></td>' : '<td class="edit-only"></td>')+'</tr>';
+      +'<td><button class="btn-sm" style="font-size:11px;padding:4px 10px" onclick=\'openEdit('+vd+')\'>✏ Edit</button></td></tr>';
   }).join('');
 }
 
@@ -3269,7 +3229,7 @@ function krp_renderHistori() {
       +'<td>'+(d.rows||[]).length+' kendaraan</td>'
       +'<td>'+krp_fmtTime(d.ts)+'</td>'
       +'<td style="display:flex;gap:6px"><button class="btn-sm" onclick="loadDailyKey(\''+k+'\')">Lihat</button>'
-      +(CAN_EDIT ? '<button class="btn-sm" style="border-color:#003087;color:#003087" onclick="openHistEdit(\''+k+'\')">✏ Edit</button>' : '')+'</td></tr>';
+      +'<button class="btn-sm" style="border-color:#003087;color:#003087" onclick="openHistEdit(\''+k+'\')">✏ Edit</button></td></tr>';
   }).join('');
 }
 
@@ -3278,7 +3238,6 @@ function krp_renderHistori() {
 // ──────────────────────────────────────────────────
 var _editV = null;
 function openEdit(v) {
-  if (!CAN_EDIT) return;
   _editV = v;
   var hasOv = (window._ov||{})[v.sgt];
   document.getElementById('edit-title').textContent = 'Edit SGT-'+String(v.sgt).padStart(2,'0')+(hasOv?' (sudah diubah)':'');
@@ -3330,7 +3289,6 @@ function resetEdit() {
 // ──────────────────────────────────────────────────
 var _editHKey = null;
 function openHistEdit(key) {
-  if (!CAN_EDIT) return;
   var all = window._allJadwal||{}, d = all[key];
   if (!d) { toast('Data tidak ditemukan'); return; }
   _editHKey = key;
@@ -3489,12 +3447,10 @@ function ql_card(link, idx) {
     + '<div style="font-size:10px;color:#B0BDD6;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:\'JetBrains Mono\',monospace">'+ql_esc(link.url)+'</div>'
     + '</div></div>'
     + '</div></a>'
-    + (CAN_EDIT ?
-        '<div style="position:absolute;bottom:0;left:0;right:0;display:flex;gap:0;border-top:1px solid rgba(0,48,135,.08);border-radius:0 0 14px 14px;overflow:hidden">'
-        + '<button onclick="event.preventDefault();event.stopPropagation();ql_openEdit('+idx+')" style="flex:1;background:#F8FAFD;border:none;border-right:1px solid rgba(0,48,135,.08);padding:7px 0;font-size:11px;color:#4A5D8A;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#EEF2FA\'" onmouseout="this.style.background=\'#F8FAFD\'">✏ Edit</button>'
-        + '<button onclick="event.preventDefault();event.stopPropagation();ql_del('+idx+')" style="flex:1;background:#FFF8F8;border:none;padding:7px 0;font-size:11px;color:#C0001E;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#FFE8E8\'" onmouseout="this.style.background=\'#FFF8F8\'">🗑 Hapus</button>'
-        + '</div>'
-      : '')
+    + '<div style="position:absolute;bottom:0;left:0;right:0;display:flex;gap:0;border-top:1px solid rgba(0,48,135,.08);border-radius:0 0 14px 14px;overflow:hidden">'
+    + '<button onclick="event.preventDefault();event.stopPropagation();ql_openEdit('+idx+')" style="flex:1;background:#F8FAFD;border:none;border-right:1px solid rgba(0,48,135,.08);padding:7px 0;font-size:11px;color:#4A5D8A;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#EEF2FA\'" onmouseout="this.style.background=\'#F8FAFD\'">✏ Edit</button>'
+    + '<button onclick="event.preventDefault();event.stopPropagation();ql_del('+idx+')" style="flex:1;background:#FFF8F8;border:none;padding:7px 0;font-size:11px;color:#C0001E;cursor:pointer;font-family:inherit;font-weight:600" onmouseover="this.style.background=\'#FFE8E8\'" onmouseout="this.style.background=\'#FFF8F8\'">🗑 Hapus</button>'
+    + '</div>'
     + '</div>';
 }
 
@@ -3522,7 +3478,6 @@ function ql_render() {
 }
 
 function ql_openAdd() {
-  if (!CAN_EDIT) return;
   _ql_editIdx = null;
   document.getElementById('ql-modal-title').textContent = 'Tambah Link Baru';
   document.getElementById('ql-inp-name').value = '';
@@ -3534,7 +3489,6 @@ function ql_openAdd() {
 }
 
 function ql_openEdit(idx) {
-  if (!CAN_EDIT) return;
   var arr = _ql_links;
   var l = arr[idx]; if (!l) return;
   _ql_editIdx = idx;
@@ -3549,7 +3503,6 @@ function ql_openEdit(idx) {
 function ql_closeModal() { document.getElementById('ql-modal').style.display = 'none'; }
 
 function ql_save() {
-  if (!CAN_EDIT) return;
   var name = document.getElementById('ql-inp-name').value.trim();
   var url  = document.getElementById('ql-inp-url').value.trim();
   var cat  = document.getElementById('ql-inp-cat').value.trim();
@@ -3574,7 +3527,6 @@ function ql_save() {
 }
 
 function ql_del(idx) {
-  if (!CAN_EDIT) return;
   var arr = _ql_links.slice();
   var l = arr[idx]; if (!l) return;
   if (!confirm('Hapus link "'+l.name+'"?')) return;
@@ -3947,10 +3899,10 @@ function dp_render() {
         +'<td class="dp-cell-mono" style="white-space:nowrap">'+dp_fmtDate(w.pensiun)+'</td>'
         +'<td><div class="dp-sisa-text dp-sisa-'+w.color+'">'+dp_sisaStr(w.sisa)+'</div></td>'
         +'<td><span class="dp-badge dp-badge-'+w.color+'"><span class="dp-badge-dot"></span>'+dp_getLabel(w.color)+'</span></td>'
-        +'<td><div class="dp-row-btns">'+(CAN_EDIT ?
-          '<button class="dp-rbtn" onclick="dp_editWorker('+w._i+')" title="Edit"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-          +'<button class="dp-rbtn dp-del" onclick="dp_confirmDelete('+w._i+')" title="Hapus"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>'
-          : '')+'</div></td></tr>';
+        +'<td><div class="dp-row-btns">'
+        +'<button class="dp-rbtn" onclick="dp_editWorker('+w._i+')" title="Edit"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+        +'<button class="dp-rbtn dp-del" onclick="dp_confirmDelete('+w._i+')" title="Hapus"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>'
+        +'</div></td></tr>';
     }).join('');}
     var info=dp_g('dp-tblInfo');
     if(info) info.textContent='Menampilkan '+data.length+' dari '+dp_workers.length+' pekerja';
@@ -4010,7 +3962,6 @@ function dp_openModal(idx) {
 function dp_closeModal(){ try{dp_g('dp-modalBg').classList.remove('show');}catch(e){} }
 function dp_outsideClose(e){ if(e.target===dp_g('dp-modalBg')) dp_closeModal(); }
 function dp_saveWorker() {
-  if (!CAN_EDIT) return;
   try{
     var nama=dp_g('dp-f-nama').value.trim(),lahir=dp_g('dp-f-lahir').value,ok=true;
     if(!nama){dp_g('dp-e-nama').classList.add('show');ok=false;}else{dp_g('dp-e-nama').classList.remove('show');}
@@ -4022,14 +3973,12 @@ function dp_saveWorker() {
     dp_save();dp_closeModal();dp_render();
   }catch(e){console.error('dp_saveWorker error:',e);}
 }
-function dp_editWorker(i){ if (!CAN_EDIT) return; dp_openModal(i); }
+function dp_editWorker(i){ dp_openModal(i); }
 function dp_confirmDelete(i) {
-  if (!CAN_EDIT) return;
   try{dp_deleteIdx=i;dp_g('dp-confirmMsg').textContent='Hapus data "'+dp_workers[i].nama+'"? Tindakan ini tidak dapat dibatalkan.';dp_g('dp-confirmBg').classList.add('show');}catch(e){}
 }
 function dp_closeConfirm(){ try{dp_g('dp-confirmBg').classList.remove('show');dp_deleteIdx=-1;}catch(e){} }
 function dp_doDelete() {
-  if (!CAN_EDIT) return;
   if(dp_deleteIdx>=0){dp_workers.splice(dp_deleteIdx,1);dp_save();}
   dp_closeConfirm();dp_render();
 }
