@@ -1103,6 +1103,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
       <button class="gs-tab"        id="gstab-analytics" onclick="gsTab('analytics')">Analitik</button>
       <button class="gs-tab"        id="gstab-rating"    onclick="gsTab('rating')">⭐ Rating</button>
       <button class="gs-tab"        id="gstab-weekly"    onclick="gsTab('weekly')">📄 Weekly Report</button>
+      <button class="gs-tab"        id="gstab-mess"      onclick="gsTab('mess')">🏠 Status Mess</button>
     </div>
 
     <!-- HARIAN -->
@@ -1275,6 +1276,34 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
       </div>
     </div>
   </div><!-- /gs-dash -->
+
+    <!-- ── STATUS MESS PAGE ── -->
+    <div class="gs-page" id="gs-pg-mess">
+      <div class="mess-content">
+        <div id="mess-sync-status" class="todo-sync-ind synced">
+          <span>●</span> <span id="mess-sync-txt">Terhubung &amp; sync realtime</span>
+        </div>
+        <div class="mess-asset-tabs">
+          <button class="mess-asset-tab active" id="mtab-balikpapan" onclick="messAssetTab('balikpapan')">🏘️ Mess Balikpapan</button>
+          <button class="mess-asset-tab" id="mtab-putih" onclick="messAssetTab('putih')">🏠 Mess Putih</button>
+          <button class="mess-asset-tab" id="mtab-merah" onclick="messAssetTab('merah')">🏡 Mess Merah</button>
+          <button class="mess-asset-tab" id="mtab-guesthouse" onclick="messAssetTab('guesthouse')">🏨 Guest House</button>
+        </div>
+        <div id="mess-panel-balikpapan" class="mess-panel">
+          <div style="text-align:center;padding:50px 20px;color:#8A9BBE"><div style="font-size:40px;margin-bottom:10px">🏘️</div><p style="font-size:13px">Memuat data...</p></div>
+        </div>
+        <div id="mess-panel-putih" class="mess-panel" style="display:none">
+          <div style="text-align:center;padding:50px 20px;color:#8A9BBE"><div style="font-size:40px;margin-bottom:10px">🏠</div><p style="font-size:13px">Memuat data...</p></div>
+        </div>
+        <div id="mess-panel-merah" class="mess-panel" style="display:none">
+          <div style="text-align:center;padding:50px 20px;color:#8A9BBE"><div style="font-size:40px;margin-bottom:10px">🏡</div><p style="font-size:13px">Memuat data...</p></div>
+        </div>
+        <div id="mess-panel-guesthouse" class="mess-panel" style="display:none">
+          <div style="text-align:center;padding:50px 20px;color:#8A9BBE"><div style="font-size:40px;margin-bottom:10px">🏨</div><p style="font-size:13px">Memuat data...</p></div>
+        </div>
+      </div>
+    </div>
+
 </div><!-- /mod-gs -->
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -1427,7 +1456,6 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     <div class="todo-tabs">
       <button class="todo-tab active" id="ttab-todo" onclick="todoTab('todo')">✅ To Do List</button>
       <button class="todo-tab" id="ttab-catatan" onclick="todoTab('catatan')">📝 Catatan Harian</button>
-      <button class="todo-tab" id="ttab-mess" onclick="todoTab('mess')">🏠 Status Mess</button>
     </div>
 
     <!-- ── TO DO LIST ── -->
@@ -1500,36 +1528,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
       </div>
     </div>
 
-    <!-- ── STATUS MESS ── -->
-    <div class="todo-page" id="todo-pg-mess">
-      <div class="mess-content">
-        <div id="mess-sync-status" class="todo-sync-ind synced">
-          <span>●</span> <span id="mess-sync-txt">Terhubung &amp; sync realtime</span>
-        </div>
-
-        <!-- Sub-tab per aset -->
-        <div class="mess-asset-tabs">
-          <button class="mess-asset-tab active" id="mtab-balikpapan" onclick="messAssetTab('balikpapan')">🏘️ Mess Balikpapan</button>
-          <button class="mess-asset-tab" id="mtab-putih" onclick="messAssetTab('putih')">🏠 Mess Putih</button>
-          <button class="mess-asset-tab" id="mtab-merah" onclick="messAssetTab('merah')">🏡 Mess Merah</button>
-          <button class="mess-asset-tab" id="mtab-guesthouse" onclick="messAssetTab('guesthouse')">🏨 Guest House</button>
-        </div>
-
-        <!-- Panel per aset (hanya 1 yang tampil) -->
-        <div id="mess-panel-balikpapan" class="mess-panel">
-          <div class="todo-empty"><div class="todo-empty-ico">🏘️</div><p>Memuat data...</p></div>
-        </div>
-        <div id="mess-panel-putih" class="mess-panel" style="display:none">
-          <div class="todo-empty"><div class="todo-empty-ico">🏠</div><p>Memuat data...</p></div>
-        </div>
-        <div id="mess-panel-merah" class="mess-panel" style="display:none">
-          <div class="todo-empty"><div class="todo-empty-ico">🏡</div><p>Memuat data...</p></div>
-        </div>
-        <div id="mess-panel-guesthouse" class="mess-panel" style="display:none">
-          <div class="todo-empty"><div class="todo-empty-ico">🏨</div><p>Memuat data...</p></div>
-        </div>
-      </div>
-    </div>
+    <!-- ── STATUS MESS dipindah ke tab GS Care ── -->
 
   </div><!-- /todo-dash -->
 </div><!-- /mod-todo -->
@@ -6272,10 +6271,10 @@ function messAssetTab(assetId) {
   if (panelEl) panelEl.style.display = 'block';
 }
 
-// Extend todoTab to init/render mess module on activation
-var _origTodoTabMess = todoTab;
-todoTab = function(t) {
-  _origTodoTabMess(t);
+// Extend gsTab to init/render mess module on activation
+var _origGsTabMess = gsTab;
+gsTab = function(t) {
+  _origGsTabMess(t);
   if (t === 'mess') {
     messInit();
     messRenderAll();
