@@ -854,6 +854,36 @@ body{font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-f
 .note-date-grp{margin-bottom:14px}
 .note-date-grp-hdr{font-size:10px;font-weight:700;color:#6B21A8;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 8px;border-bottom:1.5px solid rgba(107,33,168,.12);margin-bottom:8px}
 
+/* ── MESS STATUS ──────────────────────────────────────── */
+.mess-content{padding:22px 26px;max-width:1200px;margin:0 auto}
+.mess-asset-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.mess-asset-tab{padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid rgba(0,0,0,.1);background:#fff;color:#4A5D8A;font-family:inherit;transition:all .18s}
+.mess-asset-tab:hover{background:#f0fafa;border-color:#0D6E6E;color:#0D6E6E}
+.mess-asset-tab.active{background:#0D6E6E;border-color:#0D6E6E;color:#fff}
+.mess-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(13,110,110,.07)}
+.mess-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#0D6E6E 0%,#0A5252 100%);gap:12px;flex-wrap:wrap}
+.mess-card-title{font-size:15px;font-weight:700;color:#fff}
+.mess-card-sub{font-size:11px;color:rgba(255,255,255,.72);margin-top:2px}
+.mess-kosong-all-btn{padding:8px 16px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.38);border-radius:10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
+.mess-kosong-all-btn:hover{background:rgba(255,255,255,.3)}
+.mess-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 20px;background:#F2F9F9;border-bottom:1px solid rgba(13,110,110,.1)}
+.mess-stat-box{text-align:center;padding:10px 8px;border-radius:10px;background:#fff;border:1px solid rgba(13,110,110,.1)}
+.mess-stat-box .ms-num{font-size:24px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#0D6E6E;letter-spacing:-1px}
+.mess-stat-box .ms-lbl{font-size:9px;font-weight:700;color:#8A9BBE;text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.mess-house-label{font-size:10px;font-weight:700;color:#0D6E6E;text-transform:uppercase;letter-spacing:.6px;padding:10px 20px 8px;background:rgba(13,110,110,.04);border-bottom:1px solid rgba(13,110,110,.1);border-top:1px solid rgba(13,110,110,.08)}
+.mess-room-row{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid rgba(0,0,0,.05)}
+.mess-room-row:last-of-type{border-bottom:none}
+.mess-room-name{font-size:12px;font-weight:600;color:#4A5D8A;min-width:80px;flex-shrink:0}
+.mess-room-inp{flex:1;background:#F7F9FC;border:1.5px solid rgba(0,0,0,.08);border-radius:8px;padding:7px 11px;font-size:12px;font-family:inherit;outline:none;transition:border .2s,box-shadow .2s}
+.mess-room-inp:focus{border-color:#0D6E6E;box-shadow:0 0 0 3px rgba(13,110,110,.1);background:#fff}
+.mess-room-inp.kosong{color:#94a3b8;font-style:italic}
+.mess-room-inp:not(.kosong){color:#0D1B3E;font-weight:500}
+.mess-save-ind{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .25s;color:#cbd5e1}
+.mess-save-ind.saved{color:#00875A}
+.mess-save-ind.saving{color:#F59E0B;animation:mess-spin .7s linear infinite}
+.mess-upd-row{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#F7F9FC;font-size:10px;color:#8A9BBE;border-top:1px solid rgba(0,0,0,.05)}
+@keyframes mess-spin{to{transform:rotate(360deg)}}
+
 /* Print */
 @media print{
   .cmd-nav,.gs-tabs,.ang-tabs,.gs-filters,button,input[type=date]{display:none!important}
@@ -1397,6 +1427,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     <div class="todo-tabs">
       <button class="todo-tab active" id="ttab-todo" onclick="todoTab('todo')">✅ To Do List</button>
       <button class="todo-tab" id="ttab-catatan" onclick="todoTab('catatan')">📝 Catatan Harian</button>
+      <button class="todo-tab" id="ttab-mess" onclick="todoTab('mess')">🏠 Status Mess</button>
     </div>
 
     <!-- ── TO DO LIST ── -->
@@ -1466,6 +1497,37 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
 
         <!-- Notes list -->
         <div id="note-list"></div>
+      </div>
+    </div>
+
+    <!-- ── STATUS MESS ── -->
+    <div class="todo-page" id="todo-pg-mess">
+      <div class="mess-content">
+        <div id="mess-sync-status" class="todo-sync-ind synced">
+          <span>●</span> <span id="mess-sync-txt">Terhubung &amp; sync realtime</span>
+        </div>
+
+        <!-- Sub-tab per aset -->
+        <div class="mess-asset-tabs">
+          <button class="mess-asset-tab active" id="mtab-balikpapan" onclick="messAssetTab('balikpapan')">🏘️ Mess Balikpapan</button>
+          <button class="mess-asset-tab" id="mtab-putih" onclick="messAssetTab('putih')">🏠 Mess Putih</button>
+          <button class="mess-asset-tab" id="mtab-merah" onclick="messAssetTab('merah')">🏡 Mess Merah</button>
+          <button class="mess-asset-tab" id="mtab-guesthouse" onclick="messAssetTab('guesthouse')">🏨 Guest House</button>
+        </div>
+
+        <!-- Panel per aset (hanya 1 yang tampil) -->
+        <div id="mess-panel-balikpapan" class="mess-panel">
+          <div class="todo-empty"><div class="todo-empty-ico">🏘️</div><p>Memuat data...</p></div>
+        </div>
+        <div id="mess-panel-putih" class="mess-panel" style="display:none">
+          <div class="todo-empty"><div class="todo-empty-ico">🏠</div><p>Memuat data...</p></div>
+        </div>
+        <div id="mess-panel-merah" class="mess-panel" style="display:none">
+          <div class="todo-empty"><div class="todo-empty-ico">🏡</div><p>Memuat data...</p></div>
+        </div>
+        <div id="mess-panel-guesthouse" class="mess-panel" style="display:none">
+          <div class="todo-empty"><div class="todo-empty-ico">🏨</div><p>Memuat data...</p></div>
+        </div>
       </div>
     </div>
 
@@ -5985,6 +6047,240 @@ document.addEventListener('DOMContentLoaded', () => {
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MESS STATUS MODULE — Firebase Realtime Database Sync (same DB as Todo/Catatan)
+// Path: gs_sgt/mess_status/{assetId}/{roomId}
+// ══════════════════════════════════════════════════════════════════════════════
+
+const MESS_ASSETS = {
+  balikpapan: {
+    label: 'Mess Balikpapan', icon: '🏘️',
+    rooms: [
+      { id: 'r18_k1', house: 'Rumah Mes No 18', name: 'Kamar 1' },
+      { id: 'r18_k2', house: 'Rumah Mes No 18', name: 'Kamar 2' },
+      { id: 'r19_k1', house: 'Rumah Mes No 19', name: 'Kamar 1' },
+      { id: 'r19_k2', house: 'Rumah Mes No 19', name: 'Kamar 2' }
+    ]
+  },
+  putih: {
+    label: 'Mess Putih', icon: '🏠',
+    rooms: [1,2,3,4,5,6,7,8,9,10,11,12].map(function(n){ return { id:'k'+n, name:'Kamar '+n }; })
+  },
+  merah: {
+    label: 'Mess Merah', icon: '🏡',
+    rooms: Array.from({length:10}, function(_,i){ return { id:'k'+(i+1), name:'Kamar '+(i+1) }; })
+  },
+  guesthouse: {
+    label: 'Guest House', icon: '🏨',
+    rooms: Array.from({length:4}, function(_,i){ return { id:'k'+(i+1), name:'Kamar '+(i+1) }; })
+  }
+};
+
+var MESS_DATA = {};
+var messListenerStarted = false;
+var messSaveTimers = {};
+
+function messSetSyncStatus(cls, txt) {
+  var el = document.getElementById('mess-sync-status');
+  var txtEl = document.getElementById('mess-sync-txt');
+  if (el) el.className = 'todo-sync-ind ' + cls;
+  if (txtEl) txtEl.textContent = txt;
+}
+
+function messInit() {
+  if (messListenerStarted) return;
+  messListenerStarted = true;
+  messSetSyncStatus('connecting', 'Menghubungkan...');
+  messPoll();
+  setInterval(messPoll, 10000);
+}
+
+async function messPoll() {
+  var data = await fbGet('mess_status');
+  var prev = JSON.stringify(MESS_DATA);
+  MESS_DATA = data || {};
+  if (JSON.stringify(MESS_DATA) !== prev) {
+    // Only re-render if user is not actively editing a mess input
+    var focused = document.activeElement;
+    if (!focused || !focused.id || focused.id.indexOf('mess-inp-') !== 0) {
+      messRenderAll();
+    }
+  }
+  messSetSyncStatus('synced', 'Sync realtime aktif');
+}
+
+function messRenderAll() {
+  Object.keys(MESS_ASSETS).forEach(function(assetId) {
+    messRenderAsset(assetId);
+  });
+}
+
+function messRenderAsset(assetId) {
+  var panel = document.getElementById('mess-panel-' + assetId);
+  if (!panel) return;
+
+  var asset = MESS_ASSETS[assetId];
+  var assetData = MESS_DATA[assetId] || {};
+
+  // Stats
+  var total = asset.rooms.length;
+  var filled = asset.rooms.filter(function(r) {
+    var occ = (assetData[r.id] && assetData[r.id].occupant) || '';
+    return occ.trim() !== '';
+  }).length;
+  var kosong = total - filled;
+
+  // Last updated
+  var lastUpdated = '—';
+  var allUpdates = asset.rooms.map(function(r){ return assetData[r.id] && assetData[r.id].updatedAt; }).filter(Boolean);
+  if (allUpdates.length > 0) {
+    var latest = allUpdates.slice().sort().pop();
+    var d = new Date(latest);
+    lastUpdated = d.toLocaleString('id-ID', {weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }
+
+  // Build rooms HTML (group by house if applicable)
+  var hasHouses = asset.rooms.some(function(r){ return r.house; });
+  var roomsHtml = '';
+  if (hasHouses) {
+    var houses = {};
+    asset.rooms.forEach(function(r) {
+      if (!houses[r.house]) houses[r.house] = [];
+      houses[r.house].push(r);
+    });
+    Object.keys(houses).forEach(function(houseName) {
+      roomsHtml += '<div class="mess-house-label">🏠 ' + houseName + '</div>';
+      houses[houseName].forEach(function(r) {
+        roomsHtml += messRoomRowHtml(assetId, r, assetData);
+      });
+    });
+  } else {
+    asset.rooms.forEach(function(r) {
+      roomsHtml += messRoomRowHtml(assetId, r, assetData);
+    });
+  }
+
+  panel.innerHTML =
+    '<div class="mess-card">' +
+      '<div class="mess-card-hdr">' +
+        '<div>' +
+          '<div class="mess-card-title">' + asset.icon + ' ' + asset.label + '</div>' +
+          '<div class="mess-card-sub">Update terakhir: ' + lastUpdated + '</div>' +
+        '</div>' +
+        '<button class="mess-kosong-all-btn" onclick="messKosongAll(\'' + assetId + '\')">🧹 Kosong Semua</button>' +
+      '</div>' +
+      '<div class="mess-stats-row">' +
+        '<div class="mess-stat-box"><div class="ms-num">' + total + '</div><div class="ms-lbl">Total Kamar</div></div>' +
+        '<div class="mess-stat-box"><div class="ms-num" style="color:#C0001E" id="mess-stat-filled-' + assetId + '">' + filled + '</div><div class="ms-lbl">Terisi</div></div>' +
+        '<div class="mess-stat-box"><div class="ms-num" style="color:#00875A" id="mess-stat-kosong-' + assetId + '">' + kosong + '</div><div class="ms-lbl">Kosong</div></div>' +
+      '</div>' +
+      roomsHtml +
+      '<div class="mess-upd-row">' +
+        '<span>💾 Perubahan tersimpan otomatis ke Firebase</span>' +
+        '<span>' + asset.rooms.length + ' kamar terdaftar</span>' +
+      '</div>' +
+    '</div>';
+}
+
+function messRoomRowHtml(assetId, room, assetData) {
+  var occ = (assetData[room.id] && assetData[room.id].occupant) || '';
+  var isKosong = occ.trim() === '';
+  var safeOcc = occ.replace(/"/g, '&quot;');
+  return '<div class="mess-room-row">' +
+    '<span class="mess-room-name">' + room.name + '</span>' +
+    '<input class="mess-room-inp' + (isKosong ? ' kosong' : '') + '"' +
+      ' id="mess-inp-' + assetId + '-' + room.id + '"' +
+      ' value="' + safeOcc + '"' +
+      ' placeholder="Kosong"' +
+      ' oninput="messOnInput(\'' + assetId + '\',\'' + room.id + '\',this)"' +
+      ' onblur="messSaveRoom(\'' + assetId + '\',\'' + room.id + '\',this.value)">' +
+    '<span class="mess-save-ind saved" id="mess-ind-' + assetId + '-' + room.id + '">✓</span>' +
+  '</div>';
+}
+
+function messOnInput(assetId, roomId, el) {
+  el.classList.toggle('kosong', el.value.trim() === '');
+  var key = assetId + '_' + roomId;
+  clearTimeout(messSaveTimers[key]);
+  messSaveTimers[key] = setTimeout(function(){ messSaveRoom(assetId, roomId, el.value); }, 1500);
+  var ind = document.getElementById('mess-ind-' + assetId + '-' + roomId);
+  if (ind) { ind.className = 'mess-save-ind saving'; ind.textContent = '↻'; }
+}
+
+async function messSaveRoom(assetId, roomId, value) {
+  var key = assetId + '_' + roomId;
+  clearTimeout(messSaveTimers[key]);
+  if (!MESS_DATA[assetId]) MESS_DATA[assetId] = {};
+  MESS_DATA[assetId][roomId] = { occupant: value.trim(), updatedAt: new Date().toISOString() };
+  messSetSyncStatus('connecting', 'Menyimpan...');
+  var patch = {};
+  patch[roomId] = MESS_DATA[assetId][roomId];
+  await fbPatch('mess_status/' + assetId, patch);
+  messSetSyncStatus('synced', 'Tersimpan ✓');
+  var ind = document.getElementById('mess-ind-' + assetId + '-' + roomId);
+  if (ind) { ind.className = 'mess-save-ind saved'; ind.textContent = '✓'; }
+  messUpdateStats(assetId);
+}
+
+function messUpdateStats(assetId) {
+  var asset = MESS_ASSETS[assetId];
+  var assetData = MESS_DATA[assetId] || {};
+  var filled = asset.rooms.filter(function(r) {
+    var occ = (assetData[r.id] && assetData[r.id].occupant) || '';
+    return occ.trim() !== '';
+  }).length;
+  var kosong = asset.rooms.length - filled;
+  var elF = document.getElementById('mess-stat-filled-' + assetId);
+  var elK = document.getElementById('mess-stat-kosong-' + assetId);
+  if (elF) elF.textContent = filled;
+  if (elK) elK.textContent = kosong;
+}
+
+async function messKosongAll(assetId) {
+  var asset = MESS_ASSETS[assetId];
+  if (!confirm('Kosongkan semua kamar di ' + asset.label + '?\n\nSemua nama penghuni akan dihapus.')) return;
+  messSetSyncStatus('connecting', 'Mengosongkan semua...');
+  if (!MESS_DATA[assetId]) MESS_DATA[assetId] = {};
+  var patch = {};
+  var now = new Date().toISOString();
+  asset.rooms.forEach(function(r) {
+    MESS_DATA[assetId][r.id] = { occupant: '', updatedAt: now };
+    patch[r.id] = MESS_DATA[assetId][r.id];
+  });
+  await fbPatch('mess_status/' + assetId, patch);
+  messSetSyncStatus('synced', 'Semua kamar dikosongkan ✓');
+  // Update all inputs in DOM
+  asset.rooms.forEach(function(r) {
+    var inp = document.getElementById('mess-inp-' + assetId + '-' + r.id);
+    if (inp) { inp.value = ''; inp.className = 'mess-room-inp kosong'; }
+    var ind = document.getElementById('mess-ind-' + assetId + '-' + r.id);
+    if (ind) { ind.className = 'mess-save-ind saved'; ind.textContent = '✓'; }
+  });
+  messUpdateStats(assetId);
+  // Refresh header (last updated)
+  messRenderAsset(assetId);
+}
+
+function messAssetTab(assetId) {
+  document.querySelectorAll('.mess-asset-tab').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.mess-panel').forEach(function(el){ el.style.display = 'none'; });
+  var tabEl = document.getElementById('mtab-' + assetId);
+  var panelEl = document.getElementById('mess-panel-' + assetId);
+  if (tabEl) tabEl.classList.add('active');
+  if (panelEl) panelEl.style.display = 'block';
+}
+
+// Extend todoTab to init/render mess module on activation
+var _origTodoTabMess = todoTab;
+todoTab = function(t) {
+  _origTodoTabMess(t);
+  if (t === 'mess') {
+    messInit();
+    messRenderAll();
+  }
+};
 
 
 
