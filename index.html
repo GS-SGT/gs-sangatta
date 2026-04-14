@@ -1275,7 +1275,6 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
         </div>
       </div>
     </div>
-  </div><!-- /gs-dash -->
 
     <!-- ── STATUS MESS PAGE ── -->
     <div class="gs-page" id="gs-pg-mess">
@@ -1304,6 +1303,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
       </div>
     </div>
 
+  </div><!-- /gs-dash -->
 </div><!-- /mod-gs -->
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -5235,7 +5235,7 @@ function gsShowDash() {
 
 function gsTab(t) {
   curGsTab = t;
-  ['daily','history','analytics','rating','weekly'].forEach(id => {
+  ['daily','history','analytics','rating','weekly','mess'].forEach(id => {
     document.getElementById('gstab-' + id)?.classList.toggle('active', id === t);
     document.getElementById('gs-pg-' + id)?.classList.remove('active');
   });
