@@ -6930,7 +6930,24 @@ async function ql_initFirebase() {
 }
 
 function ql_fbSave() {
-  if (!_ql_fbRef) return;
+  if (!_ql_fbRef) {
+    // Firebase belum siap, tunggu lalu retry
+    var retryCount = 0;
+    var retry = setInterval(function() {
+      retryCount++;
+      if (_ql_fbRef) {
+        clearInterval(retry);
+        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(function(m) {
+          m.set(_ql_fbRef, _ql_links);
+        }).catch(function(e){ console.error('ql_fbSave retry error:', e); });
+      } else if (retryCount > 20) {
+        clearInterval(retry);
+        console.warn('ql_fbSave: Firebase tidak tersambung setelah 10 detik.');
+        try { localStorage.setItem('ql_links_backup', JSON.stringify(_ql_links)); } catch(e){}
+      }
+    }, 500);
+    return;
+  }
   import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(function(m) {
     m.set(_ql_fbRef, _ql_links);
   }).catch(function(e){ console.error('ql_fbSave error:', e); });
