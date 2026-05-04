@@ -6328,7 +6328,7 @@ async function _krpActivate() {
     });
 
     // Today jadwal
-    var todayKey = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    var todayKey = new Date(Date.now()+7*3600000).toISOString().slice(0,10).replace(/-/g,'');
     onValue(ref(db,'jadwal_harian/'+todayKey), function(s) {
       var d = s.val(); window._todayData = d;
       if (d) { krp_renderOverview(d); krp_showNotif('Jadwal diperbarui — '+d.disp, d.unit+' · '+krp_fmtTime(d.ts)); }
