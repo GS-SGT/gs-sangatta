@@ -1287,6 +1287,7 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
           <button class="mess-asset-tab" id="mtab-putih" onclick="messAssetTab('putih')">🏠 Mess Putih</button>
           <button class="mess-asset-tab" id="mtab-merah" onclick="messAssetTab('merah')">🏡 Mess Merah</button>
           <button class="mess-asset-tab" id="mtab-guesthouse" onclick="messAssetTab('guesthouse')">🏨 Guest House</button>
+          <button class="mess-asset-tab" id="mtab-histori" onclick="messAssetTab('histori')">📊 Histori &amp; Analitik</button>
         </div>
         <div id="mess-panel-balikpapan" class="mess-panel">
           <div style="text-align:center;padding:50px 20px;color:#8A9BBE"><div style="font-size:40px;margin-bottom:10px">🏘️</div><p style="font-size:13px">Memuat data...</p></div>
@@ -1300,6 +1301,631 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
         <div id="mess-panel-guesthouse" class="mess-panel" style="display:none">
           <div style="text-align:center;padding:50px 20px;color:#8A9BBE"><div style="font-size:40px;margin-bottom:10px">🏨</div><p style="font-size:13px">Memuat data...</p></div>
         </div>
+
+
+<div id="mess-panel-histori" class="mess-panel" style="display:none">
+  <div style="padding:18px 20px;max-width:1100px;margin:0 auto">
+
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#0D1B3E">📊 Histori & Analitik Mess</div>
+        <div style="font-size:11px;color:#8A9BBE;margin-top:3px">Snapshot harian otomatis — lacak tren penghunian dari waktu ke waktu</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button onclick="messHistoriTakeSnapshot()" style="background:#0D6E6E;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+          📸 Ambil Snapshot Sekarang
+        </button>
+        <button onclick="messHistoriExportCSV()" style="background:#fff;color:#0D6E6E;border:1.5px solid #0D6E6E;border-radius:10px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+          ⬇ Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Auto-snapshot notice -->
+    <div id="mh-auto-notice" style="background:#f0fafa;border:1px solid rgba(13,110,110,.2);border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:11px;color:#0D6E6E;display:flex;gap:8px;align-items:center">
+      <span>⏰</span>
+      <span id="mh-auto-txt">Snapshot otomatis diambil setiap hari sekali saat halaman dibuka. Terakhir: <strong id="mh-last-auto">—</strong></span>
+    </div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+      <select id="mh-filter-asset" onchange="messHistoriRender()" style="background:#fff;border:1.5px solid rgba(0,0,0,.1);border-radius:8px;padding:7px 12px;font-size:12px;font-family:inherit;outline:none;color:#0D1B3E">
+        <option value="">Semua Mess</option>
+        <option value="balikpapan">Mess Balikpapan</option>
+        <option value="putih">Mess Putih</option>
+        <option value="merah">Mess Merah</option>
+        <option value="guesthouse">Guest House</option>
+      </select>
+      <select id="mh-filter-period" onchange="messHistoriRender()" style="background:#fff;border:1.5px solid rgba(0,0,0,.1);border-radius:8px;padding:7px 12px;font-size:12px;font-family:inherit;outline:none;color:#0D1B3E">
+        <option value="30">30 hari terakhir</option>
+        <option value="60">60 hari terakhir</option>
+        <option value="90">90 hari terakhir</option>
+        <option value="180">6 bulan terakhir</option>
+        <option value="365">1 tahun terakhir</option>
+        <option value="all">Semua data</option>
+      </select>
+      <div id="mh-data-count" style="font-size:11px;color:#8A9BBE;margin-left:4px"></div>
+    </div>
+
+    <!-- Summary cards -->
+    <div id="mh-summary-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px"></div>
+
+    <!-- Chart: Trend line -->
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#4A5D8A;margin-bottom:12px">📈 Tren Penghunian Harian</div>
+      <div style="height:200px;position:relative">
+        <canvas id="mh-chart-trend"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart: Monthly occupancy bar -->
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#4A5D8A;margin-bottom:12px">📅 Rata-rata Penghunian per Bulan</div>
+      <div style="height:180px;position:relative">
+        <canvas id="mh-chart-monthly"></canvas>
+      </div>
+    </div>
+
+    <!-- Per-asset breakdown (stacked) -->
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#4A5D8A;margin-bottom:12px">🏠 Breakdown per Mess (rata-rata terisi)</div>
+      <div id="mh-asset-breakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px"></div>
+    </div>
+
+    <!-- Data table -->
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;font-weight:700;color:#4A5D8A">📋 Riwayat Snapshot</div>
+        <div style="font-size:10px;color:#8A9BBE" id="mh-table-count"></div>
+      </div>
+      <div style="overflow-x:auto;max-height:300px;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead>
+            <tr style="background:#F7F9FC;position:sticky;top:0;z-index:1">
+              <th style="padding:10px 14px;text-align:left;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">Tanggal</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">Balikpapan</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">Putih</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">Merah</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">Guest House</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#0D6E6E;border-bottom:1px solid rgba(0,0,0,.07)">Total Terisi</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">Total Kamar</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#4A5D8A;border-bottom:1px solid rgba(0,0,0,.07)">% Occupancy</th>
+            </tr>
+          </thead>
+          <tbody id="mh-table-body">
+            <tr><td colspan="8" style="padding:30px;text-align:center;color:#8A9BBE">Memuat data histori...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// MESS HISTORY MODULE
+// Firebase path: gs_sgt/mess_history/{dateKey} = { date, assets: { balikpapan: {filled, total}, ... }, totalFilled, totalRooms, snapshotAt }
+// dateKey format: '2026-05-04'
+// ═══════════════════════════════════════════════════════════════════════════════
+
+var MH_DATA = {};          // { dateKey: snapshotObj }
+var MH_CHART_TREND = null;
+var MH_CHART_MONTHLY = null;
+var MH_LOADED = false;
+
+// ── Hitung filled rooms dari MESS_DATA saat ini ──────────────────────────────
+function messHistoriCountAsset(assetId) {
+  var asset = MESS_ASSETS[assetId];
+  if (!asset) return { filled: 0, total: 0 };
+  var assetData = (MESS_DATA && MESS_DATA[assetId]) || {};
+  var filled = asset.rooms.filter(function(r) {
+    var occ = (assetData[r.id] && assetData[r.id].occupant) || '';
+    return occ.trim() !== '';
+  }).length;
+  return { filled: filled, total: asset.rooms.length };
+}
+
+// ── Ambil snapshot sekarang dan simpan ke Firebase ───────────────────────────
+async function messHistoriTakeSnapshot(isAuto) {
+  var now = new Date();
+  // Gunakan WITA (UTC+8)
+  var wita = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60000);
+  var dateKey = wita.getFullYear() + '-'
+    + String(wita.getMonth() + 1).padStart(2, '0') + '-'
+    + String(wita.getDate()).padStart(2, '0');
+
+  // Jika auto, cek apakah sudah ada snapshot hari ini
+  if (isAuto && MH_DATA[dateKey]) {
+    return;
+  }
+
+  var assets = {};
+  var totalFilled = 0;
+  var totalRooms = 0;
+  Object.keys(MESS_ASSETS).forEach(function(id) {
+    var s = messHistoriCountAsset(id);
+    assets[id] = s;
+    totalFilled += s.filled;
+    totalRooms += s.total;
+  });
+
+  var snapshot = {
+    date: dateKey,
+    assets: assets,
+    totalFilled: totalFilled,
+    totalRooms: totalRooms,
+    snapshotAt: now.toISOString(),
+    auto: !!isAuto
+  };
+
+  // Simpan ke Firebase
+  try {
+    await fbPatch('mess_history', { [dateKey]: snapshot });
+    MH_DATA[dateKey] = snapshot;
+
+    if (!isAuto) {
+      // Update UI
+      messHistoriRender();
+      // Toast (kalau ada)
+      if (typeof toast === 'function') toast('✓ Snapshot berhasil disimpan untuk ' + dateKey);
+    } else {
+      // Update label terakhir auto
+      var el = document.getElementById('mh-last-auto');
+      if (el) el.textContent = dateKey;
+      localStorage.setItem('mess_last_snapshot', dateKey);
+    }
+  } catch(e) {
+    if (!isAuto && typeof toast === 'function') toast('⚠ Gagal simpan snapshot: ' + e.message, 'var(--amber)');
+    console.error('messHistoriTakeSnapshot error:', e);
+  }
+}
+
+// ── Load semua histori dari Firebase ─────────────────────────────────────────
+async function messHistoriLoad() {
+  try {
+    var data = await fbGet('mess_history');
+    MH_DATA = data || {};
+    MH_LOADED = true;
+    messHistoriRender();
+
+    // Update last auto label
+    var last = localStorage.getItem('mess_last_snapshot') || '—';
+    var el = document.getElementById('mh-last-auto');
+    if (el) el.textContent = last;
+  } catch(e) {
+    console.error('messHistoriLoad error:', e);
+    MH_DATA = {};
+    MH_LOADED = true;
+    messHistoriRender();
+  }
+}
+
+// ── Auto-snapshot harian ──────────────────────────────────────────────────────
+function messHistoriAutoSnapshot() {
+  var wita = new Date(Date.now() + (8 * 60 + new Date().getTimezoneOffset()) * 60000);
+  var todayKey = wita.getFullYear() + '-'
+    + String(wita.getMonth() + 1).padStart(2, '0') + '-'
+    + String(wita.getDate()).padStart(2, '0');
+
+  var lastSnap = localStorage.getItem('mess_last_snapshot');
+  if (lastSnap !== todayKey) {
+    // Delay 3 detik agar MESS_DATA sudah ter-load dari Firebase
+    setTimeout(function() {
+      messHistoriTakeSnapshot(true).then(function() {
+        localStorage.setItem('mess_last_snapshot', todayKey);
+        var el = document.getElementById('mh-last-auto');
+        if (el) el.textContent = todayKey;
+      });
+    }, 3000);
+  } else {
+    var el = document.getElementById('mh-last-auto');
+    if (el) el.textContent = todayKey;
+  }
+}
+
+// ── Filter data sesuai pilihan ────────────────────────────────────────────────
+function messHistoriGetFiltered() {
+  var assetFilter = (document.getElementById('mh-filter-asset') || {}).value || '';
+  var periodFilter = parseInt((document.getElementById('mh-filter-period') || {}).value || '30');
+
+  var now = Date.now();
+  var keys = Object.keys(MH_DATA).sort();
+
+  return keys.map(function(k) { return MH_DATA[k]; }).filter(function(s) {
+    if (!s || !s.date) return false;
+    if (periodFilter !== 'all' && !isNaN(periodFilter)) {
+      var dayMs = periodFilter * 24 * 60 * 60 * 1000;
+      var snapDate = new Date(s.snapshotAt || s.date).getTime();
+      if (now - snapDate > dayMs) return false;
+    }
+    return true;
+  });
+}
+
+// ── Render semua komponen histori ────────────────────────────────────────────
+function messHistoriRender() {
+  var filtered = messHistoriGetFiltered();
+  var assetFilter = (document.getElementById('mh-filter-asset') || {}).value || '';
+
+  // Data count
+  var countEl = document.getElementById('mh-data-count');
+  if (countEl) countEl.textContent = filtered.length + ' snapshot ditemukan';
+
+  // Summary cards
+  messHistoriRenderSummaryCards(filtered, assetFilter);
+
+  // Charts
+  messHistoriRenderTrendChart(filtered, assetFilter);
+  messHistoriRenderMonthlyChart(filtered, assetFilter);
+
+  // Asset breakdown
+  messHistoriRenderBreakdown(filtered);
+
+  // Table
+  messHistoriRenderTable(filtered, assetFilter);
+}
+
+// ── Summary cards ─────────────────────────────────────────────────────────────
+function messHistoriRenderSummaryCards(filtered, assetFilter) {
+  var el = document.getElementById('mh-summary-cards');
+  if (!el || !filtered.length) {
+    if (el) el.innerHTML = '<div style="font-size:12px;color:#8A9BBE;padding:20px;text-align:center">Belum ada data histori. Klik "Ambil Snapshot" untuk mulai.</div>';
+    return;
+  }
+
+  function getFilled(s) {
+    if (assetFilter && s.assets && s.assets[assetFilter]) return s.assets[assetFilter].filled || 0;
+    return s.totalFilled || 0;
+  }
+  function getTotal(s) {
+    if (assetFilter && s.assets && s.assets[assetFilter]) return s.assets[assetFilter].total || 0;
+    return s.totalRooms || 0;
+  }
+
+  var filleds = filtered.map(getFilled);
+  var totals = filtered.map(getTotal);
+  var avgFilled = filleds.reduce(function(a, b) { return a + b; }, 0) / filleds.length;
+  var maxFilled = Math.max.apply(null, filleds);
+  var minFilled = Math.min.apply(null, filleds);
+  var lastSnap = filtered[filtered.length - 1];
+  var lastTotal = getTotal(lastSnap);
+  var lastOcc = lastTotal > 0 ? Math.round(getFilled(lastSnap) / lastTotal * 100) : 0;
+  var avgOcc = totals.reduce(function(s, t, i) { return s + (t > 0 ? filleds[i] / t : 0); }, 0) / filtered.length * 100;
+
+  var cards = [
+    { label: 'Snapshot Tersimpan', val: filtered.length, sub: 'data tersimpan', color: '#3B82F6' },
+    { label: 'Occupancy Saat Ini', val: lastOcc + '%', sub: getFilled(lastSnap) + ' dari ' + lastTotal + ' kamar', color: lastOcc >= 70 ? '#10B981' : lastOcc >= 40 ? '#F59E0B' : '#EF4444' },
+    { label: 'Rata-rata Occupancy', val: avgOcc.toFixed(1) + '%', sub: 'selama periode ini', color: '#8B5CF6' },
+    { label: 'Puncak Terisi', val: maxFilled, sub: 'kamar (tertinggi)', color: '#10B981' },
+    { label: 'Terendah Terisi', val: minFilled, sub: 'kamar (terendah)', color: '#F59E0B' },
+    { label: 'Rata-rata Terisi', val: avgFilled.toFixed(1), sub: 'kamar per hari', color: '#0D6E6E' }
+  ];
+
+  el.innerHTML = cards.map(function(c) {
+    return '<div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px 16px;text-align:center">'
+      + '<div style="font-size:9px;font-weight:700;color:#8A9BBE;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">' + c.label + '</div>'
+      + '<div style="font-size:22px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:' + c.color + ';letter-spacing:-1px">' + c.val + '</div>'
+      + '<div style="font-size:10px;color:#8A9BBE;margin-top:3px">' + c.sub + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── Trend chart ──────────────────────────────────────────────────────────────
+function messHistoriRenderTrendChart(filtered, assetFilter) {
+  var canvas = document.getElementById('mh-chart-trend');
+  if (!canvas) return;
+
+  if (MH_CHART_TREND) { try { MH_CHART_TREND.destroy(); } catch(e) {} }
+
+  if (!filtered.length) return;
+
+  var MESS_COLORS = {
+    balikpapan: '#3B82F6',
+    putih: '#10B981',
+    merah: '#EF4444',
+    guesthouse: '#F59E0B'
+  };
+  var MESS_LABELS = {
+    balikpapan: 'Balikpapan',
+    putih: 'Putih',
+    merah: 'Merah',
+    guesthouse: 'Guest House'
+  };
+
+  var labels = filtered.map(function(s) {
+    var d = new Date(s.date);
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  });
+
+  var datasets = [];
+  if (assetFilter) {
+    datasets.push({
+      label: MESS_LABELS[assetFilter] || assetFilter,
+      data: filtered.map(function(s) { return s.assets && s.assets[assetFilter] ? s.assets[assetFilter].filled : 0; }),
+      borderColor: MESS_COLORS[assetFilter] || '#0D6E6E',
+      backgroundColor: (MESS_COLORS[assetFilter] || '#0D6E6E') + '20',
+      borderWidth: 2, pointRadius: filtered.length > 30 ? 0 : 3,
+      tension: 0.3, fill: true
+    });
+  } else {
+    // Total
+    datasets.push({
+      label: 'Total Terisi',
+      data: filtered.map(function(s) { return s.totalFilled || 0; }),
+      borderColor: '#0D6E6E',
+      backgroundColor: '#0D6E6E20',
+      borderWidth: 2.5, pointRadius: filtered.length > 30 ? 0 : 3,
+      tension: 0.3, fill: true
+    });
+    // Per asset
+    Object.keys(MESS_ASSETS).forEach(function(id) {
+      datasets.push({
+        label: MESS_LABELS[id],
+        data: filtered.map(function(s) { return s.assets && s.assets[id] ? s.assets[id].filled : 0; }),
+        borderColor: MESS_COLORS[id],
+        backgroundColor: 'transparent',
+        borderWidth: 1.5, pointRadius: 0,
+        tension: 0.3, fill: false,
+        borderDash: [4, 3]
+      });
+    });
+  }
+
+  MH_CHART_TREND = new Chart(canvas, {
+    type: 'line',
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { labels: { color: '#4A5D8A', font: { size: 10 }, boxWidth: 12 } }
+      },
+      scales: {
+        x: { ticks: { color: '#8A9BBE', font: { size: 9 }, maxTicksLimit: 12 }, grid: { color: 'rgba(0,0,0,.04)' } },
+        y: { ticks: { color: '#8A9BBE', font: { size: 9 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ── Monthly avg chart ─────────────────────────────────────────────────────────
+function messHistoriRenderMonthlyChart(filtered, assetFilter) {
+  var canvas = document.getElementById('mh-chart-monthly');
+  if (!canvas) return;
+
+  if (MH_CHART_MONTHLY) { try { MH_CHART_MONTHLY.destroy(); } catch(e) {} }
+  if (!filtered.length) return;
+
+  var MONTH_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var monthly = {}; // { 'YYYY-MM': { sum: 0, count: 0, label: '' } }
+
+  filtered.forEach(function(s) {
+    var d = new Date(s.date);
+    var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    var label = MONTH_ID[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
+    if (!monthly[key]) monthly[key] = { sum: 0, count: 0, label: label, occ: 0, occCount: 0 };
+
+    var filled = assetFilter && s.assets && s.assets[assetFilter]
+      ? s.assets[assetFilter].filled
+      : (s.totalFilled || 0);
+    var total = assetFilter && s.assets && s.assets[assetFilter]
+      ? s.assets[assetFilter].total
+      : (s.totalRooms || 0);
+
+    monthly[key].sum += filled;
+    monthly[key].count++;
+    if (total > 0) { monthly[key].occ += filled / total * 100; monthly[key].occCount++; }
+  });
+
+  var sortedKeys = Object.keys(monthly).sort();
+  var labels = sortedKeys.map(function(k) { return monthly[k].label; });
+  var avgData = sortedKeys.map(function(k) { return +(monthly[k].sum / monthly[k].count).toFixed(2); });
+  var occData = sortedKeys.map(function(k) { return monthly[k].occCount > 0 ? +(monthly[k].occ / monthly[k].occCount).toFixed(1) : 0; });
+
+  MH_CHART_MONTHLY = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Rata-rata Terisi (kamar)',
+          data: avgData,
+          backgroundColor: 'rgba(13,110,110,.65)',
+          borderColor: '#0D6E6E',
+          borderWidth: 1, borderRadius: 6, yAxisID: 'y'
+        },
+        {
+          label: 'Occupancy Rate (%)',
+          data: occData,
+          type: 'line',
+          borderColor: '#F59E0B',
+          backgroundColor: 'transparent',
+          borderWidth: 2, pointRadius: 4,
+          pointBackgroundColor: '#F59E0B',
+          tension: 0.3, yAxisID: 'y2'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#4A5D8A', font: { size: 10 }, boxWidth: 12 } }
+      },
+      scales: {
+        x: { ticks: { color: '#8A9BBE', font: { size: 9 } }, grid: { display: false } },
+        y: {
+          position: 'left',
+          ticks: { color: '#8A9BBE', font: { size: 9 }, stepSize: 1 },
+          grid: { color: 'rgba(0,0,0,.04)' }, beginAtZero: true,
+          title: { display: true, text: 'Kamar', color: '#8A9BBE', font: { size: 9 } }
+        },
+        y2: {
+          position: 'right',
+          ticks: { color: '#F59E0B', font: { size: 9 }, callback: function(v) { return v + '%'; } },
+          grid: { display: false }, beginAtZero: true, max: 100,
+          title: { display: true, text: 'Occupancy', color: '#F59E0B', font: { size: 9 } }
+        }
+      }
+    }
+  });
+}
+
+// ── Per-asset breakdown ───────────────────────────────────────────────────────
+function messHistoriRenderBreakdown(filtered) {
+  var el = document.getElementById('mh-asset-breakdown');
+  if (!el || !filtered.length) { if (el) el.innerHTML = ''; return; }
+
+  var MESS_COLORS = { balikpapan: '#3B82F6', putih: '#10B981', merah: '#EF4444', guesthouse: '#F59E0B' };
+  var MESS_ICONS  = { balikpapan: '🏘️', putih: '🏠', merah: '🏡', guesthouse: '🏨' };
+  var MESS_LABELS = { balikpapan: 'Balikpapan', putih: 'Putih', merah: 'Merah', guesthouse: 'Guest House' };
+
+  el.innerHTML = Object.keys(MESS_ASSETS).map(function(id) {
+    var sums = filtered.filter(function(s) { return s.assets && s.assets[id]; })
+      .map(function(s) { return s.assets[id].filled; });
+    if (!sums.length) return '';
+    var avg = sums.reduce(function(a, b) { return a + b; }, 0) / sums.length;
+    var total = filtered[0].assets && filtered[0].assets[id] ? filtered[0].assets[id].total : MESS_ASSETS[id].rooms.length;
+    var pct = total > 0 ? avg / total * 100 : 0;
+    var color = MESS_COLORS[id] || '#0D6E6E';
+    var lastFilled = filtered[filtered.length - 1].assets && filtered[filtered.length - 1].assets[id]
+      ? filtered[filtered.length - 1].assets[id].filled : 0;
+
+    return '<div style="background:#F7F9FC;border:1px solid rgba(0,0,0,.07);border-radius:12px;padding:14px 16px">'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">'
+      + '<span style="font-size:16px">' + (MESS_ICONS[id] || '🏠') + '</span>'
+      + '<div style="font-size:12px;font-weight:700;color:#0D1B3E">' + (MESS_LABELS[id] || id) + '</div>'
+      + '</div>'
+      + '<div style="margin-bottom:6px">'
+      + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#8A9BBE;margin-bottom:4px">'
+      + '<span>Rata-rata terisi</span><span style="font-weight:700;color:' + color + '">' + avg.toFixed(1) + ' / ' + total + '</span>'
+      + '</div>'
+      + '<div style="background:#e8f0f0;border-radius:6px;height:8px;overflow:hidden">'
+      + '<div style="width:' + Math.min(100, pct) + '%;height:100%;background:' + color + ';border-radius:6px;transition:width .5s"></div>'
+      + '</div>'
+      + '<div style="font-size:9px;color:#8A9BBE;margin-top:3px">' + pct.toFixed(1) + '% rata-rata occupancy</div>'
+      + '</div>'
+      + '<div style="font-size:10px;color:#4A5D8A;border-top:1px solid rgba(0,0,0,.06);padding-top:8px;margin-top:8px">'
+      + 'Terkini: <strong style="color:' + color + '">' + lastFilled + ' kamar terisi</strong>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function messHistoriRenderTable(filtered, assetFilter) {
+  var tbody = document.getElementById('mh-table-body');
+  var countEl = document.getElementById('mh-table-count');
+  if (!tbody) return;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:#8A9BBE">Belum ada data snapshot. Klik "Ambil Snapshot Sekarang" untuk mulai merekam.</td></tr>';
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  if (countEl) countEl.textContent = filtered.length + ' baris';
+
+  // Show newest first
+  var sorted = filtered.slice().reverse();
+  tbody.innerHTML = sorted.map(function(s) {
+    var d = new Date(s.date);
+    var tgl = d.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+    var bkpFilled = s.assets && s.assets.balikpapan ? s.assets.balikpapan.filled : '—';
+    var bkpTotal  = s.assets && s.assets.balikpapan ? s.assets.balikpapan.total  : '—';
+    var pFilled   = s.assets && s.assets.putih      ? s.assets.putih.filled      : '—';
+    var pTotal    = s.assets && s.assets.putih      ? s.assets.putih.total       : '—';
+    var mFilled   = s.assets && s.assets.merah      ? s.assets.merah.filled      : '—';
+    var mTotal    = s.assets && s.assets.merah      ? s.assets.merah.total       : '—';
+    var ghFilled  = s.assets && s.assets.guesthouse ? s.assets.guesthouse.filled : '—';
+    var ghTotal   = s.assets && s.assets.guesthouse ? s.assets.guesthouse.total  : '—';
+    var occ = s.totalRooms > 0 ? Math.round(s.totalFilled / s.totalRooms * 100) : 0;
+    var occColor = occ >= 70 ? '#10B981' : occ >= 40 ? '#F59E0B' : '#EF4444';
+    var autoTag = s.auto ? '<span style="font-size:8px;background:#e8f5f5;color:#0D6E6E;padding:1px 5px;border-radius:4px;margin-left:4px">auto</span>' : '';
+
+    return '<tr style="border-bottom:1px solid rgba(0,0,0,.04)">'
+      + '<td style="padding:9px 14px;color:#0D1B3E;font-weight:500">' + tgl + autoTag + '</td>'
+      + '<td style="padding:9px 14px;text-align:center;color:#3B82F6;font-weight:600">' + bkpFilled + '<span style="color:#8A9BBE;font-weight:400">/' + bkpTotal + '</span></td>'
+      + '<td style="padding:9px 14px;text-align:center;color:#10B981;font-weight:600">' + pFilled + '<span style="color:#8A9BBE;font-weight:400">/' + pTotal + '</span></td>'
+      + '<td style="padding:9px 14px;text-align:center;color:#EF4444;font-weight:600">' + mFilled + '<span style="color:#8A9BBE;font-weight:400">/' + mTotal + '</span></td>'
+      + '<td style="padding:9px 14px;text-align:center;color:#F59E0B;font-weight:600">' + ghFilled + '<span style="color:#8A9BBE;font-weight:400">/' + ghTotal + '</span></td>'
+      + '<td style="padding:9px 14px;text-align:center;font-weight:800;color:#0D6E6E;font-family:\'JetBrains Mono\',monospace">' + s.totalFilled + '</td>'
+      + '<td style="padding:9px 14px;text-align:center;color:#8A9BBE">' + s.totalRooms + '</td>'
+      + '<td style="padding:9px 14px;text-align:center"><span style="font-weight:700;color:' + occColor + '">' + occ + '%</span></td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+function messHistoriExportCSV() {
+  var filtered = messHistoriGetFiltered();
+  if (!filtered.length) { if (typeof toast === 'function') toast('Tidak ada data untuk diexport', 'var(--amber)'); return; }
+
+  var rows = [['Tanggal','Balikpapan Terisi','Balikpapan Total','Putih Terisi','Putih Total','Merah Terisi','Merah Total','GuestHouse Terisi','GuestHouse Total','Total Terisi','Total Kamar','Occupancy %','Snapshot At','Auto']];
+  filtered.forEach(function(s) {
+    var occ = s.totalRooms > 0 ? (s.totalFilled / s.totalRooms * 100).toFixed(1) : '0';
+    rows.push([
+      s.date,
+      s.assets && s.assets.balikpapan ? s.assets.balikpapan.filled : '',
+      s.assets && s.assets.balikpapan ? s.assets.balikpapan.total  : '',
+      s.assets && s.assets.putih      ? s.assets.putih.filled      : '',
+      s.assets && s.assets.putih      ? s.assets.putih.total       : '',
+      s.assets && s.assets.merah      ? s.assets.merah.filled      : '',
+      s.assets && s.assets.merah      ? s.assets.merah.total       : '',
+      s.assets && s.assets.guesthouse ? s.assets.guesthouse.filled : '',
+      s.assets && s.assets.guesthouse ? s.assets.guesthouse.total  : '',
+      s.totalFilled, s.totalRooms, occ,
+      s.snapshotAt || '', s.auto ? 'Ya' : 'Manual'
+    ]);
+  });
+
+  var csv = rows.map(function(r) {
+    return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'histori_mess_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ── Extend messAssetTab to load histori data ──────────────────────────────────
+var _origMessAssetTab = messAssetTab;
+messAssetTab = function(assetId) {
+  _origMessAssetTab(assetId);
+  // Show/hide histori panel (not handled by original)
+  var histPanel = document.getElementById('mess-panel-histori');
+  if (histPanel) histPanel.style.display = assetId === 'histori' ? 'block' : 'none';
+
+  if (assetId === 'histori') {
+    if (!MH_LOADED) {
+      messHistoriLoad();
+    } else {
+      messHistoriRender();
+    }
+  }
+};
+
+// ── Hook: auto-snapshot setiap kali mess tab dibuka ───────────────────────────
+var _origGsTabMess2 = gsTab;
+gsTab = function(t) {
+  _origGsTabMess2(t);
+  if (t === 'mess') {
+    // Auto snapshot setelah mess data loaded (delay)
+    setTimeout(messHistoriAutoSnapshot, 5000);
+  }
+};
+
+// ── Juga hook: saat panel histori pertama kali muncul setelah mtab button click ─
+// (sudah ditangani di atas via extend messAssetTab)
+
+console.log('[MH] Mess History module loaded.');
+</script>
+
       </div>
     </div>
 
