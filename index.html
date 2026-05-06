@@ -1323,10 +1323,13 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     </div>
 
     <!-- Auto-snapshot notice -->
-    <div id="mh-auto-notice" style="background:#f0fafa;border:1px solid rgba(13,110,110,.2);border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:11px;color:#0D6E6E;display:flex;gap:8px;align-items:center">
+    <div id="mh-auto-notice" style="background:#f0fafa;border:1px solid rgba(13,110,110,.2);border-radius:10px;padding:10px 16px;margin-bottom:10px;font-size:11px;color:#0D6E6E;display:flex;gap:8px;align-items:center">
       <span>⏰</span>
       <span id="mh-auto-txt">Snapshot otomatis diambil setiap hari sekali saat halaman dibuka. Terakhir: <strong id="mh-last-auto">—</strong></span>
     </div>
+
+    <!-- Gap warning notice (tersembunyi, muncul kalau ada gap) -->
+    <div id="mh-gap-notice" style="display:none;background:#fff8e6;border:1.5px solid #F59E0B;border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:11px;color:#92400e;gap:8px;align-items:flex-start"></div>
 
     <!-- Filter bar -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
@@ -1491,7 +1494,7 @@ async function messHistoriLoad() {
     var data = await fbGet('mess_history');
     MH_DATA = data || {};
     MH_LOADED = true;
-    messHistoriRender();
+    messHistoriRender();  // ini sudah include messHistoriCheckGap via patch
 
     // Update last auto label
     var last = localStorage.getItem('mess_last_snapshot') || '—';
@@ -1512,19 +1515,27 @@ function messHistoriAutoSnapshot() {
     + String(wita.getMonth() + 1).padStart(2, '0') + '-'
     + String(wita.getDate()).padStart(2, '0');
 
+  // Cek dari MH_DATA (Firebase) ATAU localStorage — jika salah satunya sudah ada, skip
   var lastSnap = localStorage.getItem('mess_last_snapshot');
-  if (lastSnap !== todayKey) {
+  var alreadyInFirebase = MH_DATA && MH_DATA[todayKey];
+
+  if (lastSnap !== todayKey && !alreadyInFirebase) {
     // Delay 3 detik agar MESS_DATA sudah ter-load dari Firebase
     setTimeout(function() {
       messHistoriTakeSnapshot(true).then(function() {
         localStorage.setItem('mess_last_snapshot', todayKey);
         var el = document.getElementById('mh-last-auto');
         if (el) el.textContent = todayKey;
+        // Refresh gap notice setelah snapshot
+        messHistoriCheckGap();
       });
     }, 3000);
   } else {
     var el = document.getElementById('mh-last-auto');
     if (el) el.textContent = todayKey;
+    if (alreadyInFirebase) {
+      localStorage.setItem('mess_last_snapshot', todayKey);
+    }
   }
 }
 
@@ -1918,6 +1929,63 @@ gsTab = function(t) {
     // Auto snapshot setelah mess data loaded (delay)
     setTimeout(messHistoriAutoSnapshot, 5000);
   }
+};
+
+// ── Auto-snapshot saat halaman pertama kali load (tidak perlu buka tab Mess) ──
+// Ini memastikan data tersimpan meski user tidak pernah klik tab Mess hari ini
+window.addEventListener('load', function() {
+  // Tunggu Firebase + MESS_DATA ter-load dulu (10 detik)
+  setTimeout(function() {
+    // Hanya jalankan kalau Firebase sudah terhubung
+    if (typeof fbGet === 'function' && typeof MESS_DATA !== 'undefined') {
+      messHistoriLoad().then(function() {
+        messHistoriAutoSnapshot();
+      }).catch(function() {
+        messHistoriAutoSnapshot();
+      });
+    }
+  }, 10000);
+});
+
+// ── Deteksi gap data dan tampilkan peringatan ──────────────────────────────────
+function messHistoriCheckGap() {
+  var notice = document.getElementById('mh-gap-notice');
+  if (!notice) return;
+
+  var keys = Object.keys(MH_DATA).sort();
+  if (!keys.length) { notice.style.display = 'none'; return; }
+
+  var lastKey = keys[keys.length - 1];
+  var wita = new Date(Date.now() + (8 * 60 + new Date().getTimezoneOffset()) * 60000);
+  var todayKey = wita.getFullYear() + '-'
+    + String(wita.getMonth() + 1).padStart(2, '0') + '-'
+    + String(wita.getDate()).padStart(2, '0');
+
+  var lastDate = new Date(lastKey + 'T00:00:00');
+  var todayDate = new Date(todayKey + 'T00:00:00');
+  var gapDays = Math.round((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+
+  if (gapDays > 1) {
+    notice.style.display = 'flex';
+    notice.innerHTML = '<span>⚠️</span>'
+      + '<span>Ada <strong>' + (gapDays - 1) + ' hari data terlewat</strong> sejak snapshot terakhir ('
+      + lastKey + '). Data hari-hari yang terlewat tidak bisa direkonstruksi. '
+      + '<strong>Klik "Ambil Snapshot Sekarang"</strong> untuk menyimpan data hari ini sebelum hilang.</span>';
+  } else if (gapDays === 1 && lastKey !== todayKey) {
+    notice.style.display = 'flex';
+    notice.innerHTML = '<span>📅</span>'
+      + '<span>Belum ada snapshot hari ini (<strong>' + todayKey + '</strong>). '
+      + 'Klik <strong>"Ambil Snapshot Sekarang"</strong> untuk menyimpan.</span>';
+  } else {
+    notice.style.display = 'none';
+  }
+}
+
+// Patch messHistoriRender untuk cek gap setiap render
+var _origMessHistoriRender = messHistoriRender;
+messHistoriRender = function() {
+  _origMessHistoriRender();
+  messHistoriCheckGap();
 };
 
 // ── Juga hook: saat panel histori pertama kali muncul setelah mtab button click ─
