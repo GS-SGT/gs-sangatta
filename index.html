@@ -7623,6 +7623,20 @@ async function ql_initFirebase() {
   }
 }
 
+function ql_sanitize(arr) {
+  // Firebase menolak nilai undefined -- pastikan semua field terisi string/value valid
+  return arr.map(function(l) {
+    return {
+      name:  l.name  || '',
+      url:   l.url   || '',
+      cat:   l.cat   || '',
+      icon:  l.icon  || '',
+      color: l.color || '#003087',
+      ts:    l.ts    || Date.now()
+    };
+  });
+}
+
 function ql_fbSave() {
   if (!_ql_fbRef) {
     // Firebase belum siap, tunggu lalu retry
@@ -7632,7 +7646,7 @@ function ql_fbSave() {
       if (_ql_fbRef) {
         clearInterval(retry);
         import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(function(m) {
-          m.set(_ql_fbRef, _ql_links);
+          m.set(_ql_fbRef, ql_sanitize(_ql_links));
         }).catch(function(e){ console.error('ql_fbSave retry error:', e); });
       } else if (retryCount > 20) {
         clearInterval(retry);
@@ -7643,7 +7657,7 @@ function ql_fbSave() {
     return;
   }
   import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(function(m) {
-    m.set(_ql_fbRef, _ql_links);
+    m.set(_ql_fbRef, ql_sanitize(_ql_links));
   }).catch(function(e){ console.error('ql_fbSave error:', e); });
 }
 
@@ -7736,7 +7750,7 @@ function ql_save() {
   else if (/docs\.google\.com\/forms/i.test(url))   col = '#E8001D';
   else if (/github\.io/i.test(url))                 col = '#0052CC';
   else if (/drive\.google/i.test(url))              col = '#F59E0B';
-  var entry = { name:name, url:url, cat:cat, icon:icon||undefined, color:col, ts:Date.now() };
+  var entry = { name:name, url:url, cat:cat, icon:icon||'', color:col, ts:Date.now() };
   if (_ql_editIdx !== null && arr[_ql_editIdx]) {
     if (arr[_ql_editIdx].url === url) entry.color = arr[_ql_editIdx].color || col;
     arr[_ql_editIdx] = entry;
