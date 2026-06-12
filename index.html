@@ -947,6 +947,20 @@ tbody tr:nth-child(even){background:#fafcff}
 tbody tr:nth-child(even):hover{background:#f0f5ff}
 td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
 .tdl{text-align:left}.tdb{font-weight:700;color:#003087}.tdm{font-family:ui-monospace,monospace;font-size:11px}
+/* ===== Anggaran menu — professional UI polish (scoped, dark-theme safe) ===== */
+.ang-tcard tbody tr{background:transparent;border-bottom:1px solid rgba(255,255,255,.05)}
+.ang-tcard tbody tr:nth-child(even){background:rgba(255,255,255,.022)}
+.ang-tcard tbody tr:hover,
+.ang-tcard tbody tr:nth-child(even):hover{background:rgba(232,25,44,.08)}
+.ang-tcard tbody td{padding:11px 13px;border-bottom:none;color:var(--t2)}
+.ang-tcard tbody tr:hover td{background:transparent;color:var(--tx)}
+.ang-tcard thead th{background:#15181f;color:var(--t3);font-weight:700;padding:12px 13px;border-bottom:1px solid var(--bd2);letter-spacing:.6px}
+.ang-tcard .r{font-variant-numeric:tabular-nums}
+.ang-tcard tfoot td{background:#15181f;color:var(--tx);font-weight:700;padding:13px;border-top:2px solid rgba(232,25,44,.4);border-bottom:none}
+.ang-tcard tr.tot td{background:#15181f;border-top:2px solid rgba(232,25,44,.4)}
+.ang-tcard-hdr{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)}
+.ang-content .ang-kpi{transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.ang-content .ang-kpi:hover{border-color:var(--bd2)}
 /* PROGRESS */
 .prog{background:#e2e8f0;border-radius:4px;height:7px;overflow:hidden}
 .prog-bar{height:100%;border-radius:4px;transition:width .5s}
@@ -6377,7 +6391,8 @@ function angRenderPrognosa(){
   Pf.forEach((p,i)=>{
     const pIdx=P.indexOf(p);
     const sp=p.pleno_idr>0?(p._ytd||0)/p.pleno_idr:0;
-    s1+=p.rkap_idr||0; s2+=p.pleno_idr||0; sSAP+=p.sap_idr||0; s3+=p._ytd||0; s4+=p.kekurangan_idr||0; s5+=p.available_idr||0;
+    const kekur=Math.max(0,(p._ytd||0)-(p.sap_idr||0));
+    s1+=p.rkap_idr||0; s2+=p.pleno_idr||0; sSAP+=p.sap_idr||0; s3+=p._ytd||0; s4+=kekur; s5+=p.available_idr||0;
     const mActv=Object.values(p.monthly||{}).filter(v=>v>0).length;
     const avgM=mActv>0?(p._ytd||0)/mActv:0;
     const sisaS=Math.max(0,(p.sap_idr||0)-(p._ytd||0));
@@ -6391,7 +6406,7 @@ function angRenderPrognosa(){
       <td class="r">${ff(p.rkap_idr)}</td><td class="r">${ff(p.pleno_idr)}</td>
       <td class="r" style="color:var(--cyan)">${(p.sap_idr||0)>0?ff(p.sap_idr):'—'}</td>
       <td class="r" style="color:var(--green2)">${ff(p._ytd)}</td>
-      <td class="r" style="color:${(p.kekurangan_idr||0)>0?'var(--prd2)':'var(--t2)'}">${(p.kekurangan_idr||0)>0?ff(p.kekurangan_idr):'—'}</td>
+      <td class="r" style="color:${kekur>0?'var(--prd2)':'var(--t2)'}">${kekur>0?ff(kekur):'—'}</td>
       <td><span class="ang-pill ${sp>=.8?'g':sp>=.4?'y':'r'}">${pcs(sp)}</span><div class="ang-mbar"><div class="ang-mbf" style="width:${Math.min(100,sp*100)}%;background:${sp>=.8?'#10B981':sp>=.4?'#F59E0B':'#E8192C'}"></div></div></td>
       <td class="r">${(p.available_idr||0)>0?ff(p.available_idr):'—'}</td>
       <td style="font-size:11px;font-weight:600;color:${ketH==='Habis'?'var(--prd2)':ketH==='—'?'var(--t3)':'var(--green2)'}">${ketH}</td>`;
@@ -6400,7 +6415,7 @@ function angRenderPrognosa(){
   const ts2=s2>0?s3/s2:0;
   document.getElementById('ang-pt1').textContent=ff(s1); document.getElementById('ang-pt2').textContent=ff(s2);
   document.getElementById('ang-pt-sap').textContent=ff(sSAP); document.getElementById('ang-pt3').textContent=ff(s3);
-  document.getElementById('ang-pt4').textContent=ff(s4); document.getElementById('ang-pt6').textContent=s5>0?ff(s5):'—';
+  document.getElementById('ang-pt4').textContent=ff(s4); const netAv=sSAP-s3; document.getElementById('ang-pt6').innerHTML='<span style="color:'+(netAv<0?'var(--prd2)':'var(--green2)')+'">'+ff(netAv)+'</span>';
   document.getElementById('ang-pt5').innerHTML=`<span class="ang-pill ${ts2>=.8?'g':ts2>=.4?'y':'r'}">${pcs(ts2)}</span>`;
   document.getElementById('ang-pg-count').textContent=Pf.length+(selRK?' ('+selRK.replace(/ EXPENSE| SERVICE/,'')+')':'')+' item';
 }
