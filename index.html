@@ -6331,7 +6331,7 @@ function angRenderPrognosa(){
   } else if(tSisaSAP<=0){ketLabel='Habis';ketSub='sisa SAP=0';}
   const bDes=Math.max(0,11-new Date().getMonth());
   const blnKosong=Math.max(0,bDes-blnKet);
-  const kurang=avgPerMo>0&&blnKosong>0?avgPerMo*blnKosong:0;
+  const kurang=Pf.reduce((s,p)=>s+Math.max(0,(p._ytd||0)-(p.sap_idr||0)),0);
 
   document.getElementById('ang-kpi2').innerHTML=`
     <div class="ang-kpi kg"><div class="ang-ico">📊</div><div class="ang-kl">Prognosa YTD</div><div class="ang-kv">${rp(tPr)}</div><div class="ang-kbar"><div class="ang-kbar-lbl"><span>vs Pleno WP&B</span><span>${pcs(pct)}</span></div><div class="ang-kbar-t"><div class="ang-kbar-f" style="width:${Math.min(100,pct*100)}%;background:linear-gradient(90deg,#10B981,#34D399)"></div></div></div></div>
