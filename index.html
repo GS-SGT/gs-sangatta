@@ -7,7 +7,7 @@
 <script>
 (function(){
   // ── PASSWORD CONFIGURATION ──
-  const PASSWORD_HASH = "ec0cd2fc1d83b803a7e696e2f28210ce77cfacdd5b91c7c4e62baa47ff90dc91"; // password: mimisan
+  const PASSWORD_HASH = "e380b429cfc009275acdb1637352b6ab4e66b3aa60509c26c231610aa9ec8734"; // password: sangatta
   // Untuk ganti password, generate hash SHA-256 dari password baru di: https://emn178.github.io/online-tools/sha256.html
 
   async function sha256(str) {
@@ -400,6 +400,7 @@
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script><!-- dipakai modul Data Pekerja untuk download/upload Excel sesuai Template TAD Services -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── RESET ── */
@@ -1038,7 +1039,10 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
   </div>
   <div class="cmd-sep"></div>
   <div class="mod-pills">
-    <button class="mod-pill active" id="mpill-gs" onclick="switchModule('gs')">
+    <button class="mod-pill active" id="mpill-overview" onclick="switchModule('overview')">
+      <span class="pill-ico">🧭</span> Ringkasan Utama
+    </button>
+    <button class="mod-pill" id="mpill-gs" onclick="switchModule('gs')">
       <span class="pill-ico">📋</span> GS Care
     </button>
     <button class="mod-pill" id="mpill-krp" onclick="switchModule('krp')">
@@ -1071,11 +1075,266 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
     </button>
   </div>
 </nav>
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODULE: RINGKASAN UTAMA (Executive Overview)
+══════════════════════════════════════════════════════════════════════════ -->
+<style>
+#mod-overview{
+  --tx:#0f172a;--t2:#475569;--t3:#64748b;
+  --bd:#e2e8f0;--bd2:#cbd5e1;
+  --pbg2:#ffffff;--pbg3:#f8fafc;--pbg4:#e2e8f0;
+  --green2:#15803d;--amber2:#b45309;--prd2:#b91c1c;
+  --navy:#0a3d7a;--navy2:#0f4fa3;
+  background:
+    radial-gradient(1100px 340px at 100% -8%, rgba(10,61,122,.05), transparent 60%),
+    #f0f4f9;
+  min-height:calc(100vh - 58px);
+  padding:24px 28px 44px;max-width:1520px;margin:0 auto
+}
+
+/* ── HERO ── */
+.ov-hero{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  background:linear-gradient(120deg,#08306b 0%,#0a4d9c 55%,#0866c6 100%);
+  border-radius:18px;padding:22px 26px;margin-bottom:24px;position:relative;overflow:hidden;
+  box-shadow:0 14px 34px rgba(8,48,107,.22)
+}
+.ov-hero::after{content:'';position:absolute;right:-60px;top:-70px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 70%)}
+.ov-hero::before{content:'';position:absolute;left:38%;bottom:-90px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.07),transparent 70%)}
+.ov-hero-l{display:flex;align-items:center;gap:15px;position:relative;z-index:1}
+.ov-hero-ic{width:48px;height:48px;border-radius:13px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;backdrop-filter:blur(4px)}
+.ov-hero h1{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-bottom:3px}
+.ov-hero p{font-size:12px;color:rgba(255,255,255,.78);font-weight:500}
+.ov-hero-r{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.ov-upd{font-size:10.5px;color:#fff;font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);padding:7px 12px;border-radius:99px;display:flex;align-items:center}
+.ov-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:7px;box-shadow:0 0 0 3px rgba(74,222,128,.25);animation:ovblink 2s infinite}
+@keyframes ovblink{0%,100%{opacity:1}50%{opacity:.35}}
+.ov-refresh{background:#fff;border:1px solid rgba(255,255,255,.3);color:var(--navy);padding:8px 16px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:.15s;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.ov-refresh:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,0,0,.18)}
+.ov-refresh svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4}
+.ov-refresh.spinning svg{animation:rot .7s linear infinite}
+
+/* ── SECTION KICKER ── */
+.ov-kicker{display:flex;align-items:center;gap:10px;margin:28px 0 13px;color:var(--navy);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.1px}
+.ov-kicker:first-of-type{margin-top:0}
+.ov-kicker::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bd),transparent)}
+.ov-kicker .n{width:5px;height:14px;border-radius:3px;background:var(--navy2)}
+
+/* ── GRID / CARD SHELL ── */
+.ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;align-items:stretch}
+@media (max-width:1150px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:700px){.ov-grid{grid-template-columns:1fr}}
+
+.ov-card{
+  --accent:#64748b;
+  background:var(--pbg2);border:1px solid var(--bd);border-top:3px solid var(--accent);
+  border-radius:14px;padding:18px 20px 20px;transition:.18s;
+  box-shadow:0 1px 3px rgba(15,23,42,.05);display:flex;flex-direction:column
+}
+.ov-card.click{cursor:pointer}
+.ov-card.click:hover{border-color:var(--bd2);box-shadow:0 12px 26px rgba(15,23,42,.10);transform:translateY(-2px)}
+.ov-section{margin-bottom:16px}
+.ov-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;gap:10px}
+.ov-card-title-wrap{display:flex;align-items:center;gap:11px;min-width:0}
+.ov-icon-badge{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--accent-bg,#eef2ff);flex-shrink:0}
+.ov-card-title{font-size:13.5px;font-weight:800;color:var(--tx);letter-spacing:-.1px}
+.ov-card-cap{font-size:10px;color:var(--t3);font-weight:600;margin-top:1px}
+.ov-card-sub{font-size:10.5px;color:var(--navy2);font-weight:700;white-space:nowrap;padding:5px 11px;border-radius:99px;background:rgba(10,77,156,.07);transition:.15s}
+.ov-card-sub:hover{background:rgba(10,77,156,.13)}
+a.ov-card-sub{text-decoration:none}
+
+.ov-stat-row{display:flex;gap:18px;flex-wrap:wrap}
+.ov-stat{min-width:90px}
+.ov-stat-row>.ov-stat{flex:1}
+.ov-stat-lbl{font-size:10.5px;color:var(--t2);font-weight:700;margin-bottom:5px;line-height:1.4}
+.ov-stat-val{font-size:25px;font-weight:800;color:var(--tx);font-family:'JetBrains Mono',monospace;line-height:1}
+.ov-stat-val.sm{font-size:18px}
+.ov-stat-sub{font-size:10px;color:var(--t3);margin-top:4px}
+
+.ov-mini-list{margin-top:14px;padding-top:14px;border-top:1px dashed var(--bd)}
+.ov-mini-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:11.5px;border-bottom:1px solid #f1f5f9}
+.ov-mini-row:last-child{border-bottom:none}
+.ov-mini-time{font-family:'JetBrains Mono',monospace;color:#b45309;font-weight:700;width:44px;flex-shrink:0}
+.ov-mini-unit{font-weight:700;color:var(--tx);width:76px;flex-shrink:0}
+.ov-mini-driver{color:var(--t2);flex:1}
+.ov-mini-dest{color:var(--t3);font-size:10.5px;text-align:right;flex-shrink:0;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.ov-empty{text-align:center;padding:22px 10px;color:var(--t3);font-size:12px;margin:auto}
+.ov-empty span{font-size:24px;display:block;margin-bottom:6px}
+
+.ov-mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--bd)}
+.ov-mini-stat{text-align:center;background:var(--pbg3);border:1px solid var(--bd);border-radius:10px;padding:10px 6px}
+.ov-mini-stat .n{font-size:17px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.ov-mini-stat .l{font-size:9.5px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+
+.ov-rdp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--bd)}
+.ov-rdp-item{display:flex;align-items:center;gap:8px;font-size:11.5px}
+.ov-rdp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ov-rdp-lbl{color:var(--t2);flex:1}
+.ov-rdp-val{color:var(--tx);font-weight:700;font-family:'JetBrains Mono',monospace}
+
+.ov-progress{height:7px;background:var(--pbg4);border-radius:99px;overflow:hidden;margin-top:8px}
+.ov-progress-fill{height:100%;border-radius:99px;transition:width .6s}
+
+/* ── Kartu KPI mini (Anggaran, Lemburan, Tagihan) ── */
+.ov-ang-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.ov-ang-grid.row2{grid-template-columns:repeat(3,1fr);margin-top:12px}
+.ov-lembur-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media (max-width:1150px){.ov-ang-grid,.ov-ang-grid.row2{grid-template-columns:repeat(2,1fr)}.ov-lembur-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:640px){.ov-ang-grid,.ov-ang-grid.row2{grid-template-columns:1fr}.ov-lembur-grid{grid-template-columns:1fr 1fr}}
+
+.ov-akpi{background:var(--pbg3);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;transition:.15s}
+.ov-akpi:hover{border-color:var(--bd2);box-shadow:0 4px 12px rgba(15,23,42,.06)}
+.ov-akpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--ac,#94a3b8)}
+.ov-akpi-lbl{font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.ov-akpi-val{font-size:19px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.ov-akpi-sub{font-size:10px;color:var(--t3);margin-top:7px}
+.ov-akpi-bar{height:4px;background:var(--pbg4);border-radius:3px;margin-top:8px;overflow:hidden}
+.ov-akpi-bar-fill{height:100%;border-radius:3px}
+
+.ov-ext-link{font-size:10.5px;color:var(--navy2);font-weight:700;text-decoration:none;white-space:nowrap;padding:5px 11px;border-radius:99px;background:rgba(10,77,156,.07);transition:.15s}
+.ov-ext-link:hover{background:rgba(10,77,156,.13)}
+
+/* ── Tabel Daftar Kontrak ── */
+.ov-kontrak-wrap{overflow-x:auto}
+.ov-kontrak-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.ov-kontrak-tbl th{text-align:left;padding:10px;color:var(--t3);font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--bd);white-space:nowrap;background:var(--pbg3)}
+.ov-kontrak-tbl th:first-child{border-top-left-radius:8px}
+.ov-kontrak-tbl th:last-child{border-top-right-radius:8px}
+.ov-kontrak-tbl td{padding:10px;border-bottom:1px solid #f1f5f9;color:var(--t2);vertical-align:middle}
+.ov-kontrak-tbl tr:hover td{background:var(--pbg3)}
+.ov-kontrak-tbl .nm{color:var(--tx);font-weight:700;max-width:260px}
+.ov-kontrak-tbl .num{font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.ov-kontrak-bar{width:70px;height:5px;background:var(--pbg4);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px}
+.ov-kontrak-bar-fill{height:100%;border-radius:3px;display:block}
+.ov-status-pill{font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.ov-status-pill.aktif{background:rgba(21,128,61,.1);color:var(--green2)}
+.ov-status-pill.kritis{background:rgba(185,28,28,.1);color:var(--prd2)}
+.ov-status-pill.nonaktif{background:rgba(100,116,139,.1);color:var(--t2)}
+</style>
+
+<div class="module active" id="mod-overview">
+  <div class="ov-hero">
+    <div class="ov-hero-l">
+      <div class="ov-hero-ic">🧭</div>
+      <div>
+        <h1 id="ov-greet">Ringkasan Eksekutif</h1>
+        <p>Monitoring GS Sangatta Field</p>
+      </div>
+    </div>
+    <div class="ov-hero-r">
+      <div class="ov-upd"><span class="ov-live-dot"></span><span id="ov-updated">Memuat data…</span></div>
+      <button class="ov-refresh" id="ov-refresh-btn" onclick="ov_render(true)">
+        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ GRUP: OPERASIONAL HARIAN ═══ -->
+  <div class="ov-kicker"><span class="n"></span>Operasional Harian</div>
+
+  <div class="ov-grid">
+    <div class="ov-card click" style="--accent:#2563eb" onclick="ov_goto('gs')">
+      <div class="ov-card-hdr">
+        <div class="ov-card-title-wrap">
+          <div class="ov-icon-badge" style="--accent-bg:rgba(37,99,235,.1)">📋</div>
+          <div><div class="ov-card-title">GS Care</div><div class="ov-card-cap">Layanan &amp; permintaan</div></div>
+        </div>
+        <div class="ov-card-sub">Buka →</div>
+      </div>
+      <div id="ov-gsBody" style="flex:1;display:flex;flex-direction:column"><div class="ov-empty">Memuat…</div></div>
+    </div>
+
+    <div class="ov-card click" style="--accent:#7c3aed" onclick="ov_goto('datapekerja')">
+      <div class="ov-card-hdr">
+        <div class="ov-card-title-wrap">
+          <div class="ov-icon-badge" style="--accent-bg:rgba(124,58,237,.1)">👷</div>
+          <div><div class="ov-card-title">Data Pekerja</div><div class="ov-card-cap">Monitoring pensiun</div></div>
+        </div>
+        <div class="ov-card-sub">Buka →</div>
+      </div>
+      <div id="ov-dpBody" style="flex:1;display:flex;flex-direction:column"><div class="ov-empty">Memuat…</div></div>
+    </div>
+
+    <div class="ov-card click" style="--accent:#ea580c" onclick="ov_goto('rdp')">
+      <div class="ov-card-hdr">
+        <div class="ov-card-title-wrap">
+          <div class="ov-icon-badge" style="--accent-bg:rgba(234,88,12,.1)">🏠</div>
+          <div><div class="ov-card-title">RDP Monitor</div><div class="ov-card-cap">Hunian pekerja</div></div>
+        </div>
+        <div class="ov-card-sub">Buka →</div>
+      </div>
+      <div id="ov-rdpBody" style="flex:1;display:flex;flex-direction:column"><div class="ov-empty">Memuat…</div></div>
+    </div>
+  </div>
+
+  <div class="ov-card ov-section" style="--accent:#0891b2">
+    <div class="ov-card-hdr">
+      <div class="ov-card-title-wrap">
+        <div class="ov-icon-badge" style="--accent-bg:rgba(8,145,178,.1)">🚗</div>
+        <div><div class="ov-card-title">KRP Dashboard</div><div class="ov-card-cap">Kendaraan &amp; jadwal harian</div></div>
+      </div>
+      <div class="ov-card-sub" style="cursor:pointer" onclick="ov_goto('krp')">Buka modul →</div>
+    </div>
+    <div id="ov-krpBody"><div class="ov-empty">Memuat…</div></div>
+  </div>
+
+  <!-- ═══ GRUP: ANGGARAN & KONTRAK ═══ -->
+  <div class="ov-kicker"><span class="n"></span>Anggaran &amp; Kontrak</div>
+
+  <div class="ov-card ov-section" style="--accent:#059669">
+    <div class="ov-card-hdr">
+      <div class="ov-card-title-wrap">
+        <div class="ov-icon-badge" style="--accent-bg:rgba(5,150,105,.1)">💰</div>
+        <div><div class="ov-card-title">Anggaran &amp; Kontrak</div><div class="ov-card-cap">RKAP, Pleno, realisasi SAP</div></div>
+      </div>
+      <div class="ov-card-sub" style="cursor:pointer" onclick="ov_goto('anggaran')">Buka modul →</div>
+    </div>
+    <div id="ov-angBody"><div class="ov-empty">Memuat…</div></div>
+  </div>
+
+  <div class="ov-card" style="--accent:#1e3a8a">
+    <div class="ov-card-hdr">
+      <div class="ov-card-title-wrap">
+        <div class="ov-icon-badge" style="--accent-bg:rgba(30,58,138,.1)">📑</div>
+        <div><div class="ov-card-title">Daftar Kontrak</div><div class="ov-card-cap">Seluruh kontrak berjalan</div></div>
+      </div>
+      <div class="ov-card-sub" id="ov-kontrakCount" style="cursor:pointer" onclick="ov_goto('anggaran')">Buka modul →</div>
+    </div>
+    <div id="ov-kontrakBody" class="ov-kontrak-wrap"><div class="ov-empty">Memuat…</div></div>
+  </div>
+
+  <!-- ═══ GRUP: MODUL EKSTERNAL ═══ -->
+  <div class="ov-kicker"><span class="n"></span>Modul Eksternal</div>
+
+  <div class="ov-card ov-section" style="--accent:#4f46e5">
+    <div class="ov-card-hdr">
+      <div class="ov-card-title-wrap">
+        <div class="ov-icon-badge" style="--accent-bg:rgba(79,70,229,.1)">⏱️</div>
+        <div><div class="ov-card-title">Lemburan — Tim GS</div><div class="ov-card-cap">gs-sgt.github.io/lemburansgt</div></div>
+      </div>
+      <a class="ov-ext-link" href="https://gs-sgt.github.io/lemburansgt/" target="_blank" rel="noopener">Buka modul →</a>
+    </div>
+    <div id="ov-lemburBody"><div class="ov-empty">Memuat…</div></div>
+  </div>
+
+  <div class="ov-card" style="--accent:#be123c">
+    <div class="ov-card-hdr">
+      <div class="ov-card-title-wrap">
+        <div class="ov-icon-badge" style="--accent-bg:rgba(190,18,60,.1)">🧾</div>
+        <div><div class="ov-card-title">Tagihan Kontrak</div><div class="ov-card-cap">gs-sgt.github.io/tagihangssgt</div></div>
+      </div>
+      <a class="ov-ext-link" href="https://gs-sgt.github.io/tagihangssgt/" target="_blank" rel="noopener">Buka modul →</a>
+    </div>
+    <div id="ov-tagihanBody"><div class="ov-empty">Memuat…</div></div>
+  </div>
+</div><!-- /mod-overview -->
 
 <!-- ══════════════════════════════════════════════════════════════════════
      MODULE: GS CARE
 ══════════════════════════════════════════════════════════════════════════ -->
-<div class="module active" id="mod-gs">
+<div class="module" id="mod-gs">
   <div class="gs-stripe"></div>
 
   <!-- GS Loading -->
@@ -2677,6 +2936,18 @@ console.log('[MH] Mess History module loaded.');
 #mod-datapekerja .dp-btn-csv { padding: 7px 13px; border-radius: 7px; border: 1px solid #e5e7eb; background: #f9fafb; font-family: inherit; font-size: 13px; font-weight: 500; color: #6b7280; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; transition: .15s; }
 #mod-datapekerja .dp-btn-csv:hover { background: #e5e7eb; color: #111827; }
 #mod-datapekerja .dp-btn-csv svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ── Download / Upload Excel (Template TAD Services) ── */
+#mod-datapekerja .dp-btn-xls { border: none; padding: 7px 15px; border-radius: 7px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: .15s; white-space: nowrap; }
+#mod-datapekerja .dp-btn-xls svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#mod-datapekerja .dp-btn-xls-down { background: #16a34a; color: #fff; }
+#mod-datapekerja .dp-btn-xls-down:hover { background: #15803d; }
+#mod-datapekerja .dp-btn-xls-up { background: #fff; color: #16a34a; border: 1.5px solid #bbf7d0; }
+#mod-datapekerja .dp-btn-xls-up:hover { background: #f0fdf4; }
+#mod-datapekerja .dp-btn-xls:disabled { opacity: .6; cursor: wait; }
+/* ── Modal form sections (Data Pekerja) ── */
+#dp-modalBg .dp-modal { width: 640px; max-height: 88vh; overflow-y: auto; }
+#dp-modalBg .dp-fsection { grid-column: 1/-1; font-size: 11px; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: .8px; margin: 4px 0 -4px; padding-top: 10px; border-top: 1px dashed #e5e7eb; }
+#dp-modalBg .dp-fsection:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
 
 #mod-datapekerja .dp-tbl-wrap { overflow-x: auto; border-radius: 0 0 14px 14px; }
 #mod-datapekerja .dp-tbl-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -2779,6 +3050,15 @@ console.log('[MH] Mess History module loaded.');
     </div>
     <div class="dp-topbar-right">
       <div class="dp-top-date" id="dp-topDate"></div>
+      <button class="dp-btn-xls dp-btn-xls-up" id="dp-btn-upload" onclick="dp_triggerUpload()" title="Upload data dari file Excel sesuai Template TAD Services">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Excel
+      </button>
+      <input type="file" id="dp-file-input" accept=".xlsx" style="display:none" onchange="dp_handleUploadFile(event)">
+      <button class="dp-btn-xls dp-btn-xls-down" id="dp-btn-download" onclick="dp_exportXLSX()" title="Download data dalam format Template TAD Services (.xlsx)">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Excel
+      </button>
       <button class="dp-btn-add-top" onclick="dp_openModal()">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Pekerja
@@ -2870,7 +3150,7 @@ console.log('[MH] Mess History module loaded.');
           <div class="dp-toolbar">
             <div class="dp-search-box">
               <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input type="text" id="dp-srch" placeholder="Cari nama, NIK, jabatan..." oninput="dp_render()">
+              <input type="text" id="dp-srch" placeholder="Cari nama, NIK, jabatan, No. HP..." oninput="dp_render()">
             </div>
             <select class="dp-flt-select" id="dp-fltCat" onchange="dp_render()">
               <option value="">Semua Kategori</option>
@@ -2892,6 +3172,7 @@ console.log('[MH] Mess History module loaded.');
                 <th onclick="dp_sort('nama')" id="dp-th-nama">Nama / NIK</th>
                 <th onclick="dp_sort('usia')" id="dp-th-usia">Usia ↕</th>
                 <th onclick="dp_sort('jabatan')" id="dp-th-jabatan">Jabatan ↕</th>
+                <th>No. HP</th>
                 <th onclick="dp_sort('pensiun')" id="dp-th-pensiun">Tgl Pensiun ↕</th>
                 <th onclick="dp_sort('sisa')" id="dp-th-sisa">Sisa Waktu ↕</th>
                 <th>Status</th>
@@ -5758,6 +6039,20 @@ function quickEditPC(no, val) {
   toast('✓ PRL/PC diperbarui!');
 }
 
+// ── Overview bridge — kirim ringkasan RDP ke parent window (read-only, tak mengubah logic RDP di atas) ──
+function _ovBroadcastRDP(){
+  try{
+    var data=(MASTER_DATA||[]).concat(CUSTOM_RDP||[]);
+    var pekerja=data.filter(function(r){return r.status==='Terisi Pekerja';}).length;
+    var pihakKetiga=data.filter(function(r){return r.status==='Terisi Pihak Ketiga'||r.status==='Terisi OJT';}).length;
+    var stock=data.filter(function(r){return r.status==='Layak Huni'||r.status==='Kosong (Stock)';}).length;
+    var tidakLayak=data.filter(function(r){return r.status==='Tidak Layak Huni';}).length;
+    parent.postMessage({type:'ov_rdp_summary',total:data.length,pekerja:pekerja,pihakKetiga:pihakKetiga,stock:stock,tidakLayak:tidakLayak},'*');
+  }catch(e){}
+}
+setTimeout(_ovBroadcastRDP,300);
+setInterval(_ovBroadcastRDP,3000);
+
 </script>
 </body>
 </html>"
@@ -5798,7 +6093,7 @@ const CO_GS = {
 };
 
 // ══ STATE ════════════════════════════════════════════════════════════════════
-let curModule = 'gs', gsUrl = '', angUrl = '';
+let curModule = 'overview', gsUrl = '', angUrl = '';
 let GS_DATA = [], OVR = {}, gsDate = null, curGsTab = 'daily';
 let K = [], P = [], selRK = '', selM = -1;
 let CH = {}, CHK = {}, GS_CH = {}, modalChart = null;
@@ -5820,6 +6115,10 @@ window.addEventListener('load', () => {
   angInit();
   // Pre-connect Firebase for todo (so data loads instantly when tab clicked)
   fbStartListeners();
+  // Preload modul lain di background supaya Ringkasan Utama punya data langsung
+  try { if (typeof dp_initModule === 'function') dp_initModule(); } catch(e) {}
+  try { if (typeof _krpActivate === 'function') _krpActivate(); } catch(e) {}
+  setTimeout(() => { if (typeof ov_render === 'function') ov_render(); }, 1200);
 });
 
 // ══ MODULE SWITCH ════════════════════════════════════════════════════════════
@@ -5829,6 +6128,7 @@ function switchModule(m) {
   document.querySelectorAll('.mod-pill').forEach(el => el.classList.remove('active'));
   document.getElementById('mod-' + m).classList.add('active');
   document.getElementById('mpill-' + m).classList.add('active');
+  if (m === 'overview') ov_render();
   if (m === 'todo') todoInit();
   if (m === 'krp') { _krpActivate(); }
   if (m === 'links') ql_render();
@@ -7814,31 +8114,78 @@ document.addEventListener('keydown', function(e) {
     </div>
     <input type="hidden" id="dp-editIdx" value="-1">
     <div class="dp-fgrid">
+      <div class="dp-fsection">Data Pribadi</div>
       <div class="dp-fg full">
         <label class="dp-flabel">Nama Lengkap *</label>
         <input class="dp-finput" type="text" id="dp-f-nama" placeholder="Masukkan nama lengkap">
         <span class="dp-ferr" id="dp-e-nama">Nama tidak boleh kosong</span>
       </div>
       <div class="dp-fg">
-        <label class="dp-flabel">NIK / ID Karyawan</label>
+        <label class="dp-flabel">NIK (Nomor Induk Kependudukan)</label>
         <input class="dp-finput" type="text" id="dp-f-nik" placeholder="Contoh: 6408120307750001">
       </div>
       <div class="dp-fg">
-        <label class="dp-flabel">Tanggal Lahir *</label>
-        <input class="dp-finput" type="date" id="dp-f-lahir">
-        <span class="dp-ferr" id="dp-e-lahir">Tanggal lahir wajib diisi</span>
-      </div>
-      <div class="dp-fg">
-        <label class="dp-flabel">Jabatan</label>
-        <input class="dp-finput" type="text" id="dp-f-jabatan" placeholder="Contoh: Driver, Teknisi">
-      </div>
-      <div class="dp-fg">
-        <label class="dp-flabel">Gender</label>
+        <label class="dp-flabel">Jenis Kelamin (L/P)</label>
         <select class="dp-fsel" id="dp-f-gender">
           <option value="L">Laki-laki</option>
           <option value="P">Perempuan</option>
         </select>
       </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Tanggal Lahir Pegawai *</label>
+        <input class="dp-finput" type="date" id="dp-f-lahir">
+        <span class="dp-ferr" id="dp-e-lahir">Tanggal lahir wajib diisi</span>
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">No. Handphone</label>
+        <input class="dp-finput" type="text" id="dp-f-hp" placeholder="Contoh: 08125364004">
+      </div>
+
+      <div class="dp-fsection">Data Kontrak &amp; Penempatan</div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Jabatan</label>
+        <input class="dp-finput" type="text" id="dp-f-jabatan" placeholder="Contoh: Driver, Teknisi">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Nama Vendor</label>
+        <input class="dp-finput" type="text" id="dp-f-vendor" placeholder="Contoh: PT. Go Rental">
+      </div>
+      <div class="dp-fg full">
+        <label class="dp-flabel">Nama &amp; Lingkup Kontrak</label>
+        <input class="dp-finput" type="text" id="dp-f-kontrak" placeholder="Contoh: Penyediaan Jasa Tenaga Kerja SCM-GS Support PT Pertamina EP Sangatta Field">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Durasi Kontrak (Existing)</label>
+        <input class="dp-finput" type="text" id="dp-f-durasi" placeholder="Contoh: 21 Feb 2024 - 21 Feb 2027">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Direksi Pekerjaan/Fungsi</label>
+        <input class="dp-finput" type="text" id="dp-f-direksi" placeholder="Contoh: Supply Chain Managemen">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Subholding</label>
+        <input class="dp-finput" type="text" id="dp-f-subholding" placeholder="Contoh: Subholding Upstream">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Lokasi Kerja</label>
+        <input class="dp-finput" type="text" id="dp-f-lokasi" placeholder="Contoh: Field Sangatta">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Start Bekerja di Lingkungan Hulu</label>
+        <input class="dp-finput" type="date" id="dp-f-startkerja">
+      </div>
+      <div class="dp-fg">
+        <label class="dp-flabel">Masa Kerja (Kumulatif Bekerja Reguler)</label>
+        <input class="dp-finput" type="text" id="dp-f-masakerja" placeholder="Contoh: Reguler">
+      </div>
+      <div class="dp-fg full">
+        <label class="dp-flabel">Jenis Volume</label>
+        <select class="dp-fsel" id="dp-f-volume">
+          <option value="Volume Reguler Project">Volume Reguler Project</option>
+          <option value="Volume Short Project">Volume Short Project</option>
+        </select>
+      </div>
+
       <div class="dp-fg full" id="dp-previewBlock" style="display:none">
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:11px 13px;font-size:12px;color:#6b7280">
           <span id="dp-previewText">—</span>
@@ -7866,16 +8213,17 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <script>
-// ══ DATA PEKERJA MODULE — Firebase Realtime DB ═══════════════════════════════
+// ══ DATA PEKERJA MODULE — kini memakai Firebase bersama (satu project sama dengan
+//    Mess/Todo/Catatan, lihat FB_URL & FB_TEAM di bagian GS Care) — tidak perlu
+//    bikin/atur project Firebase terpisah lagi. DP_FB_CONFIG di bawah sudah tidak
+//    dipakai, dibiarkan agar tidak menghapus riwayat konfigurasi lama. ══════════
 
-// ── KONFIGURASI FIREBASE ─────────────────────────────────────────────────────
-// Isi dengan config Firebase project Anda, atau biarkan kosong untuk setup via UI
 var DP_FB_CONFIG = {
   apiKey: '',
-  databaseURL: '',    // contoh: https://nama-project-default-rtdb.asia-southeast1.firebasedatabase.app
+  databaseURL: '',    // sudah tidak dipakai — lihat FB_URL (shared) di modul GS Care
   projectId: ''
 };
-var DP_FB_PATH = 'data_pekerja';  // path di Realtime Database
+var DP_FB_PATH = 'data_pekerja';  // path di Realtime Database bersama (di bawah gs_sgt/)
 
 // ── STATE ────────────────────────────────────────────────────────────────────
 var dp_workers = [];
@@ -7976,46 +8324,23 @@ function dp_fbStatus(msg, color) {
   if (el) { el.textContent = msg; el.style.color = color || '#6b7280'; }
 }
 
-async function dp_connectFirebase(dbUrl) {
+// ── Firebase Data Pekerja — memakai project Firebase yang SAMA dengan
+//    Mess/Todo/Catatan (FB_URL + fbGet/fbPut dari bagian GS Care), supaya
+//    tidak perlu bikin project Firebase terpisah lagi saat di-deploy ─────────
+var dp_fbPollTimer = null;
+
+async function dp_connectFirebase() {
   try {
     dp_fbStatus('Menghubungkan ke Firebase...', '#d97706');
-    var { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-    var { getDatabase, ref, set, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-
-    var existing = getApps().find(function(a){ return a.name === 'dp-app'; });
-    var app = existing || initializeApp({ databaseURL: dbUrl }, 'dp-app');
-    dp_fbDb = getDatabase(app);
-    dp_fbRef = ref(dp_fbDb, DP_FB_PATH);
-
-    // Save URL
-    try { localStorage.setItem(DP_FB_URL_KEY, dbUrl); } catch(e){}
-
-    // Listen realtime
-    onValue(dp_fbRef, function(snap) {
-      var data = snap.val();
-      if (data && data.workers && data.workers.length > 0) {
-        dp_workers = data.workers;
-        dp_nextId = data.nextId || dp_workers.length + 1;
-      } else {
-        // First time: push seed data
-        dp_workers = dp_seed.map(function(w,i){ return Object.assign({},w,{id:i+1}); });
-        dp_nextId = dp_workers.length + 1;
-        dp_fbPush();
-      }
-      dp_render();
-      dp_fbStatus('\u26a1 Firebase terhubung \u2014 real-time sync aktif', '#16a34a');
-    }, function(err) {
-      dp_fbStatus('\u274c Gagal: ' + err.message, '#dc2626');
-    });
-
     dp_useFirebase = true;
+    await dp_fbPoll(true); // load awal, seed data kalau masih kosong
+    if (dp_fbPollTimer) clearInterval(dp_fbPollTimer);
+    dp_fbPollTimer = setInterval(dp_fbPoll, 4000);
 
-    // Hide setup, show dash
     var setup = document.getElementById('dp-fb-setup');
     var dash = document.getElementById('dp-dash-content');
     if (setup) setup.style.display = 'none';
     if (dash) dash.style.display = 'block';
-
     return true;
   } catch(e) {
     dp_fbStatus('\u274c Error: ' + e.message, '#dc2626');
@@ -8024,22 +8349,37 @@ async function dp_connectFirebase(dbUrl) {
   }
 }
 
+async function dp_fbPoll(isInitial) {
+  try {
+    var data = await fbGet(DP_FB_PATH);
+    if (data && data.workers && data.workers.length > 0) {
+      var next = JSON.stringify(data.workers);
+      if (next !== JSON.stringify(dp_workers)) {
+        dp_workers = data.workers;
+        dp_nextId = data.nextId || dp_workers.length + 1;
+        dp_render();
+      }
+    } else if (isInitial) {
+      // Belum ada data di Firebase — isi dengan seed data awal
+      dp_workers = dp_seed.map(function(w,i){ return Object.assign({},w,{id:i+1}); });
+      dp_nextId = dp_workers.length + 1;
+      dp_render();
+      dp_fbPush();
+    }
+    dp_fbStatus('\u26a1 Firebase terhubung \u2014 sync aktif', '#16a34a');
+  } catch(e) {
+    dp_fbStatus('\u274c Gagal: ' + e.message, '#dc2626');
+  }
+}
+
 function dp_fbPush() {
-  if (!dp_fbRef) return;
-  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(function(m) {
-    m.set(dp_fbRef, { workers: dp_workers, nextId: dp_nextId });
-  }).catch(function(e){ console.error('fbPush error:', e); });
+  if (!dp_useFirebase) return;
+  fbPut(DP_FB_PATH, { workers: dp_workers, nextId: dp_nextId }).catch(function(e){ console.error('dp_fbPush error:', e); });
 }
 
 function dp_fbConnectClick() {
-  var urlEl = document.getElementById('dp-fb-url-input');
-  if (!urlEl) return;
-  var url = urlEl.value.trim();
-  if (!url || url.indexOf('firebaseio.com') < 0 && url.indexOf('firebasedatabase.app') < 0) {
-    dp_fbStatus('\u26a0 URL tidak valid. Pastikan format: https://nama-project-default-rtdb.region.firebasedatabase.app', '#dc2626');
-    return;
-  }
-  dp_connectFirebase(url);
+  // Tak lagi dipakai — Data Pekerja otomatis terhubung ke Firebase bersama Mess/Todo.
+  dp_connectFirebase();
 }
 
 function dp_skipFirebase() {
@@ -8111,10 +8451,10 @@ function dp_render() {
     var q=srchEl.value.toLowerCase(), fcat=dp_g('dp-fltCat').value, fjab=dp_g('dp-fltJab').value;
     var data=dp_workers.map(function(w,i){
       var sisa=dp_calcSisaExact(w.lahir);
-      return {nama:w.nama,nik:w.nik,lahir:w.lahir,jabatan:w.jabatan,gender:w.gender,id:w.id,
+      return {nama:w.nama,nik:w.nik,lahir:w.lahir,jabatan:w.jabatan,gender:w.gender,hp:w.hp,id:w.id,
         _i:i,usia:dp_calcAge(w.lahir),pensiun:dp_calcPensiun(w.lahir),sisa:sisa,color:dp_getColor(sisa)};
     });
-    if(q) data=data.filter(function(w){return w.nama.toLowerCase().indexOf(q)>=0||(w.nik||'').indexOf(q)>=0||(w.jabatan||'').toLowerCase().indexOf(q)>=0;});
+    if(q) data=data.filter(function(w){return w.nama.toLowerCase().indexOf(q)>=0||(w.nik||'').indexOf(q)>=0||(w.jabatan||'').toLowerCase().indexOf(q)>=0||(w.hp||'').indexOf(q)>=0;});
     if(fcat) data=data.filter(function(w){return w.color===fcat;});
     if(fjab) data=data.filter(function(w){return w.jabatan===fjab;});
     data.sort(function(a,b){
@@ -8140,12 +8480,13 @@ function dp_render() {
     if(fj){var prev=fj.value;fj.innerHTML='<option value="">Semua Jabatan</option>';jabs.forEach(function(j){var o=document.createElement('option');o.value=j;o.textContent=j;if(j===prev)o.selected=true;fj.appendChild(o);});}
     var tbody=dp_g('dp-tbody');
     if(!tbody) return;
-    if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:#9ca3af">Tidak ada data yang sesuai pencarian</td></tr>';}
+    if(!data.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:#9ca3af">Tidak ada data yang sesuai pencarian</td></tr>';}
     else{tbody.innerHTML=data.map(function(w,i){
       return '<tr><td style="color:#9ca3af;font-size:12px">'+(i+1)+'</td>'
         +'<td><div class="dp-cell-name">'+w.nama+'</div><div class="dp-cell-nik">'+(w.nik||'\u2014')+'</div></td>'
         +'<td class="dp-cell-mono">'+(w.usia!=null?w.usia+' th':'\u2014')+'</td>'
         +'<td>'+(w.jabatan||'\u2014')+'</td>'
+        +'<td class="dp-cell-mono">'+(w.hp||'\u2014')+'</td>'
         +'<td class="dp-cell-mono" style="white-space:nowrap">'+dp_fmtDate(w.pensiun)+'</td>'
         +'<td><div class="dp-sisa-text dp-sisa-'+w.color+'">'+dp_sisaStr(w.sisa)+'</div></td>'
         +'<td><span class="dp-badge dp-badge-'+w.color+'"><span class="dp-badge-dot"></span>'+dp_getLabel(w.color)+'</span></td>'
@@ -8202,8 +8543,33 @@ function dp_openModal(idx) {
     dp_g('dp-editIdx').value=idx;
     dp_g('dp-modalTitle').textContent=idx>=0?'Edit Data Pekerja':'Tambah Pekerja Baru';
     document.querySelectorAll('.dp-ferr').forEach(function(e){e.classList.remove('show');});
-    if(idx>=0){var w=dp_workers[idx];dp_g('dp-f-nama').value=w.nama;dp_g('dp-f-nik').value=w.nik||'';dp_g('dp-f-lahir').value=w.lahir;dp_g('dp-f-jabatan').value=w.jabatan||'';dp_g('dp-f-gender').value=w.gender||'L';}
-    else{dp_g('dp-f-nama').value='';dp_g('dp-f-nik').value='';dp_g('dp-f-lahir').value='';dp_g('dp-f-jabatan').value='';dp_g('dp-f-gender').value='L';}
+    var fields=['nama','nik','lahir','jabatan','gender','hp','vendor','kontrak','durasi','direksi','subholding','lokasi','startkerja','masakerja','volume'];
+    if(idx>=0){
+      var w=dp_workers[idx];
+      dp_g('dp-f-nama').value=w.nama||'';
+      dp_g('dp-f-nik').value=w.nik||'';
+      dp_g('dp-f-lahir').value=w.lahir||'';
+      dp_g('dp-f-jabatan').value=w.jabatan||'';
+      dp_g('dp-f-gender').value=w.gender||'L';
+      dp_g('dp-f-hp').value=w.hp||'';
+      dp_g('dp-f-vendor').value=w.vendor||'';
+      dp_g('dp-f-kontrak').value=w.kontrak||'';
+      dp_g('dp-f-durasi').value=w.durasi||'';
+      dp_g('dp-f-direksi').value=w.direksi||'';
+      dp_g('dp-f-subholding').value=w.subholding||'';
+      dp_g('dp-f-lokasi').value=w.lokasi||'';
+      dp_g('dp-f-startkerja').value=w.startkerja||'';
+      dp_g('dp-f-masakerja').value=w.masakerja||'';
+      dp_g('dp-f-volume').value=w.volume||'Volume Reguler Project';
+    } else {
+      fields.forEach(function(f){
+        var el=dp_g('dp-f-'+f);
+        if(!el) return;
+        if(f==='gender') el.value='L';
+        else if(f==='volume') el.value='Volume Reguler Project';
+        else el.value='';
+      });
+    }
     dp_updatePreview();
     dp_g('dp-modalBg').classList.add('show');
     dp_g('dp-f-nama').focus();
@@ -8217,7 +8583,24 @@ function dp_saveWorker() {
     if(!nama){dp_g('dp-e-nama').classList.add('show');ok=false;}else{dp_g('dp-e-nama').classList.remove('show');}
     if(!lahir){dp_g('dp-e-lahir').classList.add('show');ok=false;}else{dp_g('dp-e-lahir').classList.remove('show');}
     if(!ok) return;
-    var w={id:dp_nextId,nama:nama,nik:dp_g('dp-f-nik').value.trim(),lahir:lahir,jabatan:dp_g('dp-f-jabatan').value.trim(),gender:dp_g('dp-f-gender').value};
+    var w={
+      id:dp_nextId,
+      nama:nama,
+      nik:dp_g('dp-f-nik').value.trim(),
+      lahir:lahir,
+      jabatan:dp_g('dp-f-jabatan').value.trim(),
+      gender:dp_g('dp-f-gender').value,
+      hp:dp_g('dp-f-hp').value.trim(),
+      vendor:dp_g('dp-f-vendor').value.trim(),
+      kontrak:dp_g('dp-f-kontrak').value.trim(),
+      durasi:dp_g('dp-f-durasi').value.trim(),
+      direksi:dp_g('dp-f-direksi').value.trim(),
+      subholding:dp_g('dp-f-subholding').value.trim(),
+      lokasi:dp_g('dp-f-lokasi').value.trim(),
+      startkerja:dp_g('dp-f-startkerja').value,
+      masakerja:dp_g('dp-f-masakerja').value.trim(),
+      volume:dp_g('dp-f-volume').value
+    };
     var idx=parseInt(dp_g('dp-editIdx').value);
     if(idx>=0){w.id=dp_workers[idx].id;dp_workers[idx]=w;}else{dp_nextId++;dp_workers.push(w);}
     dp_save();dp_closeModal();dp_render();
@@ -8234,11 +8617,158 @@ function dp_doDelete() {
 }
 function dp_exportCSV() {
   try{
-    var rows=[['No','Nama','NIK','Tgl Lahir','Usia','Jabatan','Gender','Tgl Pensiun','Sisa (tahun)','Sisa Lengkap','Status']];
-    dp_workers.forEach(function(w,i){var s=dp_calcSisaExact(w.lahir);rows.push([i+1,w.nama,w.nik||'',w.lahir,dp_calcAge(w.lahir)||'',w.jabatan||'',w.gender||'',dp_fmtDate(dp_calcPensiun(w.lahir)),s?s.y:'',dp_sisaStr(s),dp_getLabel(dp_getColor(s))]);});
+    var rows=[['No','Nama Tenaga Alih Daya','NIK','Jabatan','Nama & Lingkup Kontrak','Durasi Kontrak (Existing)','Nama Vendor','Direksi Pekerjaan/Fungsi','Subholding','Lokasi Kerja','Jenis Kelamin (L/P)','Tanggal Lahir Pegawai','Usia','No. Handphone','Start Bekerja di Lingkungan Hulu','Masa Kerja','Jenis Volume','Tgl Pensiun','Sisa (tahun)','Sisa Lengkap','Status']];
+    dp_workers.forEach(function(w,i){var s=dp_calcSisaExact(w.lahir);rows.push([i+1,w.nama,w.nik||'',w.jabatan||'',w.kontrak||'',w.durasi||'',w.vendor||'',w.direksi||'',w.subholding||'',w.lokasi||'',w.gender||'',w.lahir,dp_calcAge(w.lahir)||'',w.hp||'',w.startkerja||'',w.masakerja||'',w.volume||'',dp_fmtDate(dp_calcPensiun(w.lahir)),s?s.y:'',dp_sisaStr(s),dp_getLabel(dp_getColor(s))]);});
     var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
     var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='monitoring_pensiun.csv';a.click();
   }catch(e){}
+}
+
+// ── DOWNLOAD / UPLOAD EXCEL — Template_Data_TAD_Services_Sangatta ────────────
+var DP_XLS_HEADERS = ['No','Nama Tenaga Alih Daya','NIK\n(Nomor Induk Kependudukan)','Jabatan','Nama & Lingkup Kontrak','Durasi Kontrak (Existing)','Nama Vendor','Direksi Pekerjaan/Fungsi','Subholding','Lokasi Kerja ','Jenis Kelamin (L/P)','Tanggal Lahir Pegawai','Usia','No. Handphone','Start Bekerja di Lingkungan Hulu','Masa Kerja  \n(Secara Kumulatif Bekerja Reguler)','Jenis Volume\n(Volume Reguler Project/Volume Short Project)'];
+var DP_XLS_WIDTHS  = [4.6,28.6,32.1,18.5,67.75,24.1,25.8,22.1,20.1,21.3,13.1,17.8,9,14.5,18.6,30.8,41.8];
+
+function dp_isoToDate(iso) { // 'YYYY-MM-DD' -> Date (UTC, aman dari pergeseran zona waktu)
+  if(!iso) return null;
+  var p=iso.split('-'); if(p.length!==3) return null;
+  return new Date(Date.UTC(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])));
+}
+function dp_dateToIso(d) { // Date (dari cell Excel, UTC) -> 'YYYY-MM-DD' untuk <input type=date>
+  if(!d||isNaN(d)) return '';
+  var pad=function(n){return String(n).padStart(2,'0');};
+  return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate());
+}
+
+async function dp_exportXLSX() {
+  var btn=dp_g('dp-btn-download');
+  try{
+    if(typeof ExcelJS==='undefined'){ if(typeof toast==='function') toast('Gagal memuat modul Excel (cek koneksi internet)','var(--amber)'); return; }
+    if(btn){btn.disabled=true;btn.querySelector('svg')&&btn.querySelector('svg').classList.add('spinning');}
+    var wb=new ExcelJS.Workbook();
+    wb.creator='GS Sangatta — Command Center';
+    wb.created=new Date();
+    var ws=wb.addWorksheet('Data Tenaga Kerja',{views:[{state:'frozen',ySplit:1}]});
+
+    ws.columns=DP_XLS_WIDTHS.map(function(w){return {width:w};});
+    var headerRow=ws.addRow(DP_XLS_HEADERS);
+    headerRow.height=42;
+    headerRow.eachCell(function(cell){
+      cell.font={name:'Calibri',size:11,bold:true,color:{argb:'FF000000'}};
+      cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFA9D18E'}};
+      cell.border={bottom:{style:'thin',color:{argb:'FF7F7F7F'}}};
+    });
+
+    dp_workers.forEach(function(w,i){
+      var row=ws.addRow([
+        i+1, w.nama||'', w.nik?String(w.nik):'', w.jabatan||'', w.kontrak||'', w.durasi||'',
+        w.vendor||'', w.direksi||'', w.subholding||'', w.lokasi||'', w.gender||'',
+        dp_isoToDate(w.lahir), dp_calcAge(w.lahir), w.hp?String(w.hp):'',
+        dp_isoToDate(w.startkerja), w.masakerja||'', w.volume||''
+      ]);
+      row.getCell(1).numFmt='00';
+      row.getCell(3).numFmt='@'; // NIK selalu teks, cegah notasi ilmiah
+      row.getCell(12).numFmt='d-mmm-yy';
+      row.getCell(14).numFmt='@'; // No HP selalu teks, cegah angka 0 di depan hilang
+      row.getCell(15).numFmt='d-mmm-yy';
+      row.eachCell(function(cell){ cell.alignment={vertical:'middle',wrapText:false}; });
+    });
+
+    var buf=await wb.xlsx.writeBuffer();
+    var blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='Data_TAD_Services_Sangatta_'+DP_TODAY.toISOString().slice(0,10)+'.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+    if(typeof toast==='function') toast('✓ Excel berhasil diunduh ('+dp_workers.length+' data)');
+  }catch(e){
+    console.error('dp_exportXLSX error:',e);
+    if(typeof toast==='function') toast('⚠ Gagal membuat file Excel: '+e.message,'var(--amber)');
+  }finally{
+    if(btn){btn.disabled=false;btn.querySelector('svg')&&btn.querySelector('svg').classList.remove('spinning');}
+  }
+}
+
+function dp_triggerUpload() { var el=dp_g('dp-file-input'); if(el){ el.value=''; el.click(); } }
+
+async function dp_handleUploadFile(evt) {
+  var file=evt.target.files && evt.target.files[0];
+  if(!file) return;
+  var btn=dp_g('dp-btn-upload');
+  try{
+    if(typeof ExcelJS==='undefined'){ if(typeof toast==='function') toast('Gagal memuat modul Excel (cek koneksi internet)','var(--amber)'); return; }
+    if(btn){btn.disabled=true;btn.querySelector('svg')&&btn.querySelector('svg').classList.add('spinning');}
+    var buf=await file.arrayBuffer();
+    var wb=new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    var ws=wb.getWorksheet('Data Tenaga Kerja') || wb.worksheets[0];
+    if(!ws){ if(typeof toast==='function') toast('⚠ Sheet "Data Tenaga Kerja" tidak ditemukan','var(--amber)'); return; }
+
+    var cellText=function(v){
+      if(v===null||v===undefined) return '';
+      if(typeof v==='object'){
+        if(v instanceof Date) return v;
+        if(v.text) return String(v.text);
+        if(v.richText) return v.richText.map(function(t){return t.text;}).join('');
+        if(v.result!==undefined) return v.result;
+      }
+      return v;
+    };
+    var toIso=function(v){
+      if(!v) return '';
+      if(v instanceof Date) return dp_dateToIso(v);
+      var s=String(v).trim();
+      var d=new Date(s);
+      return isNaN(d)?'':dp_dateToIso(new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())));
+    };
+
+    var imported=[], skipped=0;
+    ws.eachRow({includeEmpty:false},function(row,rowNumber){
+      if(rowNumber===1) return; // header
+      var nama=cellText(row.getCell(2).value);
+      nama=nama?String(nama).trim():'';
+      if(!nama){ skipped++; return; } // lewati baris kosong / catatan kaki template
+      imported.push({
+        id:0,
+        nama:nama,
+        nik:String(cellText(row.getCell(3).value)||'').trim(),
+        jabatan:String(cellText(row.getCell(4).value)||'').trim(),
+        kontrak:String(cellText(row.getCell(5).value)||'').trim(),
+        durasi:String(cellText(row.getCell(6).value)||'').trim(),
+        vendor:String(cellText(row.getCell(7).value)||'').trim(),
+        direksi:String(cellText(row.getCell(8).value)||'').trim(),
+        subholding:String(cellText(row.getCell(9).value)||'').trim(),
+        lokasi:String(cellText(row.getCell(10).value)||'').trim(),
+        gender:String(cellText(row.getCell(11).value)||'L').trim().toUpperCase()==='P'?'P':'L',
+        lahir:toIso(cellText(row.getCell(12).value)),
+        hp:String(cellText(row.getCell(14).value)||'').trim(),
+        startkerja:toIso(cellText(row.getCell(15).value)),
+        masakerja:String(cellText(row.getCell(16).value)||'').trim(),
+        volume:String(cellText(row.getCell(17).value)||'').trim()||'Volume Reguler Project'
+      });
+    });
+
+    if(!imported.length){ if(typeof toast==='function') toast('⚠ Tidak ada baris data valid di file ini','var(--amber)'); return; }
+
+    dp_confirmUploadPreview(imported);
+  }catch(e){
+    console.error('dp_handleUploadFile error:',e);
+    if(typeof toast==='function') toast('⚠ Gagal membaca file Excel: '+e.message,'var(--amber)');
+  }finally{
+    if(btn){btn.disabled=false;btn.querySelector('svg')&&btn.querySelector('svg').classList.remove('spinning');}
+  }
+}
+
+function dp_confirmUploadPreview(imported) {
+  var ok=window.confirm('File berisi '+imported.length+' data pekerja.\n\nGanti SELURUH data Data Pekerja saat ini dengan isi file ini?\n(Tindakan ini tidak dapat dibatalkan)');
+  if(!ok) return;
+  imported.forEach(function(w,i){ w.id=i+1; });
+  dp_workers=imported;
+  dp_nextId=imported.length+1;
+  dp_save();
+  dp_render();
+  if(typeof toast==='function') toast('✓ '+imported.length+' data pekerja berhasil diimpor');
 }
 
 function dp_initModule() {
@@ -8251,7 +8781,7 @@ function dp_initModule() {
     if(lahirEl) lahirEl.addEventListener('change',dp_updatePreview);
 
     // Auto-connect langsung dengan URL hardcoded
-    dp_connectFirebase(DP_FB_HARDCODED_URL);
+    dp_connectFirebase();
 
     setInterval(function(){ dp_render(); }, 60000);
   }catch(err){ console.error('dp_initModule error:',err); }
@@ -8430,6 +8960,468 @@ gsRenderAnalytics = function() {
 setTimeout(async () => {
   await gsLoadRatings(); // selalu load rating pakai RATING_URL
 }, 2000);
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODULE: RINGKASAN UTAMA — Executive Overview (agregasi read-only)
+     Membaca state global modul lain (tanpa mengubah logic modul manapun)
+══════════════════════════════════════════════════════════════════════════ -->
+<script>
+function ov_goto(m) { switchModule(m); }
+
+function ov_greeting() {
+  var h = new Date().getHours();
+  return h < 11 ? 'Selamat Pagi 👋' : h < 15 ? 'Selamat Siang 👋' : h < 18 ? 'Selamat Sore 👋' : 'Selamat Malam 👋';
+}
+function ov_esc(s) { return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+// ── Pengambil data tiap modul (defensif — tak pernah melempar error keluar) ──
+function ov_getGS() {
+  try {
+    if (typeof GS_DATA === 'undefined' || !GS_DATA.length) return null;
+    var ds = dateStr(getTodayWITA());
+    var bulanPrefix = ds.slice(0,7); // 'YYYY-MM'
+    var today = GS_DATA.filter(function(r){ return r.tanggal === ds; });
+    var bulan = GS_DATA.filter(function(r){ return (r.tanggal||'').slice(0,7) === bulanPrefix; });
+    var done = today.filter(function(r){ return getSt(r) === 'selesai'; });
+    var pending = today.filter(function(r){ return getSt(r) !== 'selesai'; });
+    var pct = today.length>0 ? Math.round(done.length/today.length*100) : 100;
+    var ratingAvg = (typeof RATING_DATA !== 'undefined' && RATING_DATA.summary && RATING_DATA.summary.avg) || 0;
+    var ratingTotal = (typeof RATING_DATA !== 'undefined' && RATING_DATA.summary && RATING_DATA.summary.total) || 0;
+    return {today: today.length, bulan: bulan.length, done: done.length, pending: pending, pct: pct,
+      ratingAvg: ratingAvg, ratingTotal: ratingTotal};
+  } catch(e) { console.error('ov_getGS error:', e); return null; }
+}
+
+function ov_getKRP() {
+  try {
+    if (typeof VEH === 'undefined' || !VEH.length) return null;
+    var d = window._todayData || null;
+    var rows = (d && d.rows) ? d.rows.filter(function(r){ return r.driver; }) : [];
+    return {totalVeh: VEH.length, rows: rows, hasToday: !!d};
+  } catch(e) { console.error('ov_getKRP error:', e); return null; }
+}
+
+function ov_getAng() {
+  try {
+    if ((typeof P === 'undefined' || !P.length) && (typeof K === 'undefined' || !K.length)) return null;
+    var Pf = P || [];
+    var tR   = Pf.reduce(function(s,p){ return s+(p.rkap_idr||0); },0);       // Total RKAP 2026
+    var tPl  = Pf.reduce(function(s,p){ return s+(p.pleno_idr||0); },0);      // Pleno WP&B 2026
+    var tPr  = Pf.reduce(function(s,p){ return s+(p._ytd||0); },0);           // Prognosa YTD
+    var tSAP = Pf.reduce(function(s,p){ return s+(p.sap_idr||0); },0);        // Upload SAP
+    var pct    = tPl>0 ? tPr/tPl : 0;      // prognosa vs pleno
+    var pctSAP = tPl>0 ? tSAP/tPl : 0;     // upload SAP vs pleno
+    var sisaSAP = Math.max(0, tSAP-tPr);   // Sisa Anggaran (SAP)
+
+    // Ketahanan Anggaran (persis logic modul Anggaran)
+    var activeMos = MFULL.filter(function(m){ return Pf.some(function(p){ return (p.monthly&&p.monthly[m]||0)>0; }); }).length;
+    var avgPerMo = activeMos>0 ? tPr/activeMos : 0;
+    var tSisaSAP = Math.max(0, tSAP-tPr);
+    var ketLabel='—', ketSub='belum ada data', blnKet=0;
+    if (avgPerMo>0 && tSisaSAP>0) {
+      blnKet = tSisaSAP/avgPerMo;
+      var nm = new Date().getMonth(), tm = nm+Math.ceil(blnKet);
+      ketLabel = (tm<=11 ? MONTHS[tm]+' 2026' : tm<=23 ? MONTHS[tm-12]+' 2027' : '>2027');
+      ketSub = '~'+blnKet.toFixed(1)+' bln · avg '+rp(avgPerMo)+'/bln';
+    } else if (tSisaSAP<=0) { ketLabel='Habis'; ketSub='sisa SAP=0'; }
+    var bDes = Math.max(0, 11-new Date().getMonth());
+    var blnKosong = Math.max(0, bDes-blnKet);
+    var kurang = Pf.reduce(function(s,p){ return s+Math.max(0,(p._ytd||0)-(p.sap_idr||0)); },0); // Kekurangan s/d Des
+
+    var isAktif = function(k){ return (k.status||'').toLowerCase().includes('aktif'); };
+    var Kd = K || [];
+    var aktif = Kd.filter(isAktif).length;
+    var kritis = Kd.filter(function(k){ return isAktif(k) && (k.due||0)>0 && (k.due||0)<=30; }).length;
+    var nonaktif = Kd.filter(function(k){ return !isAktif(k); }).length;
+
+    return {
+      tR:tR, tPl:tPl, tPr:tPr, tSAP:tSAP, pct:pct, pctSAP:pctSAP, sisaSAP:sisaSAP,
+      ketLabel:ketLabel, ketSub:ketSub, kurang:kurang, blnKosong:blnKosong,
+      itemCount:Pf.length, kontrak:Kd, isAktif:isAktif,
+      totalKontrak:Kd.length, aktif:aktif, kritis:kritis, nonaktif:nonaktif
+    };
+  } catch(e) { console.error('ov_getAng error:', e); return null; }
+}
+
+function ov_getDP() {
+  try {
+    if (typeof dp_workers === 'undefined' || !dp_workers.length) return null;
+    var rows = dp_workers.map(function(w){
+      var s = dp_calcSisaExact(w.lahir);
+      return {w:w, s:s, color: dp_getColor(s)};
+    });
+    var kritis = rows.filter(function(r){ return r.color==='red'; });
+    var waspada = rows.filter(function(r){ return r.color==='orange'; });
+    var perhatian = rows.filter(function(r){ return r.color==='yellow'; });
+    var aman = rows.filter(function(r){ return r.color==='green'; });
+    var top5 = rows.filter(function(r){ return r.s && r.s.totalDays>=0; })
+      .sort(function(a,b){ return a.s.totalDays-b.s.totalDays; }).slice(0,5);
+    return {total: dp_workers.length, kritis:kritis, waspada:waspada, perhatian:perhatian, aman:aman, top5:top5};
+  } catch(e) { console.error('ov_getDP error:', e); return null; }
+}
+
+// Menerima ringkasan RDP dari iframe via postMessage — jauh lebih cepat & andal
+// daripada mengakses contentWindow langsung (yang bisa diblokir browser saat file dibuka via file://)
+var ov_rdpCache = null;
+window.addEventListener('message', function(e){
+  if (e.data && e.data.type === 'ov_rdp_summary') {
+    ov_rdpCache = e.data;
+    ov_render();
+  }
+});
+
+function ov_getRDP() {
+  if (ov_rdpCache) return ov_rdpCache;
+  // fallback lama, jaga-jaga kalau bridge belum sempat mengirim pesan pertama
+  try {
+    var frame = document.getElementById('rdp-iframe');
+    var win = frame && frame.contentWindow;
+    if (!win || typeof win.MASTER_DATA === 'undefined') return null;
+    var data = (win.MASTER_DATA || []).concat(win.CUSTOM_RDP || []);
+    if (!data.length) return null;
+    var pekerja = data.filter(function(r){ return r.status === 'Terisi Pekerja'; }).length;
+    var pihakKetiga = data.filter(function(r){ return r.status === 'Terisi Pihak Ketiga' || r.status === 'Terisi OJT'; }).length;
+    var stock = data.filter(function(r){ return r.status === 'Layak Huni' || r.status === 'Kosong (Stock)'; }).length;
+    var tidakLayak = data.filter(function(r){ return r.status === 'Tidak Layak Huni'; }).length;
+    return {total:data.length, pekerja:pekerja, pihakKetiga:pihakKetiga, stock:stock, tidakLayak:tidakLayak};
+  } catch(e) { console.error('ov_getRDP fallback error:', e); return null; }
+}
+
+// ── Modul eksternal: Lemburan & Tagihan (Firebase project terpisah, di luar app ini) ──
+var LEMBUR_FB_URL  = 'https://lemburan-pep-sgt-default-rtdb.asia-southeast1.firebasedatabase.app';
+var TAGIHAN_FB_URL = 'https://tagihan-gs-sgt-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+async function ov_fetchRTDB(baseUrl, path) {
+  try {
+    var r = await fetch(baseUrl + '/' + path + '.json');
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// Lemburan — hanya tim GS (General Services), replikasi persis rumus di app Lemburan asli
+async function ov_getLemburGS() {
+  try {
+    var raw = await ov_fetchRTDB(LEMBUR_FB_URL, 'lembur/fungsi/GS');
+    if (!raw) return null;
+    var arr = Array.isArray(raw) ? raw : Object.values(raw);
+    var recs = arr.filter(Boolean).map(function(p){ return {nama:p.nama||'', title:p.title||'', y:p.y||{}}; });
+    if (!recs.length) return null;
+
+    var years = {};
+    recs.forEach(function(p){ Object.keys(p.y).forEach(function(y){ years[y]=1; }); });
+    var yearList = Object.keys(years).sort();
+    var curYear = yearList.length ? yearList[yearList.length-1] : String(new Date().getFullYear());
+    var getArr = function(p){ return p.y[curYear] || Array(12).fill(0); };
+
+    var active = [];
+    for (var i=0;i<12;i++) {
+      var s = 0;
+      recs.forEach(function(p){ s += (getArr(p)[i]||0); });
+      if (s>0) active.push(i);
+    }
+    var TW=220, TH=300;
+    var calcs = recs.map(function(p){
+      var a = getArr(p), tot = 0;
+      active.forEach(function(i){ tot += (a[i]||0); });
+      var avg = active.length ? tot/active.length : 0;
+      return {total:tot, avg:avg, status: avg>TH?'TINGGI':(avg>=TW?'PERHATIAN':'AMAN')};
+    });
+    var totalJam = calcs.reduce(function(s,c){ return s+c.total; },0);
+    var n = recs.length || 1;
+    var avgOrgBln = active.length ? totalJam/(n*active.length) : 0;
+    var tinggi = calcs.filter(function(c){ return c.status==='TINGGI'; }).length;
+    var perhatian = calcs.filter(function(c){ return c.status==='PERHATIAN'; }).length;
+    return {n:recs.length, year:curYear, totalJam:totalJam, avgOrgBln:avgOrgBln, tinggi:tinggi, perhatian:perhatian, activeMonths:active.length};
+  } catch(e) { console.error('ov_getLemburGS error:', e); return null; }
+}
+
+// Tagihan — replikasi persis rumus status & summary di app Tagihan asli
+var TAG_STEPS_REGULER = ['inv_masuk','pr','po','sa','routing','bon_p2p','finance','bayar'];
+var TAG_STEPS_AIR = ['pr','po','sa','inv_masuk','routing','bon_p2p','finance','bayar'];
+function ov_tagSteps(tipe){ return tipe==='air' ? TAG_STEPS_AIR : TAG_STEPS_REGULER; }
+function ov_tagNowKey(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function ov_tagIsPast(k){ return k<ov_tagNowKey(); }
+function ov_tagIsCurr(k){ return k===ov_tagNowKey(); }
+function ov_tagMonths(s,e){
+  var arr=[], c=new Date(s); c.setDate(1);
+  var en=new Date(e); en.setDate(1);
+  while (c<=en) { arr.push(c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')); c.setMonth(c.getMonth()+1); }
+  return arr;
+}
+function ov_tagDeriveStatus(t, mk, tipe) {
+  if (!t) return ov_tagIsPast(mk) ? 'late' : (ov_tagIsCurr(mk) ? 'pending' : 'future');
+  var steps = ov_tagSteps(tipe);
+  var lastKey = steps[steps.length-1];
+  if (t[lastKey] && t[lastKey].checked) return 'paid';
+  if (t.finance && t.finance.checked) return 'finance';
+  if (t.routing && t.routing.checked) return 'routing';
+  if (steps.some(function(k){ return t[k] && t[k].checked; })) return 'partial';
+  if (ov_tagIsPast(mk)) return 'late';
+  if (ov_tagIsCurr(mk)) return 'pending';
+  return 'future';
+}
+async function ov_getTagihan() {
+  try {
+    var raw = await ov_fetchRTDB(TAGIHAN_FB_URL, 'tagihan_kontrak');
+    if (!raw || !raw.contracts || !raw.contracts.length) return null;
+    var contracts = raw.contracts;
+    var now = ov_tagNowKey();
+    var paid=0, finance=0, routing=0, partial=0, pending=0, late=0;
+    contracts.forEach(function(c){
+      ov_tagMonths(c.mulai, c.akhir).forEach(function(mk){
+        var t = (c.tagihan||{})[mk];
+        var st = ov_tagDeriveStatus(t, mk, c.tipe);
+        if (mk===now || ov_tagIsPast(mk)) {
+          if (st==='paid') paid++;
+          else if (st==='finance') finance++;
+          else if (st==='routing') routing++;
+          else if (st==='partial') partial++;
+          else if (st==='pending') pending++;
+          else if (st==='late') late++;
+        }
+      });
+    });
+    return {total:contracts.length, paid:paid, finance:finance, routing:routing, partial:partial, pending:pending, late:late};
+  } catch(e) { console.error('ov_getTagihan error:', e); return null; }
+}
+
+// ── RENDER UTAMA ─────────────────────────────────────────────────────────
+async function ov_render(manual) {
+  var btn = document.getElementById('ov-refresh-btn');
+  if (manual && btn) btn.classList.add('spinning');
+
+  var greetEl = document.getElementById('ov-greet');
+  if (greetEl) greetEl.textContent = ov_greeting();
+
+  var gs = ov_getGS(), krp = ov_getKRP(), ang = ov_getAng(), dp = ov_getDP(), rdp = ov_getRDP();
+  var lembur = await ov_getLemburGS(), tagihan = await ov_getTagihan();
+
+  // ── GS Care ──
+  var gsEl = document.getElementById('ov-gsBody');
+  if (gsEl) {
+    if (gs) {
+      var barC = gs.pct>=80?'#16a34a':gs.pct>=50?'#d97706':'#dc2626';
+      var pendingHtml;
+      if (gs.today === 0) {
+        pendingHtml = '<div class="ov-empty" style="padding:14px 0"><span>📭</span>Belum ada request hari ini</div>';
+      } else if (gs.pending.length === 0) {
+        pendingHtml = '<div class="ov-empty" style="padding:14px 0"><span>✅</span>Semua request hari ini sudah selesai</div>';
+      } else {
+        pendingHtml = gs.pending.slice(0,5).map(function(r){
+          return '<div class="ov-mini-row">'
+            +'<div class="ov-mini-unit" style="width:auto;flex:1;font-weight:600">'+ov_esc(r.nama||r.wo||'—')+'</div>'
+            +'<div class="ov-mini-dest" style="max-width:130px">'+ov_esc(r.layanan||'—')+'</div>'
+            +'</div>';
+        }).join('') + (gs.pending.length>5?'<div style="font-size:10.5px;color:var(--t3);margin-top:6px">...dan '+(gs.pending.length-5)+' lainnya belum selesai</div>':'');
+      }
+      gsEl.innerHTML = '<div class="ov-stat-row">'
+        +'<div class="ov-stat"><div class="ov-stat-lbl">Requestan Hari Ini</div><div class="ov-stat-val">'+gs.today+'</div></div>'
+        +'<div class="ov-stat"><div class="ov-stat-lbl">Requestan Bulan Ini</div><div class="ov-stat-val">'+gs.bulan+'</div></div>'
+        +'</div>'
+        +'<div class="ov-mini-list">'
+        +'<div class="ov-stat"><div class="ov-stat-lbl">Rating Layanan</div><div class="ov-stat-val sm">'+(gs.ratingAvg?gs.ratingAvg.toFixed(1):'—')+' ⭐ <span style="font-size:11px;color:var(--t3);font-weight:500">('+gs.ratingTotal+' rating)</span></div></div>'
+        +'</div>'
+        +'<div class="ov-mini-list">'
+        +'<div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--t2);font-weight:600;margin-bottom:6px"><span>Progress Hari Ini</span><span>'+gs.done+'/'+gs.today+' selesai</span></div>'
+        +'<div class="ov-progress"><div class="ov-progress-fill" style="width:'+gs.pct+'%;background:'+barC+'"></div></div>'
+        +'</div>'
+        +'<div class="ov-mini-list">'
+        +'<div style="font-size:10.5px;color:var(--t2);font-weight:600;margin-bottom:2px">Belum Selesai</div>'
+        + pendingHtml
+        +'</div>';
+    } else {
+      gsEl.innerHTML = '<div class="ov-empty">Data belum dimuat — buka modul untuk sinkron</div>';
+    }
+  }
+
+  // ── Data Pekerja (diperkaya: breakdown kategori + top 5 terdekat pensiun) ──
+  var dpEl = document.getElementById('ov-dpBody');
+  if (dpEl) {
+    if (dp) {
+      var top5Html = dp.top5.length ? '<div class="ov-mini-list">' + dp.top5.map(function(r){
+        var colorHex = {red:'#dc2626',orange:'#ea580c',yellow:'#d97706',green:'#16a34a'}[r.color] || '#64748b';
+        return '<div class="ov-mini-row">'
+          +'<div class="ov-mini-unit" style="width:auto;flex:1">'+ov_esc(r.w.nama)+'</div>'
+          +'<div style="color:'+colorHex+';font-weight:700;font-size:11px">'+dp_sisaStr(r.s)+'</div>'
+          +'</div>';
+      }).join('') + '</div>' : '';
+      dpEl.innerHTML = '<div class="ov-stat"><div class="ov-stat-lbl">Total Pekerja Terdaftar</div><div class="ov-stat-val">'+dp.total+'</div></div>'
+        +'<div class="ov-mini-stats">'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#dc2626">'+dp.kritis.length+'</div><div class="l">Kritis</div></div>'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#ea580c">'+dp.waspada.length+'</div><div class="l">Waspada</div></div>'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#d97706">'+dp.perhatian.length+'</div><div class="l">Perhatian</div></div>'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#16a34a">'+dp.aman.length+'</div><div class="l">Aman</div></div>'
+        +'</div>' + top5Html;
+    } else {
+      dpEl.innerHTML = '<div class="ov-empty">Data belum dimuat — buka modul untuk sinkron</div>';
+    }
+  }
+
+  // ── RDP Monitor ──
+  var rdpEl = document.getElementById('ov-rdpBody');
+  if (rdpEl) {
+    rdpEl.innerHTML = rdp ? (
+      '<div class="ov-stat"><div class="ov-stat-lbl">Total Unit RDP</div><div class="ov-stat-val">'+rdp.total+'</div></div>'
+      +'<div class="ov-rdp-grid">'
+      +'<div class="ov-rdp-item"><div class="ov-rdp-dot" style="background:#2563eb"></div><div class="ov-rdp-lbl">Terisi Pekerja</div><div class="ov-rdp-val">'+rdp.pekerja+'</div></div>'
+      +'<div class="ov-rdp-item"><div class="ov-rdp-dot" style="background:#7c3aed"></div><div class="ov-rdp-lbl">Pihak Ketiga/OJT</div><div class="ov-rdp-val">'+rdp.pihakKetiga+'</div></div>'
+      +'<div class="ov-rdp-item"><div class="ov-rdp-dot" style="background:#d97706"></div><div class="ov-rdp-lbl">Layak/Stock</div><div class="ov-rdp-val">'+rdp.stock+'</div></div>'
+      +'<div class="ov-rdp-item"><div class="ov-rdp-dot" style="background:#dc2626"></div><div class="ov-rdp-lbl">Tidak Layak Huni</div><div class="ov-rdp-val">'+rdp.tidakLayak+'</div></div>'
+      +'</div>'
+    ) : '<div class="ov-empty">Menyinkronkan data RDP…</div>';
+  }
+
+  // ── KRP: total kendaraan + jadwal hari ini ──
+  var krpEl = document.getElementById('ov-krpBody');
+  if (krpEl) {
+    if (krp) {
+      var jadwalHtml;
+      if (krp.rows.length) {
+        jadwalHtml = '<div class="ov-mini-list">' + krp.rows.slice(0,8).map(function(r){
+          return '<div class="ov-mini-row">'
+            +'<div class="ov-mini-time">'+ov_esc(r.jam||'—')+'</div>'
+            +'<div class="ov-mini-unit">'+ov_esc(r.lam||'—')+'</div>'
+            +'<div class="ov-mini-driver">'+ov_esc(r.driver||'—')+'</div>'
+            +'<div class="ov-mini-dest">'+ov_esc(r.tujuan||'—')+'</div>'
+            +'</div>';
+        }).join('') + (krp.rows.length>8?'<div style="font-size:10.5px;color:var(--t3);margin-top:6px">...dan '+(krp.rows.length-8)+' jadwal lainnya</div>':'') + '</div>';
+      } else {
+        jadwalHtml = '<div class="ov-mini-list"><div class="ov-empty" style="padding:14px 0"><span>📋</span>Belum ada jadwal hari ini</div></div>';
+      }
+      krpEl.innerHTML = '<div class="ov-stat-row">'
+        +'<div class="ov-stat"><div class="ov-stat-lbl">Total Kendaraan</div><div class="ov-stat-val">'+krp.totalVeh+'</div></div>'
+        +'<div class="ov-stat"><div class="ov-stat-lbl">Jadwal Hari Ini</div><div class="ov-stat-val">'+krp.rows.length+'</div></div>'
+        +'</div>' + jadwalHtml;
+    } else {
+      krpEl.innerHTML = '<div class="ov-empty">Data belum dimuat — buka modul untuk sinkron</div>';
+    }
+  }
+
+  // ── Anggaran & Kontrak (7 KPI — persis modul Anggaran asli) ──
+  var angEl = document.getElementById('ov-angBody');
+  if (angEl) {
+    if (ang) {
+      angEl.innerHTML =
+        '<div class="ov-ang-grid">'
+        +'<div class="ov-akpi" style="--ac:#dc2626"><div class="ov-akpi-lbl">Total RKAP 2026</div><div class="ov-akpi-val" style="color:#dc2626">'+rp(ang.tR)+'</div><div class="ov-akpi-sub">'+ang.itemCount+' item anggaran</div></div>'
+        +'<div class="ov-akpi" style="--ac:#2563eb"><div class="ov-akpi-lbl">Pleno WP&amp;B 2026</div><div class="ov-akpi-val" style="color:#2563eb">'+rp(ang.tPl)+'</div><div class="ov-akpi-sub">anggaran disetujui</div></div>'
+        +'<div class="ov-akpi" style="--ac:#0891b2"><div class="ov-akpi-lbl">Upload SAP</div><div class="ov-akpi-val" style="color:#0891b2">'+rp(ang.tSAP)+'</div>'
+          +'<div class="ov-akpi-sub" style="display:flex;justify-content:space-between"><span>vs Pleno</span><span>'+(ang.pctSAP*100).toFixed(1)+'%</span></div>'
+          +'<div class="ov-akpi-bar"><div class="ov-akpi-bar-fill" style="width:'+Math.min(100,ang.pctSAP*100)+'%;background:linear-gradient(90deg,#0891b2,#22d3ee)"></div></div></div>'
+        +'<div class="ov-akpi" style="--ac:#16a34a"><div class="ov-akpi-lbl">Sisa Anggaran (SAP)</div><div class="ov-akpi-val" style="color:#16a34a">'+rp(ang.sisaSAP)+'</div><div class="ov-akpi-sub">'+((ang.tSAP>0?ang.sisaSAP/ang.tSAP*100:0).toFixed(1))+'% sisa dari SAP</div></div>'
+        +'</div>'
+        +'<div class="ov-ang-grid row2">'
+        +'<div class="ov-akpi" style="--ac:#16a34a"><div class="ov-akpi-lbl">Prognosa YTD</div><div class="ov-akpi-val" style="color:#16a34a">'+rp(ang.tPr)+'</div>'
+          +'<div class="ov-akpi-sub" style="display:flex;justify-content:space-between"><span>vs Pleno WP&amp;B</span><span>'+(ang.pct*100).toFixed(1)+'%</span></div>'
+          +'<div class="ov-akpi-bar"><div class="ov-akpi-bar-fill" style="width:'+Math.min(100,ang.pct*100)+'%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div></div>'
+        +'<div class="ov-akpi" style="--ac:'+(ang.ketLabel==='Habis'?'#b91c1c':'#7c3aed')+'"><div class="ov-akpi-lbl">Ketahanan Anggaran</div><div class="ov-akpi-val" style="font-size:16px;color:'+(ang.ketLabel==='Habis'?'#b91c1c':'#7c3aed')+'">'+ang.ketLabel+'</div><div class="ov-akpi-sub">'+ang.ketSub+'</div></div>'
+        +'<div class="ov-akpi" style="--ac:'+(ang.kurang>0?'#dc2626':'#16a34a')+'"><div class="ov-akpi-lbl">Kekurangan s/d Des</div><div class="ov-akpi-val" style="font-size:16px;color:'+(ang.kurang>0?'#dc2626':'#16a34a')+'">'+(ang.kurang>0?rp(ang.kurang):'Cukup')+'</div><div class="ov-akpi-sub">'+(ang.kurang>0?Math.ceil(ang.blnKosong)+' bln kosong':'SAP cukup s/d Des 2026')+'</div></div>'
+        +'</div>'
+        +'<div class="ov-mini-stats">'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#0f172a">'+ang.totalKontrak+'</div><div class="l">Total Kontrak</div></div>'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#16a34a">'+ang.aktif+'</div><div class="l">Aktif</div></div>'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#dc2626">'+ang.kritis+'</div><div class="l">Kritis</div></div>'
+        +'<div class="ov-mini-stat"><div class="n" style="color:#64748b">'+ang.nonaktif+'</div><div class="l">Non-Aktif</div></div>'
+        +'</div>';
+    } else {
+      angEl.innerHTML = '<div class="ov-empty">Data belum dimuat — buka modul untuk sinkron</div>';
+    }
+  }
+
+  // ── Daftar Kontrak (full list, di depan) ──
+  var kontrakEl = document.getElementById('ov-kontrakBody');
+  var kontrakCountEl = document.getElementById('ov-kontrakCount');
+  if (kontrakEl) {
+    if (ang && ang.kontrak.length) {
+      if (kontrakCountEl) kontrakCountEl.textContent = ang.kontrak.length + ' kontrak · Buka modul →';
+      var sorted = [...ang.kontrak].sort(function(a,b){ return (b.nilaiKontrak||0)-(a.nilaiKontrak||0); });
+      kontrakEl.innerHTML = '<table class="ov-kontrak-tbl"><thead><tr>'
+        +'<th>Pekerjaan</th><th>Vendor</th><th>Mulai</th><th>Akhir</th><th>Sisa Hari</th><th>Nilai Kontrak</th><th>Realisasi</th><th>Progress</th>'
+        +'</tr></thead><tbody>' + sorted.map(function(k){
+          var nilai = k.nilaiKontrak||0, real = k.realisasi2026||0;
+          var pct = nilai>0 ? Math.min(100, real/nilai*100) : 0;
+          var due = k.due||0;
+          var sisaC = due<=0?'#64748b':due<=30?'#dc2626':due<=90?'#d97706':'#16a34a';
+          var barC = pct>=80?'#16a34a':pct>=40?'#d97706':'#dc2626';
+          return '<tr onclick="ov_goto(\'anggaran\')" style="cursor:pointer">'
+            +'<td class="nm">'+ov_esc(k.pekerjaan||'—')+'</td>'
+            +'<td>'+ov_esc(k.vendor||'—')+'</td>'
+            +'<td class="num" style="color:var(--t3)">'+ov_esc(k.mulai||'—')+'</td>'
+            +'<td class="num" style="color:var(--t3)">'+ov_esc(k.akhir||'—')+'</td>'
+            +'<td class="num" style="color:'+sisaC+';font-weight:700">'+(due>0?due+'h':'—')+'</td>'
+            +'<td class="num">'+rp(nilai)+'</td>'
+            +'<td class="num">'+rp(real)+'</td>'
+            +'<td><span class="ov-kontrak-bar"><span class="ov-kontrak-bar-fill" style="width:'+pct+'%;background:'+barC+'"></span></span>'+pct.toFixed(0)+'%</td>'
+            +'</tr>';
+        }).join('') + '</tbody></table>';
+    } else {
+      if (kontrakCountEl) kontrakCountEl.textContent = 'Buka modul →';
+      kontrakEl.innerHTML = '<div class="ov-empty">Data kontrak belum dimuat — buka modul Anggaran untuk sinkron</div>';
+    }
+  }
+
+  // ── Lemburan (Tim GS) ──
+  var lemburEl = document.getElementById('ov-lemburBody');
+  if (lemburEl) {
+    if (lembur) {
+      lemburEl.innerHTML = '<div class="ov-lembur-grid">'
+        +'<div class="ov-akpi" style="--ac:#2563eb"><div class="ov-akpi-lbl">Total Karyawan</div><div class="ov-akpi-val" style="color:#2563eb">'+lembur.n+'</div><div class="ov-akpi-sub">tim GS</div></div>'
+        +'<div class="ov-akpi" style="--ac:#2563eb"><div class="ov-akpi-lbl">Total Jam '+lembur.year+'</div><div class="ov-akpi-val" style="color:#2563eb">'+Math.round(lembur.totalJam).toLocaleString('id-ID')+'</div><div class="ov-akpi-sub">'+lembur.activeMonths+' bulan terisi</div></div>'
+        +'<div class="ov-akpi" style="--ac:#2563eb"><div class="ov-akpi-lbl">Rata-rata/Org/Bln</div><div class="ov-akpi-val" style="color:#2563eb">'+lembur.avgOrgBln.toFixed(1)+'</div><div class="ov-akpi-sub">jam</div></div>'
+        +'<div class="ov-akpi" style="--ac:#dc2626"><div class="ov-akpi-lbl">Status Tinggi</div><div class="ov-akpi-val" style="color:#dc2626">'+lembur.tinggi+'</div><div class="ov-akpi-sub">'+(lembur.n?Math.round(lembur.tinggi/lembur.n*100):0)+'% dari total</div></div>'
+        +'<div class="ov-akpi" style="--ac:#d97706"><div class="ov-akpi-lbl">Status Perhatian</div><div class="ov-akpi-val" style="color:#d97706">'+lembur.perhatian+'</div><div class="ov-akpi-sub">'+(lembur.n?Math.round(lembur.perhatian/lembur.n*100):0)+'% dari total</div></div>'
+        +'</div>';
+    } else {
+      lemburEl.innerHTML = '<div class="ov-empty">Data belum dimuat — buka modul untuk sinkron</div>';
+    }
+  }
+
+  // ── Tagihan Kontrak ──
+  var tagihanEl = document.getElementById('ov-tagihanBody');
+  if (tagihanEl) {
+    if (tagihan) {
+      tagihanEl.innerHTML = '<div class="ov-ang-grid">'
+        +'<div class="ov-akpi" style="--ac:#1e3a8a"><div class="ov-akpi-lbl">Total Kontrak</div><div class="ov-akpi-val" style="color:#1e3a8a">'+tagihan.total+'</div><div class="ov-akpi-sub">aktif 2026</div></div>'
+        +'<div class="ov-akpi" style="--ac:#16a34a"><div class="ov-akpi-lbl">Lunas</div><div class="ov-akpi-val" style="color:#16a34a">'+tagihan.paid+'</div><div class="ov-akpi-sub">tagihan dibayar</div></div>'
+        +'<div class="ov-akpi" style="--ac:#2563eb"><div class="ov-akpi-lbl">Di Finance</div><div class="ov-akpi-val" style="color:#2563eb">'+tagihan.finance+'</div><div class="ov-akpi-sub">maks 3 minggu</div></div>'
+        +'<div class="ov-akpi" style="--ac:#7c3aed"><div class="ov-akpi-lbl">Routing TTD</div><div class="ov-akpi-val" style="color:#7c3aed">'+tagihan.routing+'</div><div class="ov-akpi-sub">Iqbal→Asman→FM</div></div>'
+        +'</div>'
+        +'<div class="ov-ang-grid row2">'
+        +'<div class="ov-akpi" style="--ac:#d97706"><div class="ov-akpi-lbl">Proses</div><div class="ov-akpi-val" style="color:#d97706">'+tagihan.partial+'</div><div class="ov-akpi-sub">PR / PO / SA</div></div>'
+        +'<div class="ov-akpi" style="--ac:#b45309"><div class="ov-akpi-lbl">Belum</div><div class="ov-akpi-val" style="color:#b45309">'+tagihan.pending+'</div><div class="ov-akpi-sub">belum diproses</div></div>'
+        +'<div class="ov-akpi" style="--ac:#dc2626"><div class="ov-akpi-lbl">Terlambat</div><div class="ov-akpi-val" style="color:#dc2626">'+tagihan.late+'</div><div class="ov-akpi-sub">perlu tindakan</div></div>'
+        +'</div>';
+    } else {
+      tagihanEl.innerHTML = '<div class="ov-empty">Data belum dimuat — buka modul untuk sinkron</div>';
+    }
+  }
+
+  var updEl = document.getElementById('ov-updated');
+  if (updEl) updEl.textContent = 'Update: '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if (manual && btn) setTimeout(function(){ btn.classList.remove('spinning'); }, 500);
+}
+
+// ── Auto-load tanpa perlu refresh manual ──────────────────────────────────
+// Render cepat berulang di awal (menunggu Firebase/iframe RDP/fetch Anggaran selesai),
+// lalu settle ke interval rutin — semua tanpa aksi user sama sekali.
+var ov_bootTicks = 0;
+var ov_bootTimer = setInterval(function(){
+  ov_render();
+  ov_bootTicks++;
+  if (ov_bootTicks >= 20) clearInterval(ov_bootTimer); // ~30 detik percobaan cepat (tiap 1.5s)
+}, 1500);
+setInterval(function(){ ov_render(); }, 8000); // refresh rutin tiap 8 detik seterusnya — selamanya, tanpa aksi user
+
+// Begitu iframe RDP selesai load, langsung render ulang (RDP butuh waktu paling lama)
+(function(){
+  var f = document.getElementById('rdp-iframe');
+  if (f) f.addEventListener('load', function(){ setTimeout(ov_render, 400); setTimeout(ov_render, 1500); setTimeout(ov_render, 4000); });
+})();
+
+// Render pertama secepat mungkin
+ov_render();
 </script>
 </body>
 </html>
