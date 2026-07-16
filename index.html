@@ -405,7 +405,7 @@
 <style>
 /* ── RESET ── */
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;zoom:.75}
 
 /* ── DARK THEME (default, used for Anggaran module) ── */
 :root{
@@ -444,7 +444,8 @@ body{font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-f
 .cmd-sep{width:1px;height:28px;background:rgba(255,255,255,.07);margin:0 4px}
 
 /* ── MODULE SWITCHER ── */
-.mod-pills{display:flex;background:rgba(255,255,255,.05);border-radius:99px;padding:3px;gap:3px}
+.mod-pills{display:flex;background:rgba(255,255,255,.05);border-radius:99px;padding:3px;gap:3px;overflow-x:auto;min-width:0;scrollbar-width:none}
+.mod-pills::-webkit-scrollbar{display:none}
 .mod-pill{
   display:flex;align-items:center;gap:6px;
   padding:6px 18px;border-radius:99px;font-size:12px;font-weight:600;
@@ -1121,8 +1122,8 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
 .ov-kicker .n{width:5px;height:14px;border-radius:3px;background:var(--navy2)}
 
 /* ── GRID / CARD SHELL ── */
-.ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;align-items:stretch}
-@media (max-width:1150px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
+.ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;align-items:stretch}
+@media (max-width:1180px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:700px){.ov-grid{grid-template-columns:1fr}}
 
 .ov-card{
@@ -1266,6 +1267,17 @@ a.ov-card-sub{text-decoration:none}
         <div class="ov-card-sub">Buka →</div>
       </div>
       <div id="ov-rdpBody" style="flex:1;display:flex;flex-direction:column"><div class="ov-empty">Memuat…</div></div>
+    </div>
+
+    <div class="ov-card click" style="--accent:#0d9488" onclick="ov_gotoMess()">
+      <div class="ov-card-hdr">
+        <div class="ov-card-title-wrap">
+          <div class="ov-icon-badge" style="--accent-bg:rgba(13,148,136,.1)">🏨</div>
+          <div><div class="ov-card-title">Status Mess</div><div class="ov-card-cap">Okupansi kamar</div></div>
+        </div>
+        <div class="ov-card-sub">Buka →</div>
+      </div>
+      <div id="ov-messBody" style="flex:1;display:flex;flex-direction:column"><div class="ov-empty">Memuat…</div></div>
     </div>
   </div>
 
@@ -6118,6 +6130,7 @@ window.addEventListener('load', () => {
   // Preload modul lain di background supaya Ringkasan Utama punya data langsung
   try { if (typeof dp_initModule === 'function') dp_initModule(); } catch(e) {}
   try { if (typeof _krpActivate === 'function') _krpActivate(); } catch(e) {}
+  try { if (typeof messInit === 'function') messInit(); } catch(e) {}
   setTimeout(() => { if (typeof ov_render === 'function') ov_render(); }, 1200);
 });
 
@@ -8968,6 +8981,7 @@ setTimeout(async () => {
 ══════════════════════════════════════════════════════════════════════════ -->
 <script>
 function ov_goto(m) { switchModule(m); }
+function ov_gotoMess() { switchModule('gs'); if (typeof gsTab === 'function') gsTab('mess'); }
 
 function ov_greeting() {
   var h = new Date().getHours();
@@ -9070,6 +9084,29 @@ window.addEventListener('message', function(e){
     ov_render();
   }
 });
+
+// Status okupansi Mess (dibaca langsung dari MESS_ASSETS/MESS_DATA modul GS Care, read-only)
+function ov_getMess() {
+  try {
+    if (typeof MESS_ASSETS === 'undefined') return null;
+    var rows = [], filled = 0, total = 0;
+    Object.keys(MESS_ASSETS).forEach(function(assetId){
+      var asset = MESS_ASSETS[assetId];
+      var assetData = (typeof MESS_DATA !== 'undefined' && MESS_DATA[assetId]) || {};
+      total += asset.rooms.length;
+      asset.rooms.forEach(function(r){
+        var occ = (assetData[r.id] && assetData[r.id].occupant) || '';
+        occ = occ.trim();
+        if (occ) {
+          filled++;
+          rows.push({mess: asset.label, kamar: (r.house ? r.house+' · ' : '') + r.name, occupant: occ});
+        }
+      });
+    });
+    if (!total) return null;
+    return {filled: filled, total: total, rows: rows};
+  } catch(e) { console.error('ov_getMess error:', e); return null; }
+}
 
 function ov_getRDP() {
   if (ov_rdpCache) return ov_rdpCache;
@@ -9196,6 +9233,7 @@ async function ov_render(manual) {
   if (greetEl) greetEl.textContent = ov_greeting();
 
   var gs = ov_getGS(), krp = ov_getKRP(), ang = ov_getAng(), dp = ov_getDP(), rdp = ov_getRDP();
+  var mess = ov_getMess();
   var lembur = await ov_getLemburGS(), tagihan = await ov_getTagihan();
 
   // ── GS Care ──
@@ -9271,6 +9309,24 @@ async function ov_render(manual) {
       +'<div class="ov-rdp-item"><div class="ov-rdp-dot" style="background:#dc2626"></div><div class="ov-rdp-lbl">Tidak Layak Huni</div><div class="ov-rdp-val">'+rdp.tidakLayak+'</div></div>'
       +'</div>'
     ) : '<div class="ov-empty">Menyinkronkan data RDP…</div>';
+  }
+
+  // ── Status Mess (terpisah, klik → GS Care > Status Mess) ──
+  var messEl = document.getElementById('ov-messBody');
+  if (messEl) {
+    if (mess) {
+      var messRows = mess.rows.length ? mess.rows.slice(0,6).map(function(r){
+        return '<div class="ov-mini-row">'
+          +'<div class="ov-mini-unit" style="width:auto;flex:1;font-weight:600">'+ov_esc(r.occupant)+'</div>'
+          +'<div class="ov-mini-dest" style="max-width:150px">'+ov_esc(r.mess)+' — '+ov_esc(r.kamar)+'</div>'
+          +'</div>';
+      }).join('') + (mess.rows.length>6?'<div style="font-size:10.5px;color:var(--t3);margin-top:6px">...dan '+(mess.rows.length-6)+' penghuni lainnya</div>':'')
+        : '<div class="ov-empty" style="padding:14px 0"><span>🛏️</span>Semua kamar mess kosong</div>';
+      messEl.innerHTML = '<div class="ov-stat"><div class="ov-stat-lbl">Kamar Terisi</div><div class="ov-stat-val">'+mess.filled+'<span style="font-size:14px;color:var(--t3);font-weight:600">/'+mess.total+'</span></div></div>'
+        + '<div class="ov-mini-list">' + messRows + '</div>';
+    } else {
+      messEl.innerHTML = '<div class="ov-empty">Menyinkronkan data mess…</div>';
+    }
   }
 
   // ── KRP: total kendaraan + jadwal hari ini ──
