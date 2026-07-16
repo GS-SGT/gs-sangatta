@@ -1028,6 +1028,67 @@ td{padding:7px 8px;vertical-align:middle;text-align:center;color:#1e293b}
 </style>
 </head>
 <body>
+<script>
+// ── Mode Tampilan Saja (view-only) — aktif kalau URL diakhiri ?view=1 ──
+var OV_VIEW_ONLY = new URLSearchParams(location.search).get('view') === '1';
+if (OV_VIEW_ONLY) document.documentElement.classList.add('ov-view-only');
+</script>
+<div id="ov-vo-banner" style="display:none;background:linear-gradient(90deg,#0f172a,#1e293b);color:#fbbf24;font-size:12px;font-weight:700;text-align:center;padding:6px;letter-spacing:.3px;position:sticky;top:0;z-index:400">
+  🔒 MODE TAMPILAN SAJA — semua data hanya bisa dilihat, tidak bisa diubah
+</div>
+<script>
+if (OV_VIEW_ONLY) { var _ovBanner = document.getElementById('ov-vo-banner'); if (_ovBanner) _ovBanner.style.display = 'block'; }
+</script>
+<style>
+/* ── Mode Tampilan Saja: nonaktifkan tombol/aksi yang mengubah data ──
+   Hanya menarget fungsi yang benar-benar mutasi data (save/add/delete/upload/reset).
+   Navigasi, tab switch, sort, filter, pencarian, export, print TETAP aktif normal. */
+html.ov-view-only [onclick*="angClearRK("],
+html.ov-view-only [onclick*="dp_confirmDelete("],
+html.ov-view-only [onclick*="dp_doDelete("],
+html.ov-view-only [onclick*="dp_editWorker("],
+html.ov-view-only [onclick*="dp_handleUploadFile("],
+html.ov-view-only [onclick*="dp_openModal("],
+html.ov-view-only [onclick*="dp_saveWorker("],
+html.ov-view-only [onclick*="dp_skipFirebase("],
+html.ov-view-only [onclick*="dp_triggerUpload("],
+html.ov-view-only [onclick*="gsSaveAll("],
+html.ov-view-only [onclick*="gsToggle("],
+html.ov-view-only [onclick*="gsWkSave("],
+html.ov-view-only [onclick*="messHistoriTakeSnapshot("],
+html.ov-view-only [onclick*="messKosongAll("],
+html.ov-view-only [onclick*="noteAdd("],
+html.ov-view-only [onclick*="noteDelete("],
+html.ov-view-only [onclick*="openHistEdit("],
+html.ov-view-only [onclick*="ql_openAdd("],
+html.ov-view-only [onclick*="ql_resetDefaults("],
+html.ov-view-only [onclick*="ql_save("],
+html.ov-view-only [onclick*="resetEdit("],
+html.ov-view-only [onclick*="saveEdit("],
+html.ov-view-only [onclick*="saveHistEdit("],
+html.ov-view-only [onclick*="tdAdd("],
+html.ov-view-only [onclick*="tdDelete("],
+html.ov-view-only [onclick*="tdClearDone("],
+html.ov-view-only [onclick*="tdToggle("] {
+  pointer-events: none !important;
+  opacity: .4 !important;
+  filter: grayscale(60%);
+  cursor: not-allowed !important;
+}
+html.ov-view-only input[oninput*="messOnInput("],
+html.ov-view-only input[onblur*="messOnInput("],
+html.ov-view-only input[onchange*="messOnInput("] {
+  pointer-events: none !important;
+  background: #f1f5f9 !important;
+  opacity: .65;
+  cursor: not-allowed !important;
+}
+html.ov-view-only input[type="checkbox"][onclick*="tdToggle("],
+html.ov-view-only input[type="checkbox"][onchange*="tdToggle("] {
+  pointer-events: none !important;
+  opacity: .4 !important;
+}
+</style>
 <div class="app-shell">
 
 <!-- ══ COMMAND NAV ══════════════════════════════════════════════════════ -->
@@ -3247,7 +3308,7 @@ console.log('[MH] Mess History module loaded.');
 <!-- ══════════════════════════════════════════════════════════════════════
      MODULE: RDP MONITOR (iframe isolated)
 ══════════════════════════════════════════════════════════════════════════ -->
-<div class="module" id="mod-rdp" style="height:calc(100vh - 58px);overflow:hidden">
+<div class="module" id="mod-rdp" style="overflow:visible">
   <iframe id="rdp-iframe" 
     srcdoc="<!DOCTYPE html>
 <html lang=&quot;id&quot;>
@@ -3497,6 +3558,57 @@ hr.div{border:none;border-top:1px solid var(--bd2);margin:18px 0}
 </style>
 </head>
 <body>
+<script>
+var OV_VIEW_ONLY = false;
+try { OV_VIEW_ONLY = parent.location.search.indexOf('view=1') >= 0; } catch(e) {}
+if (OV_VIEW_ONLY) document.body.classList.add('ov-view-only');
+</script>
+<style>
+/* Mode Tampilan Saja — nonaktifkan aksi mutasi data RDP (tab/sort/filter/lightbox tetap normal) */
+body.ov-view-only [onclick*='addFasManual('],
+body.ov-view-only [onclick*='addSemberah('],
+body.ov-view-only [onclick*='addStdCat('],
+body.ov-view-only [onclick*='addStdItem('],
+body.ov-view-only [onclick*='addTodo('],
+body.ov-view-only [onclick*='addVacant('],
+body.ov-view-only [onclick*='clearDoneTodo('],
+body.ov-view-only [onclick*='delFasFoto('],
+body.ov-view-only [onclick*='delSemberah('],
+body.ov-view-only [onclick*='delStdItem('],
+body.ov-view-only [onclick*='delVacant('],
+body.ov-view-only [onclick*='deleteNote('],
+body.ov-view-only [onclick*='deleteRDP('],
+body.ov-view-only [onclick*='deleteTodo('],
+body.ov-view-only [onclick*='doSave('],
+body.ov-view-only [onclick*='saveAddRDP('],
+body.ov-view-only [onclick*='saveModal('],
+body.ov-view-only [onclick*='saveStdLS('],
+body.ov-view-only [onclick*='openAddRDP('],
+body.ov-view-only [onclick*='openModal('],
+body.ov-view-only [onclick*='pinNote('],
+body.ov-view-only [onclick*='resetSensus('],
+body.ov-view-only [onclick*='resetStd('],
+body.ov-view-only [onclick*='toggleTodo('],
+body.ov-view-only [onclick*='tandaiSelesai('] {
+  pointer-events: none !important;
+  opacity: .4 !important;
+  filter: grayscale(60%);
+  cursor: not-allowed !important;
+}
+body.ov-view-only input[onchange*='handleFoto('],
+body.ov-view-only input[onchange*='handleSiFoto('],
+body.ov-view-only select[onchange*='quickEditPC('],
+body.ov-view-only select[onchange*='updStdItem('],
+body.ov-view-only input[onchange*='updStdItem('],
+body.ov-view-only select[onchange*='updF('],
+body.ov-view-only input[onchange*='updF('],
+body.ov-view-only select[onchange*='onPRLChange('] {
+  pointer-events: none !important;
+  background: #f1f5f9 !important;
+  opacity: .6;
+  cursor: not-allowed !important;
+}
+</style>
 <div class=&quot;topbar&quot;></div>
 <div class=&quot;wrap&quot;>
 
@@ -6068,7 +6180,7 @@ setInterval(_ovBroadcastRDP,3000);
 </script>
 </body>
 </html>"
-    style="width:100%;height:calc(100vh - 58px);border:none;display:block;overflow:auto"
+    style="width:100%;height:2600px;border:none;display:block;overflow:hidden"
     sandbox="allow-scripts allow-same-origin allow-forms allow-modals">
   </iframe>
 </div><!-- /mod-rdp -->
