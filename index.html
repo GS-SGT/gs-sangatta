@@ -9986,7 +9986,6 @@ body{background:#fff;color:var(--ab-ink);font-variant-numeric:tabular-nums}
 .ang-sec{font-size:20px;font-weight:600;color:var(--ab-ink);margin-bottom:16px}
 .ang-sec::before{display:none}
 .gs-wks-t,.note-date-grp-hdr{font-size:17px;font-weight:600;color:var(--ab-ink);border-bottom:1px solid var(--ab-hair);padding:10px 0;margin-bottom:12px}
-#mod-links h2{font-size:28px!important;font-weight:600!important}
 
 /* ── Kartu ── */
 .gs-stat,.gs-tcard,.gs-hgrp,.ang-kpi,.ang-card,.ang-cardf,.ang-tcard,.todo-kpi,.todo-item,.note-item,.mess-card,.mc,.card,.vc,.ov-card,.ov-akpi,.fb-setup-form,
@@ -10085,8 +10084,8 @@ td{color:var(--ab-ink)}
 #mod-datapekerja .dp-flt-select:focus,#dp-modalBg .dp-finput:focus,#dp-modalBg .dp-fsel:focus{border-color:var(--ab-ink);box-shadow:0 0 0 1px var(--ab-ink);background:#fff}
 .mess-room-inp{background:var(--ab-soft);border-color:transparent}
 /* kolom pencarian = pil bayangan ala search bar */
-.note-search,#ql-search,#mod-datapekerja .dp-search-box input{background:#fff!important;border:1px solid var(--ab-line)!important;border-radius:999px!important;box-shadow:var(--ab-sh-pill);color:var(--ab-ink)!important;font-size:13.5px}
-.note-search:focus,#ql-search:focus,#mod-datapekerja .dp-search-box input:focus{border-color:var(--ab-ink)!important;box-shadow:var(--ab-sh-card)}
+.note-search,#mod-datapekerja .dp-search-box input{background:#fff!important;border:1px solid var(--ab-line)!important;border-radius:999px!important;box-shadow:var(--ab-sh-pill);color:var(--ab-ink)!important;font-size:13.5px}
+.note-search:focus,#mod-datapekerja .dp-search-box input:focus{border-color:var(--ab-ink)!important;box-shadow:var(--ab-sh-card)}
 .gs-field label,.ang-field label,.fb-setup-form label,.mfield label,#dp-modalBg .dp-flabel{font-size:12.5px;font-weight:600;color:var(--ab-ink)}
 .mfield input[readonly]{background:var(--ab-soft);color:var(--ab-ink2)}
 
@@ -10162,18 +10161,6 @@ td{color:var(--ab-ink)}
 #mod-datapekerja .dp-wrap{padding:32px 40px}
 #mod-datapekerja .dp-priority-item,#mod-datapekerja .dp-tbl-foot{border-color:var(--ab-hair)}
 
-/* ── Quick Links: kartu ala listing ── */
-#ql-pinned{gap:28px 22px!important}
-#ql-pinned .ql-card-inner{background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0 0 52px!important;overflow:visible!important}
-#ql-pinned .ql-card-inner>div:first-child{display:none!important}
-#ql-pinned .ql-card-inner>div:nth-child(2){flex-direction:column!important;gap:12px!important}
-#ql-pinned .ql-card-inner>div:nth-child(2)>div:first-child{width:100%!important;height:auto!important;aspect-ratio:20/13;border-radius:12px!important;font-size:52px!important;transition:filter .2s}
-#ql-pinned a:hover .ql-card-inner>div:nth-child(2)>div:first-child{filter:brightness(.93)}
-#ql-pinned .ql-card-inner>div:nth-child(2)>div:last-child>div:first-child{font-size:15px!important;font-weight:600!important}
-#ql-pinned>div>div:last-child{border-top:none!important;border-radius:0!important;gap:8px!important}
-#ql-pinned>div>div:last-child button{background:#fff!important;border:1px solid var(--ab-line)!important;border-radius:8px!important;color:var(--ab-ink)!important;padding:8px 0!important}
-#ql-pinned>div>div:last-child button:hover{background:var(--ab-soft)!important;border-color:var(--ab-ink)!important}
-#ql-pinned>div>div:last-child button:last-child:hover{color:var(--ab-err)!important}
 
 /* ── Warna inline lama → palet baru ── */
 [style*="color:#8A9BBE"],[style*="color:#64748b"],[style*="color:#94a3b8"],[style*="color:#9ca3af"],[style*="color:#6b7280"],[style*="color:#B0BDD6"]{color:var(--ab-ink3)!important}
@@ -10322,6 +10309,15 @@ thead tr,thead th,.gs-tcard th,.ang-tcard th,.ang-tcard thead th,.ov-kontrak-tbl
 [style*="background:#0052cc"],[style*="background:#0052CC"]{background:var(--ab-soft)!important;color:var(--ab-ink)!important}
 [style*="background:#dbeafe"]{background:var(--ab-soft2)!important}
 [style*="background:#dcfce7"]{background:var(--ab-ok-bg)!important}
+
+/* ── Quick Links: kembali ke tampilan kartu asli ── */
+#mod-links *{font-family:'Inter',sans-serif!important}
+#mod-links [style*="JetBrains"]{font-family:'JetBrains Mono',monospace!important}
+#mod-links [style*="background:#0052cc"],#mod-links [style*="background:#0052CC"]{background:#0052CC!important;color:#fff!important}
+#mod-links [style*="background:#003087"]{background:#003087!important;border-color:#003087!important}
+#mod-links [style*="background:#3b82f6"]{background:#3b82f6!important;border-color:#3b82f6!important}
+#mod-links [style*="background:#6B21A8"]{background:#6B21A8!important;border-color:#6B21A8!important}
+#mod-links [style*="background:#0D6E6E"]{background:#0D6E6E!important;border-color:#0D6E6E!important}
 </style>
 </body>
 </html>
