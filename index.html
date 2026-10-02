@@ -7145,7 +7145,7 @@ function angRenderPrognosa(){
   const ts2=s2>0?s3/s2:0;
   document.getElementById('ang-pt1').textContent=ff(s1); document.getElementById('ang-pt2').textContent=ff(s2);
   document.getElementById('ang-pt-sap').textContent=ff(sSAP); document.getElementById('ang-pt3').textContent=ff(s3);
-  document.getElementById('ang-pt4').textContent=ff(s4); const netAv=sSAP-s3; document.getElementById('ang-pt6').innerHTML='<span style="color:'+(netAv<0?'var(--prd2)':'var(--green2)')+'">'+ff(netAv)+'</span>';
+  document.getElementById('ang-pt4').textContent=ff(s4); const netAv=s5; document.getElementById('ang-pt6').innerHTML='<span style="color:'+(netAv<0?'var(--prd2)':'var(--green2)')+'">'+ff(netAv)+'</span>';
   document.getElementById('ang-pt5').innerHTML=`<span class="ang-pill ${ts2>=.8?'g':ts2>=.4?'y':'r'}">${pcs(ts2)}</span>`;
   document.getElementById('ang-pg-count').textContent=Pf.length+(selRK?' ('+selRK.replace(/ EXPENSE| SERVICE/,'')+')':'')+' item';
 }
