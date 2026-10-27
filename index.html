@@ -9320,7 +9320,8 @@ function rosterToday(){
   st.data.p2h.forEach(o=>{if(o._t&amp;&amp;o._t>=t0){const s=p2hState(o);put(o.Driver,{t:o._t,cls:s.cls===&quot;ok&quot;?&quot;ok&quot;:s.cls,sub:`${o.Unit} · ${s.label}`,open:&quot;p2h&quot;,id:o.ID})}});
   st.data.mcu.forEach(o=>{if(o._t&amp;&amp;o._t>=t0)put(o.Driver,{t:o._t,cls:&quot;bad&quot;,sub:`${o.Unit} · Tidak fit`,open:&quot;mcu&quot;,id:o.ID,unfit:true})});
   const list=DRIVERS.map(n=>({n,e:ev[n]}));
-  Object.keys(ev).filter(k=>!DRIVERS.includes(k)).forEach(k=>list.push({n:k,e:ev[k],extra:true}));
+  const extraD=new Set(Object.keys(ev));[...st.data.p2h,...st.data.mcu].forEach(o=>{const k=String(o.Driver||&quot;&quot;).trim().toUpperCase();if(k)extraD.add(k)});
+  [...extraD].filter(k=>!DRIVERS.includes(k)).sort().forEach(k=>list.push({n:k,e:ev[k],extra:true}));
   return list}
 function rosterCard(){
   const all=rosterToday();
@@ -9345,7 +9346,8 @@ function rosterGS(){
     if(!ev[k]||o._t>ev[k].t)ev[k]={t:o._t,cls:gsFit(o)?&quot;ok&quot;:&quot;bad&quot;,sub:`Tensi ${o.Tensi||&quot;-&quot;}`,open:&quot;dcuGs&quot;,id:o.ID,unfit:!gsFit(o)}});
   const names=TIM_GS.map(x=>x[0]);
   const list=TIM_GS.map(([n,j])=>({n,j,e:ev[n]}));
-  Object.keys(ev).filter(k=>!names.includes(k)).forEach(k=>list.push({n:k,j:&quot;&quot;,e:ev[k],extra:true}));
+  const extraG=new Set(Object.keys(ev));(st.data.dcuGs||[]).forEach(o=>{const k=String(o.Nama||&quot;&quot;).trim().toUpperCase();if(k)extraG.add(k)});
+  [...extraG].filter(k=>!names.includes(k)).sort().forEach(k=>list.push({n:k,j:&quot;&quot;,e:ev[k],extra:true}));
   return list}
 function renderGS(){
   const ro=rosterGS(),q=st.q.toLowerCase(),done=ro.filter(x=>x.e),unfit=done.filter(x=>x.e.unfit),belum=ro.filter(x=>!x.e);
@@ -9484,6 +9486,7 @@ function rkCompute(g,ym){
   const days=rkDays(ym),past=days.filter(x=>!x.future),wajibN=past.filter(x=>x.wajib).length||1;
   const roster=g===&quot;krp&quot;?DRIVERS.map(n=>({n,j:&quot;Driver KRP&quot;})):TIM_GS.map(([n])=>({n,j:&quot;Tim GS&quot;}));
   const per={};roster.forEach(r=>per[r.n]={n:r.n,j:r.j,days:{},times:[],inRoster:true});
+  rkEvents(g).forEach(e=>{if(!per[e.n])per[e.n]={n:e.n,j:g===&quot;krp&quot;?&quot;Driver KRP&quot;:&quot;Tim GS&quot;,days:{},times:[],inRoster:true}});
   rkEvents(g).filter(e=>ymOf(e.t)===ym).forEach(e=>{
     const p=per[e.n]||(per[e.n]={n:e.n,j:e.j||&quot;&quot;,days:{},times:[],inRoster:false});
     const k=dkey(e.t);if(!p.days[k]||e.t<p.days[k]){p.days[k]=e.t}
