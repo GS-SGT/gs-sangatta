@@ -9342,7 +9342,7 @@ const gsFit=o=>!String(o.Status||&quot;&quot;).toUpperCase().includes(&quot;TIDA
 function rosterGS(){
   const t0=new Date();t0.setHours(0,0,0,0);const ev={};
   (st.data.dcuGs||[]).forEach(o=>{if(!o._t||o._t<t0)return;const k=String(o.Nama||&quot;&quot;).trim().toUpperCase();if(!k)return;
-    if(!ev[k]||o._t>ev[k].t)ev[k]={t:o._t,cls:gsFit(o)?&quot;ok&quot;:&quot;bad&quot;,sub:`${o.Jabatan||&quot;-&quot;} · tensi ${o.Tensi||&quot;-&quot;}`,open:&quot;dcuGs&quot;,id:o.ID,unfit:!gsFit(o)}});
+    if(!ev[k]||o._t>ev[k].t)ev[k]={t:o._t,cls:gsFit(o)?&quot;ok&quot;:&quot;bad&quot;,sub:`Tensi ${o.Tensi||&quot;-&quot;}`,open:&quot;dcuGs&quot;,id:o.ID,unfit:!gsFit(o)}});
   const names=TIM_GS.map(x=>x[0]);
   const list=TIM_GS.map(([n,j])=>({n,j,e:ev[n]}));
   Object.keys(ev).filter(k=>!names.includes(k)).forEach(k=>list.push({n:k,j:&quot;&quot;,e:ev[k],extra:true}));
@@ -9352,7 +9352,7 @@ function renderGS(){
   const total=ro.length,pc=done.length/(total||1)*100;
   let show=st.roG===&quot;done&quot;?done:st.roG===&quot;belum&quot;?belum:ro;
   show=show.filter(x=>!q||x.n.toLowerCase().includes(q)||String(x.j).toLowerCase().includes(q));
-  const groups={};show.forEach(x=>{const g=x.j||&quot;Lainnya&quot;;(groups[g]=groups[g]||[]).push(x)});
+  const groups={};show.forEach(x=>{const g=&quot;Tim GS&quot;;(groups[g]=groups[g]||[]).push(x)});
   const order=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
   const chip=x=>{const e=x.e;if(!e)return `<span class=&quot;rc none&quot;>${esc(x.n)}</span>`;
     return `<button class=&quot;rc ${e.cls}&quot; data-open=&quot;dcuGs&quot; data-id=&quot;${esc(e.id)}&quot; title=&quot;${esc(e.sub)}&quot;><i></i>${esc(x.n)}<small>${e.t.toLocaleTimeString(&quot;id-ID&quot;,{hour:&quot;2-digit&quot;,minute:&quot;2-digit&quot;})}</small></button>`};
@@ -9370,7 +9370,7 @@ function renderGS(){
   </div>
   <section class=&quot;card ro&quot;>
     <div class=&quot;ro-h&quot;><h3>DCU tim GS hari ini</h3>
-      <div class=&quot;tbl-tools&quot;><label class=&quot;search&quot;>${IC.search}<input id=&quot;q&quot; type=&quot;search&quot; placeholder=&quot;Cari nama atau jabatan&quot; value=&quot;${esc(st.q)}&quot; aria-label=&quot;Cari&quot;></label>
+      <div class=&quot;tbl-tools&quot;><label class=&quot;search&quot;>${IC.search}<input id=&quot;q&quot; type=&quot;search&quot; placeholder=&quot;Cari nama&quot; value=&quot;${esc(st.q)}&quot; aria-label=&quot;Cari&quot;></label>
       <div class=&quot;seg sm&quot; role=&quot;group&quot; aria-label=&quot;Filter DCU&quot;>${[[&quot;all&quot;,&quot;Semua&quot;],[&quot;done&quot;,`Sudah ${done.length}`],[&quot;belum&quot;,`Belum ${belum.length}`]].map(([v,l])=>`<button data-rog=&quot;${v}&quot; aria-pressed=&quot;${st.roG===v}&quot;>${l}</button>`).join(&quot;&quot;)}</div></div></div>
     <div class=&quot;ro-bar&quot; aria-hidden=&quot;true&quot;><i style=&quot;width:${pc}%;background:var(--ok)&quot;></i></div>
     ${order.map(g=>`<div class=&quot;grp&quot;><p class=&quot;grp-t&quot;>${esc(g)} <span>${groups[g].filter(x=>x.e).length}/${groups[g].length}</span></p><div class=&quot;rc-wrap&quot;>${groups[g].sort((a,b)=>(!!b.e-!!a.e)||a.n.localeCompare(b.n)).map(chip).join(&quot;&quot;)}</div></div>`).join(&quot;&quot;)||'<p class=&quot;empty&quot;>Tidak ada yang cocok.</p>'}
@@ -9385,7 +9385,7 @@ function renderGS(){
 function tblGS(R){if(!R.length)return `<p class=&quot;empty&quot;>Belum ada DCU tim GS pada periode ini.</p>`;
   return `<table><thead><tr><th>Waktu</th><th>Nama</th><th>Tensi</th><th>Status</th><th>Alasan</th></tr></thead><tbody>
   ${R.map(o=>{const f=gsFit(o),ul=String(o.Status||&quot;&quot;).toUpperCase().startsWith(&quot;ULANG&quot;);return `<tr data-open=&quot;dcuGs&quot; data-id=&quot;${esc(o.ID)}&quot;>
-    <td class=&quot;nowrap&quot;>${tm(o._t)}</td><td>${who(o.Nama,o.Jabatan)}</td><td class=&quot;mono&quot;>${esc(o.Tensi)}</td>
+    <td class=&quot;nowrap&quot;>${tm(o._t)}</td><td>${who(o.Nama,&quot;Tim GS&quot;)}</td><td class=&quot;mono&quot;>${esc(o.Tensi)}</td>
     <td class=&quot;nowrap&quot;><span class=&quot;chip ${f?&quot;ok&quot;:&quot;bad&quot;}&quot;><i></i>${f?&quot;Fit&quot;:&quot;Tidak fit&quot;}</span>${ul?' <span class=&quot;chip rev&quot;>Ulang</span>':&quot;&quot;}</td>
     <td><div class=&quot;trunc&quot; title=&quot;${esc(o[&quot;Alasan tidak fit&quot;])}&quot;>${esc(o[&quot;Alasan tidak fit&quot;])||'<span class=&quot;muted&quot;>–</span>'}</div></td></tr>`}).join(&quot;&quot;)}</tbody></table>`}
 function chart7(){
@@ -9432,7 +9432,7 @@ function openDetail(type,id){
         <p class=&quot;muted&quot; style=&quot;margin:8px 0 0;font-size:12px&quot;>Status tersimpan otomatis ke Google Sheets.</p></div>`;
   }else if(type===&quot;dcuGs&quot;){const f=gsFit(o);
     head=`<h3>DCU tim GS</h3><h2 style=&quot;margin-top:4px&quot;>${esc(o.Nama)}</h2><p style=&quot;margin:8px 0 0&quot;><span class=&quot;chip ${f?&quot;ok&quot;:&quot;bad&quot;}&quot;>${f?&quot;Fit&quot;:&quot;Tidak fit&quot;}</span></p>`;
-    body=kv([[&quot;No.&quot;,o.ID],[&quot;Waktu&quot;,fmtDT(o._t)],[&quot;Jabatan&quot;,o.Jabatan],[&quot;Tensi&quot;,o.Tensi?o.Tensi+&quot; mmHg&quot;:&quot;&quot;],[&quot;Obat kantuk&quot;,o.Obat],[&quot;Alkohol&quot;,o.Alkohol],[&quot;Keluhan&quot;,o.Keluhan],[&quot;Status&quot;,o.Status]])
+    body=kv([[&quot;No.&quot;,o.ID],[&quot;Waktu&quot;,fmtDT(o._t)],[&quot;Tensi&quot;,o.Tensi?o.Tensi+&quot; mmHg&quot;:&quot;&quot;],[&quot;Obat kantuk&quot;,o.Obat],[&quot;Alkohol&quot;,o.Alkohol],[&quot;Keluhan&quot;,o.Keluhan],[&quot;Status&quot;,o.Status]])
       +(o[&quot;Alasan tidak fit&quot;]?`<div><h3 style=&quot;margin-bottom:6px&quot;>Alasan</h3><div class=&quot;pre&quot;>${esc(o[&quot;Alasan tidak fit&quot;])}</div></div>`:&quot;&quot;);
   }else{
     head=`<h3>DCU tidak fit</h3><h2 style=&quot;margin-top:4px&quot;>${esc(o.Driver)}</h2><p style=&quot;margin:8px 0 0&quot;><span class=&quot;chip bad&quot;>Tidak fit</span></p>`;
@@ -9464,7 +9464,7 @@ const dkey=d=>d.getFullYear()+&quot;-&quot;+String(d.getMonth()+1).padStart(2,&q
 function rkEvents(g){
   const out=[];
   if(g===&quot;krp&quot;){st.data.p2h.forEach(o=>o._t&amp;&amp;out.push({n:o.Driver,t:o._t}));st.data.mcu.forEach(o=>o._t&amp;&amp;out.push({n:o.Driver,t:o._t}))}
-  else (st.data.dcuGs||[]).forEach(o=>o._t&amp;&amp;out.push({n:o.Nama,t:o._t,j:o.Jabatan}));
+  else (st.data.dcuGs||[]).forEach(o=>o._t&amp;&amp;out.push({n:o.Nama,t:o._t,j:&quot;Tim GS&quot;}));
   return out.map(e=>({...e,n:String(e.n||&quot;&quot;).trim().toUpperCase()})).filter(e=>e.n);
 }
 function rkMonths(){
@@ -9482,7 +9482,7 @@ function rkDays(ym){
 }
 function rkCompute(g,ym){
   const days=rkDays(ym),past=days.filter(x=>!x.future),wajibN=past.filter(x=>x.wajib).length||1;
-  const roster=g===&quot;krp&quot;?DRIVERS.map(n=>({n,j:&quot;Driver KRP&quot;})):TIM_GS.map(([n,j])=>({n,j}));
+  const roster=g===&quot;krp&quot;?DRIVERS.map(n=>({n,j:&quot;Driver KRP&quot;})):TIM_GS.map(([n])=>({n,j:&quot;Tim GS&quot;}));
   const per={};roster.forEach(r=>per[r.n]={n:r.n,j:r.j,days:{},times:[],inRoster:true});
   rkEvents(g).filter(e=>ymOf(e.t)===ym).forEach(e=>{
     const p=per[e.n]||(per[e.n]={n:e.n,j:e.j||&quot;&quot;,days:{},times:[],inRoster:false});
@@ -9542,7 +9542,7 @@ function renderRank(){
   </div>
   <section class=&quot;card&quot; style=&quot;display:flex;flex-direction:column;gap:12px&quot;>
     <div class=&quot;tbl-h&quot;><h3>Peringkat lengkap</h3>
-      <div class=&quot;tbl-tools&quot;><label class=&quot;search&quot;>${IC.search}<input id=&quot;q&quot; type=&quot;search&quot; placeholder=&quot;Cari nama atau jabatan&quot; value=&quot;${esc(st.q)}&quot; aria-label=&quot;Cari&quot;></label>
+      <div class=&quot;tbl-tools&quot;><label class=&quot;search&quot;>${IC.search}<input id=&quot;q&quot; type=&quot;search&quot; placeholder=&quot;Cari nama&quot; value=&quot;${esc(st.q)}&quot; aria-label=&quot;Cari&quot;></label>
       <button class=&quot;btn sec&quot; id=&quot;rkCsv&quot;>Unduh CSV</button></div></div>
     <p class=&quot;muted&quot; style=&quot;margin:0;font-size:12px&quot;><span class=&quot;lg&quot; style=&quot;background:var(--ok)&quot;></span>Isi <span class=&quot;lg&quot; style=&quot;background:#F3C7C2&quot;></span>Tidak isi <span class=&quot;lg&quot; style=&quot;background:var(--sunk);border:1px solid var(--line)&quot;></span>Libur / belum lewat</p>
     <div class=&quot;tbl-wrap&quot;><table><thead><tr><th>#</th><th>Nama</th><th>Kepatuhan</th><th>Hari isi</th><th>Streak terpanjang</th><th>Rata-rata jam isi</th><th>Terakhir isi</th><th>Harian ${BLN_ID[+ym.slice(5)-1]}</th></tr></thead><tbody>
@@ -9560,7 +9560,7 @@ function bindRank(rows,g,ym,wajibN){
   $(&quot;#rkM&quot;).onchange=e=>{st.rkM=e.target.value;render()};
   $(&quot;#rkHari&quot;).onchange=e=>{st.rkHari=e.target.value;rkSave();render()};
   $(&quot;#rkCsv&quot;).onclick=()=>{
-    const L=[[&quot;Peringkat&quot;,&quot;Nama&quot;,&quot;Jabatan&quot;,&quot;Kepatuhan (%)&quot;,&quot;Hari isi&quot;,&quot;Hari wajib&quot;,&quot;Streak terpanjang&quot;,&quot;Rata-rata jam isi&quot;,&quot;Terakhir isi&quot;]].concat(rows.map(r=>[r.rank,r.n,r.j||&quot;&quot;,Math.round(r.pct),r.filledW,wajibN,r.best,hhmm(r.avgMin),r.last?fmtDT(r.last):&quot;&quot;]));
+    const L=[[&quot;Peringkat&quot;,&quot;Nama&quot;,&quot;Kelompok&quot;,&quot;Kepatuhan (%)&quot;,&quot;Hari isi&quot;,&quot;Hari wajib&quot;,&quot;Streak terpanjang&quot;,&quot;Rata-rata jam isi&quot;,&quot;Terakhir isi&quot;]].concat(rows.map(r=>[r.rank,r.n,r.j||&quot;&quot;,Math.round(r.pct),r.filledW,wajibN,r.best,hhmm(r.avgMin),r.last?fmtDT(r.last):&quot;&quot;]));
     const csv=&quot;﻿&quot;+L.map(r=>r.map(v=>`&quot;${String(v).replace(/&quot;/g,'&quot;&quot;')}&quot;`).join(&quot;;&quot;)).join(&quot;\n&quot;);
     const a=document.createElement(&quot;a&quot;);a.href=URL.createObjectURL(new Blob([csv],{type:&quot;text/csv&quot;}));a.download=`kepatuhan_${g===&quot;krp&quot;?&quot;driver_krp&quot;:&quot;tim_gs&quot;}_${ym}.csv`;a.click()};
 }
