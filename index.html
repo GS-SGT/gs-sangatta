@@ -9164,8 +9164,11 @@ const CONFIG={API_URL:&quot;https://script.google.com/macros/s/AKfycbxsFKi0NsN_h
 const AUTO_REFRESH_DETIK=30;
 /* Daftar driver KRP: samakan dengan DRIVERS di index.html */
 /* Daftar tim GS: samakan dengan TIM_GS di dcu-gs.html. [nama, jabatan] */
-const TIM_GS_HAPUS=[&quot;A. JOHAN RISKY&quot;,&quot;RIO HADI IRAWAN&quot;,&quot;NURBAYA&quot;];  /* sudah tidak di tim GS — tidak ditampilkan */
-const TIM_GS=[[&quot;ABDILLAH MUTTAQIN&quot;, &quot;Mitra&quot;], [&quot;ABDULLAH QUZAIRI&quot;, &quot;Mitra&quot;], [&quot;ABIDIN&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;ADINDA&quot;, &quot;Mitra&quot;], [&quot;AHMAD HARIYANTO&quot;, &quot;Asisten Teknisi Listrik&quot;], [&quot;AHMAD SYUKRON SAFII BASYED&quot;, &quot;Mitra&quot;], [&quot;AJI MUHAMMAD QOYUM&quot;, &quot;Mitra&quot;], [&quot;ALAMSYAH&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;ALIMUDDIN&quot;, &quot;Mitra&quot;], [&quot;ANDI EKO SAPUTRO&quot;, &quot;Mitra&quot;], [&quot;DESY PUTRI RAHMADINA&quot;, &quot;Admin Fasum&quot;], [&quot;DIANA&quot;, &quot;Mitra&quot;], [&quot;DIKA NURGANDA&quot;, &quot;Mitra&quot;], [&quot;GESTIN PUJI NIRMANTO&quot;, &quot;Mitra&quot;], [&quot;HENDRIK&quot;, &quot;Mitra&quot;], [&quot;HERMAWAN&quot;, &quot;Mitra&quot;], [&quot;HERU WAHYUDI&quot;, &quot;Mitra&quot;], [&quot;IKBAL&quot;, &quot;Mitra&quot;], [&quot;IKHSAN&quot;, &quot;Mitra&quot;], [&quot;INDRA AHMAT TAUFIK&quot;, &quot;Mitra&quot;], [&quot;JAMALUDDIN&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;KARMILA&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;KHAIRIL ANWAR&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;MILA RIANI&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;MUH. ABUZAL ALGHIFARI&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;MUH. SYUKUR&quot;, &quot;Mitra&quot;], [&quot;NASRUL&quot;, &quot;Mitra&quot;], [&quot;NUR RIZKI BAYU PEBRIANTO&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;PATDRI AHMAD&quot;, &quot;Mitra&quot;], [&quot;RABDI&quot;, &quot;Mitra&quot;], [&quot;RISMAYANTO&quot;, &quot;Mitra&quot;], [&quot;ROHMAT&quot;, &quot;Mitra&quot;], [&quot;RUDIANSYAH&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;RUSTAM&quot;, &quot;Mitra&quot;], [&quot;SELFIANA PUTRI&quot;, &quot;Magang&quot;], [&quot;SETYO WIDIANTORO&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;SITTI OCTAVIANI&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;SUGENG RIVAI&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;SUHARDI&quot;, &quot;Mitra&quot;], [&quot;SUPRIANTO&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;SUTA ADIWIJAYA&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;TASRINA SEPTIANI PRAYOGI&quot;, &quot;Admin GS&quot;], [&quot;WAWAN&quot;, &quot;Mitra&quot;]];
+/* ganti nama: kiriman dengan nama lama dicatat ke nama baru */
+const TIM_GS_ALIAS={&quot;GESTIN PUJI NIRMANTO&quot;:&quot;GESTIN PUJI NIRWANI&quot;};
+const gsNama=v=>{const k=String(v||&quot;&quot;).trim().toUpperCase();return TIM_GS_ALIAS[k]||k};
+const TIM_GS_HAPUS=[&quot;A. JOHAN RISKY&quot;,&quot;RIO HADI IRAWAN&quot;,&quot;NURBAYA&quot;,&quot;HENDRIK&quot;];  /* sudah tidak di tim GS — tidak ditampilkan */
+const TIM_GS=[[&quot;ABDILLAH MUTTAQIN&quot;, &quot;Mitra&quot;], [&quot;ABDULLAH QUZAIRI&quot;, &quot;Mitra&quot;], [&quot;ABIDIN&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;ADINDA&quot;, &quot;Mitra&quot;], [&quot;AHMAD HARIYANTO&quot;, &quot;Asisten Teknisi Listrik&quot;], [&quot;AHMAD SYUKRON SAFII BASYED&quot;, &quot;Mitra&quot;], [&quot;AJI MUHAMMAD QOYUM&quot;, &quot;Mitra&quot;], [&quot;ALAMSYAH&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;ALIMUDDIN&quot;, &quot;Mitra&quot;], [&quot;ANDI EKO SAPUTRO&quot;, &quot;Mitra&quot;], [&quot;DESY PUTRI RAHMADINA&quot;, &quot;Admin Fasum&quot;], [&quot;DIANA&quot;, &quot;Mitra&quot;], [&quot;DIKA NURGANDA&quot;, &quot;Mitra&quot;], [&quot;GESTIN PUJI NIRWANI&quot;, &quot;Mitra&quot;], [&quot;HERMAWAN&quot;, &quot;Mitra&quot;], [&quot;HERU WAHYUDI&quot;, &quot;Mitra&quot;], [&quot;IKBAL&quot;, &quot;Mitra&quot;], [&quot;IKHSAN&quot;, &quot;Mitra&quot;], [&quot;INDRA AHMAT TAUFIK&quot;, &quot;Mitra&quot;], [&quot;IQBAL FAUZI&quot;, &quot;Mitra&quot;], [&quot;JAMALUDDIN&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;JOKO SANTOSO&quot;, &quot;Mitra&quot;], [&quot;KARMILA&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;KHAIRIL ANWAR&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;MILA RIANI&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;MUH. ABUZAL ALGHIFARI&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;MUH. SYUKUR&quot;, &quot;Mitra&quot;], [&quot;NASRUL&quot;, &quot;Mitra&quot;], [&quot;NUR RIZKI BAYU PEBRIANTO&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;PATDRI AHMAD&quot;, &quot;Mitra&quot;], [&quot;RABDI&quot;, &quot;Mitra&quot;], [&quot;RISMAYANTO&quot;, &quot;Mitra&quot;], [&quot;ROHMAT&quot;, &quot;Mitra&quot;], [&quot;RUDIANSYAH&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;RUSTAM&quot;, &quot;Mitra&quot;], [&quot;SELFIANA PUTRI&quot;, &quot;Magang&quot;], [&quot;SETYO WIDIANTORO&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;SITTI OCTAVIANI&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;SUGENG RIVAI&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;SUHARDI&quot;, &quot;Mitra&quot;], [&quot;SUPRIANTO&quot;, &quot;Petugas Fasilitas Umum&quot;], [&quot;SUTA ADIWIJAYA&quot;, &quot;Pemuka Fasilitas Umum&quot;], [&quot;TASRINA SEPTIANI PRAYOGI&quot;, &quot;Admin GS&quot;], [&quot;WAWAN&quot;, &quot;Mitra&quot;]];
 const DRIVERS=[&quot;AGUS WAHYUDI&quot;, &quot;ALIMIN&quot;, &quot;AMIRUDDIN&quot;, &quot;ARIF SANTOSO&quot;, &quot;ASKAR&quot;, &quot;CATUR DWI CAHYONO&quot;, &quot;DANDI&quot;, &quot;DIAN HERMAWAN&quot;, &quot;FERIANTO PRIYO BIJAKSONO&quot;, &quot;IMRON&quot;, &quot;IRWAN PRATAMA PUTRA&quot;, &quot;ISHAK MUHAMMAD GAZALI&quot;, &quot;M. REDHO WIRAYUDA&quot;, &quot;MUHAMMAD HUSAYNI&quot;, &quot;NAWIR ALI&quot;, &quot;PATHULLAH MS&quot;, &quot;REO DWI MARINES&quot;, &quot;RUSTAM EFENDI&quot;, &quot;SUKAJI&quot;, &quot;SUPARMAN&quot;, &quot;SURYA CHANDRA KIRANA&quot;, &quot;SUWARDI&quot;, &quot;SUWARSONO&quot;, &quot;SYAMSAIL&quot;, &quot;SYARIFUDDIN-A&quot;, &quot;SYARIFUDDIN-B&quot;, &quot;TAUFIK HIDAYAT&quot;, &quot;WAHYU&quot;];
 
 const $=s=>document.querySelector(s);
@@ -9343,11 +9346,11 @@ function rosterCard(){
 const gsFit=o=>!String(o.Status||&quot;&quot;).toUpperCase().includes(&quot;TIDAK&quot;);
 function rosterGS(){
   const t0=new Date();t0.setHours(0,0,0,0);const ev={};
-  (st.data.dcuGs||[]).forEach(o=>{if(!o._t||o._t<t0)return;const k=String(o.Nama||&quot;&quot;).trim().toUpperCase();if(!k)return;
+  (st.data.dcuGs||[]).forEach(o=>{if(!o._t||o._t<t0)return;const k=gsNama(o.Nama);if(!k)return;
     if(!ev[k]||o._t>ev[k].t)ev[k]={t:o._t,cls:gsFit(o)?&quot;ok&quot;:&quot;bad&quot;,sub:`Tensi ${o.Tensi||&quot;-&quot;}`,open:&quot;dcuGs&quot;,id:o.ID,unfit:!gsFit(o)}});
   const names=TIM_GS.map(x=>x[0]);
   const list=TIM_GS.map(([n,j])=>({n,j,e:ev[n]}));
-  const extraG=new Set(Object.keys(ev));(st.data.dcuGs||[]).forEach(o=>{const k=String(o.Nama||&quot;&quot;).trim().toUpperCase();if(k)extraG.add(k)});
+  const extraG=new Set(Object.keys(ev));(st.data.dcuGs||[]).forEach(o=>{const k=gsNama(o.Nama);if(k)extraG.add(k)});
   [...extraG].filter(k=>!names.includes(k)&amp;&amp;!TIM_GS_HAPUS.includes(k)).sort().forEach(k=>list.push({n:k,j:&quot;&quot;,e:ev[k],extra:true}));
   return list}
 function renderGS(){
@@ -9388,7 +9391,7 @@ function renderGS(){
 function tblGS(R){if(!R.length)return `<p class=&quot;empty&quot;>Belum ada DCU tim GS pada periode ini.</p>`;
   return `<table><thead><tr><th>Waktu</th><th>Nama</th><th>Tensi</th><th>Status</th><th>Alasan</th></tr></thead><tbody>
   ${R.map(o=>{const f=gsFit(o),ul=String(o.Status||&quot;&quot;).toUpperCase().startsWith(&quot;ULANG&quot;);return `<tr data-open=&quot;dcuGs&quot; data-id=&quot;${esc(o.ID)}&quot;>
-    <td class=&quot;nowrap&quot;>${tm(o._t)}</td><td>${who(o.Nama,&quot;Tim GS&quot;)}</td><td class=&quot;mono&quot;>${esc(o.Tensi)}</td>
+    <td class=&quot;nowrap&quot;>${tm(o._t)}</td><td>${who(gsNama(o.Nama),&quot;Tim GS&quot;)}</td><td class=&quot;mono&quot;>${esc(o.Tensi)}</td>
     <td class=&quot;nowrap&quot;><span class=&quot;chip ${f?&quot;ok&quot;:&quot;bad&quot;}&quot;><i></i>${f?&quot;Fit&quot;:&quot;Tidak fit&quot;}</span>${ul?' <span class=&quot;chip rev&quot;>Ulang</span>':&quot;&quot;}</td>
     <td><div class=&quot;trunc&quot; title=&quot;${esc(o[&quot;Alasan tidak fit&quot;])}&quot;>${esc(o[&quot;Alasan tidak fit&quot;])||'<span class=&quot;muted&quot;>–</span>'}</div></td></tr>`}).join(&quot;&quot;)}</tbody></table>`}
 function chart7(){
@@ -9434,7 +9437,7 @@ function openDetail(type,id){
       +`<div><h3 style=&quot;margin-bottom:8px&quot;>Status perbaikan</h3><div class=&quot;seg st-seg&quot; role=&quot;group&quot; aria-label=&quot;Status perbaikan&quot;>${[&quot;Open&quot;,&quot;Diproses&quot;,&quot;Selesai&quot;].map(v=>`<button data-setst=&quot;${v}&quot; data-id=&quot;${esc(o.ID)}&quot; aria-pressed=&quot;${(o.Status||&quot;Open&quot;)===v}&quot;>${v}</button>`).join(&quot;&quot;)}</div>
         <p class=&quot;muted&quot; style=&quot;margin:8px 0 0;font-size:12px&quot;>Status tersimpan otomatis ke Google Sheets.</p></div>`;
   }else if(type===&quot;dcuGs&quot;){const f=gsFit(o);
-    head=`<h3>DCU tim GS</h3><h2 style=&quot;margin-top:4px&quot;>${esc(o.Nama)}</h2><p style=&quot;margin:8px 0 0&quot;><span class=&quot;chip ${f?&quot;ok&quot;:&quot;bad&quot;}&quot;>${f?&quot;Fit&quot;:&quot;Tidak fit&quot;}</span></p>`;
+    head=`<h3>DCU tim GS</h3><h2 style=&quot;margin-top:4px&quot;>${esc(gsNama(o.Nama))}</h2><p style=&quot;margin:8px 0 0&quot;><span class=&quot;chip ${f?&quot;ok&quot;:&quot;bad&quot;}&quot;>${f?&quot;Fit&quot;:&quot;Tidak fit&quot;}</span></p>`;
     body=kv([[&quot;No.&quot;,o.ID],[&quot;Waktu&quot;,fmtDT(o._t)],[&quot;Tensi&quot;,o.Tensi?o.Tensi+&quot; mmHg&quot;:&quot;&quot;],[&quot;Obat kantuk&quot;,o.Obat],[&quot;Alkohol&quot;,o.Alkohol],[&quot;Keluhan&quot;,o.Keluhan],[&quot;Status&quot;,o.Status]])
       +(o[&quot;Alasan tidak fit&quot;]?`<div><h3 style=&quot;margin-bottom:6px&quot;>Alasan</h3><div class=&quot;pre&quot;>${esc(o[&quot;Alasan tidak fit&quot;])}</div></div>`:&quot;&quot;);
   }else{
@@ -9467,7 +9470,7 @@ const dkey=d=>d.getFullYear()+&quot;-&quot;+String(d.getMonth()+1).padStart(2,&q
 function rkEvents(g){
   const out=[];
   if(g===&quot;krp&quot;){st.data.p2h.forEach(o=>o._t&amp;&amp;out.push({n:o.Driver,t:o._t}));st.data.mcu.forEach(o=>o._t&amp;&amp;out.push({n:o.Driver,t:o._t}))}
-  else (st.data.dcuGs||[]).forEach(o=>o._t&amp;&amp;out.push({n:o.Nama,t:o._t,j:&quot;Tim GS&quot;}));
+  else (st.data.dcuGs||[]).forEach(o=>o._t&amp;&amp;out.push({n:gsNama(o.Nama),t:o._t,j:&quot;Tim GS&quot;}));
   return out.map(e=>({...e,n:String(e.n||&quot;&quot;).trim().toUpperCase()})).filter(e=>e.n);
 }
 function rkMonths(){
