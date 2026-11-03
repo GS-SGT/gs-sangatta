@@ -6526,6 +6526,210 @@ setTimeout(_ovBroadcastRDP,300);
 setInterval(_ovBroadcastRDP,3000);
 
 </script>
+<!-- ═══ ADD-ON: Download / Upload Excel Data RDP (tambahan, tidak mengubah kode asli) ═══ -->
+<style>
+#rdpXlBar{display:flex;gap:6px;align-items:center}
+#rdpXlBar .xlb{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s}
+#rdpXlBar .xlb:hover{border-color:#16a34a;color:#15803d;box-shadow:0 2px 8px rgba(22,163,74,.15)}
+#rdpXlBar .xlb.xlb-up{background:#16a34a;color:#fff;border-color:#16a34a}
+#rdpXlBar .xlb.xlb-up:hover{background:#15803d;color:#fff}
+#rdpXlOv{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-start;justify-content:center;z-index:9999;padding:40px 16px;overflow:auto}
+#rdpXlOv .xl-box{background:#fff;border-radius:14px;max-width:860px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:'Plus Jakarta Sans',sans-serif}
+#rdpXlOv .xl-hd{padding:18px 22px;border-bottom:1px solid var(--bd2);display:flex;justify-content:space-between;align-items:center}
+#rdpXlOv .xl-hd b{font-size:15px}
+#rdpXlOv .xl-bd{padding:18px 22px;font-size:12px;color:var(--t2)}
+#rdpXlOv .xl-sm{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+#rdpXlOv .xl-sm div{background:var(--bg3);border-radius:10px;padding:10px 12px}
+#rdpXlOv .xl-sm span{display:block;font-size:22px;font-weight:800;color:var(--tx)}
+#rdpXlOv table{width:100%;border-collapse:collapse;font-size:11px}
+#rdpXlOv th{background:var(--bg3);text-align:left;padding:7px 9px;font-weight:700;color:var(--t2);position:sticky;top:0}
+#rdpXlOv td{padding:6px 9px;border-bottom:1px solid var(--bd2);vertical-align:top}
+#rdpXlOv .xl-old{color:#b91c1c;text-decoration:line-through}
+#rdpXlOv .xl-new{color:#15803d;font-weight:700}
+#rdpXlOv .xl-ft{padding:14px 22px;border-top:1px solid var(--bd2);display:flex;justify-content:flex-end;gap:8px}
+#rdpXlOv .xl-ft button{padding:8px 16px;border-radius:9px;font-weight:700;font-size:12px;cursor:pointer;border:1px solid var(--bd);background:#fff;font-family:inherit}
+#rdpXlOv .xl-ft .xl-ok{background:#16a34a;color:#fff;border-color:#16a34a}
+#rdpXlOv .xl-warn{background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 10px;margin-bottom:10px}
+</style>
+<script>
+(function(){
+  var XL_COLS=[
+    ['id','ID (jangan diubah)',false],['no_rdp','No RDP',true],['jalan','Jalan',true],['tipe','Tipe',true],
+    ['prl','PRL',true],['prl_pc','PRL/PC',true],['penghuni','Penghuni',true],['nik','NIK',true],
+    ['jabatan','Jabatan',true],['sub_divisi','Sub Divisi',true],['departemen','Departemen',true],['section','Section',true],
+    ['kondisi','Kondisi',true],['status','Status Hunian',true],['keterangan','Keterangan',true],['rencana','Rencana',true],
+    ['_sensus','Sensus Selesai (info)',false],['_tgl','Tgl Sensus (info)',false],['_petugas','Petugas Sensus (info)',false]
+  ];
+  var OPT_STATUS=['Terisi Pekerja','Terisi Pihak Ketiga','Terisi OJT','Layak Huni','Kosong (Stock)','Tidak Layak Huni'];
+  var OPT_KONDISI=['Bagus','Rusak Ringan','Rusak Berat'];
+  var PENDING=null;
+
+  function loadXLSX(cb){
+    if(window.XLSX) return cb();
+    var urls=['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'];
+    (function tryNext(i){
+      if(i>=urls.length){ toast('Gagal memuat library Excel. Cek koneksi internet.','var(--red)'); return; }
+      var s=document.createElement('script'); s.src=urls[i];
+      s.onload=function(){ cb(); }; s.onerror=function(){ tryNext(i+1); };
+      document.head.appendChild(s);
+    })(0);
+  }
+  function str(v){ return v===undefined||v===null?'':String(v).trim(); }
+  function saveBlob(blob,name){
+    // iframe di-sandbox tanpa izin download → unduh lewat dokumen induk
+    var doc=document; try{ if(window.parent&amp;&amp;window.parent.document) doc=window.parent.document; }catch(e){}
+    var a=doc.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.style.display='none';
+    doc.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },2000);
+  }
+
+  // ── DOWNLOAD ─────────────────────────────────────────
+  window.rdpXlDownload=function(){
+    loadXLSX(function(){
+      var rows=getAllRDP().map(function(r){ return getR(r.id||r.no); });
+      var aoa=[XL_COLS.map(function(c){return c[1];})];
+      rows.forEach(function(r){
+        var u=getU(r.id||r.no)||{};
+        aoa.push(XL_COLS.map(function(c){
+          if(c[0]==='_sensus') return u.sensusSelesai?'Ya':'Belum';
+          if(c[0]==='_tgl') return u.tglSensus||'';
+          if(c[0]==='_petugas') return u.petugas||'';
+          var v=r[c[0]]; return v===undefined||v===null?'':v;
+        }));
+      });
+      var ws=XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols']=XL_COLS.map(function(c){ return {wch: c[0]==='id'?16:(['penghuni','jabatan','keterangan','rencana','section','sub_divisi'].indexOf(c[0])>=0?28:16)}; });
+      ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:aoa.length-1,c:XL_COLS.length-1}})};
+      var info=[
+        ['PETUNJUK UPLOAD DATA RDP'],[''],
+        ['1. Edit data langsung di sheet &quot;Data RDP&quot;, lalu simpan file dan upload lewat tombol &quot;Upload Excel&quot;.'],
+        ['2. Kolom &quot;ID&quot; adalah kunci data. Jangan diubah atau dihapus untuk unit yang sudah ada.'],
+        ['3. Untuk menambah unit baru: isi baris baru dengan kolom ID dikosongkan dan No RDP wajib diisi (tidak boleh sama dengan yang sudah ada).'],
+        ['4. Baris yang dihapus dari Excel TIDAK menghapus unit di dashboard (aman).'],
+        ['5. Kolom bertanda (info) hanya informasi sensus dan tidak ikut diupload.'],
+        ['6. Sebelum data diterapkan, akan muncul pratinjau perubahan untuk dikonfirmasi.'],[''],
+        ['Pilihan &quot;Status Hunian&quot; yang valid:'],].concat(OPT_STATUS.map(function(s){return ['   • '+s];}))
+        .concat([[''],['Pilihan &quot;Kondisi&quot; yang valid:']]).concat(OPT_KONDISI.map(function(s){return ['   • '+s];}))
+        .concat([[''],['Diunduh: '+new Date().toLocaleString('id-ID')+' · '+rows.length+' unit']]);
+      var ws2=XLSX.utils.aoa_to_sheet(info); ws2['!cols']=[{wch:110}];
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Data RDP');
+      XLSX.utils.book_append_sheet(wb,ws2,'Petunjuk');
+      var out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+      saveBlob(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'Data_RDP_Sangatta_'+new Date().toISOString().slice(0,10)+'.xlsx');
+      toast('⬇ Excel Data RDP diunduh ('+rows.length+' unit)');
+    });
+  };
+
+  // ── UPLOAD ───────────────────────────────────────────
+  window.rdpXlPick=function(){ var f=document.getElementById('rdpXlFile'); f.value=''; f.click(); };
+  window.rdpXlRead=function(inp){
+    var file=inp.files&amp;&amp;inp.files[0]; if(!file) return;
+    loadXLSX(function(){
+      var fr=new FileReader();
+      fr.onload=function(e){
+        try{
+          var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          var sh=wb.Sheets['Data RDP']||wb.Sheets[wb.SheetNames[0]];
+          var aoa=XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:false});
+          analyse(aoa,file.name);
+        }catch(err){ console.error(err); toast('File tidak bisa dibaca. Pastikan format .xlsx dari tombol Download.','var(--red)'); }
+      };
+      fr.readAsArrayBuffer(file);
+    });
+  };
+  function analyse(aoa,fname){
+    if(!aoa.length){ toast('File kosong.','var(--red)'); return; }
+    var hdr=aoa[0].map(str), idx={};
+    XL_COLS.forEach(function(c){ var i=hdr.indexOf(c[1]); if(i<0) i=hdr.indexOf(c[0]); if(i>=0) idx[c[0]]=i; });
+    if(idx.no_rdp===undefined){ toast('Kolom &quot;No RDP&quot; tidak ditemukan. Gunakan template dari tombol Download.','var(--red)'); return; }
+    var all=getAllRDP().map(function(r){ return getR(r.id||r.no); });
+    var byId={}, byNo={}; all.forEach(function(r){ byId[String(r.id)]=r; byNo[str(r.no_rdp).toLowerCase()]=r; });
+    var upd=[], add=[], warn=[], seenNo={};
+    for(var i=1;i<aoa.length;i++){
+      var row=aoa[i]; if(!row||row.every(function(v){return str(v)==='';})) continue;
+      var g=function(k){ return idx[k]===undefined?undefined:str(row[idx[k]]); };
+      var id=g('id'), no=g('no_rdp');
+      if(!no){ warn.push('Baris '+(i+1)+': No RDP kosong, dilewati.'); continue; }
+      var key=no.toLowerCase(); if(seenNo[key]){ warn.push('Baris '+(i+1)+': No RDP &quot;'+no+'&quot; ganda di file, dilewati.'); continue; } seenNo[key]=1;
+      var vals={};
+      XL_COLS.forEach(function(c){ if(!c[2]) return; var v=g(c[0]); if(v===undefined) return; vals[c[0]]=v; });
+      if(vals.status!==undefined &amp;&amp; vals.status!=='' &amp;&amp; OPT_STATUS.indexOf(vals.status)<0){ warn.push('Baris '+(i+1)+' ('+no+'): Status &quot;'+vals.status+'&quot; tidak valid, kolom status diabaikan.'); delete vals.status; }
+      if(vals.kondisi!==undefined &amp;&amp; vals.kondisi!=='' &amp;&amp; OPT_KONDISI.indexOf(vals.kondisi)<0){ warn.push('Baris '+(i+1)+' ('+no+'): Kondisi &quot;'+vals.kondisi+'&quot; tidak valid, kolom kondisi diabaikan.'); delete vals.kondisi; }
+      var cur=(id&amp;&amp;byId[id])||null;
+      if(id&amp;&amp;!cur){ warn.push('Baris '+(i+1)+': ID '+id+' tidak dikenal, dicocokkan lewat No RDP.'); }
+      if(!cur) cur=byNo[key]||null;
+      if(cur){
+        if(byNo[key]&amp;&amp;byNo[key]!==cur){ warn.push('Baris '+(i+1)+': No RDP &quot;'+no+'&quot; sudah dipakai unit lain, dilewati.'); continue; }
+        var ch={};
+        Object.keys(vals).forEach(function(k){ if(str(cur[k])!==vals[k]) ch[k]=[str(cur[k]),vals[k]]; });
+        if(Object.keys(ch).length) upd.push({r:cur,ch:ch,row:i+1});
+      } else {
+        if(!vals.status) vals.status='Kosong (Stock)';
+        if(!vals.kondisi) vals.kondisi='Bagus';
+        add.push({vals:vals,row:i+1});
+      }
+    }
+    PENDING={upd:upd,add:add};
+    showPreview(fname,upd,add,warn);
+  }
+  function esc(s){ return String(s).replace(/[&amp;<>&quot;]/g,function(c){return {'&amp;':'&amp;amp;','<':'&amp;lt;','>':'&amp;gt;','&quot;':'&amp;quot;'}[c];}); }
+  function label(k){ for(var i=0;i<XL_COLS.length;i++) if(XL_COLS[i][0]===k) return XL_COLS[i][1]; return k; }
+  function showPreview(fname,upd,add,warn){
+    var nf=upd.reduce(function(a,u){return a+Object.keys(u.ch).length;},0);
+    var rows='';
+    upd.slice(0,200).forEach(function(u){ Object.keys(u.ch).forEach(function(k){
+      rows+='<tr><td>'+esc(u.r.no_rdp)+'</td><td>'+esc(label(k))+'</td><td class=&quot;xl-old&quot;>'+esc(u.ch[k][0]||'–')+'</td><td class=&quot;xl-new&quot;>'+esc(u.ch[k][1]||'–')+'</td></tr>'; }); });
+    add.forEach(function(a){ rows+='<tr><td>'+esc(a.vals.no_rdp)+'</td><td colspan=&quot;3&quot; class=&quot;xl-new&quot;>Unit baru · '+esc(a.vals.status)+' · '+esc(a.vals.penghuni||'Kosong')+'</td></tr>'; });
+    var html='<div class=&quot;xl-box&quot;><div class=&quot;xl-hd&quot;><b>⬆ Pratinjau Upload Excel</b><span style=&quot;font-size:11px;color:var(--t3)&quot;>'+esc(fname)+'</span></div><div class=&quot;xl-bd&quot;>'+
+      '<div class=&quot;xl-sm&quot;><div>Unit diperbarui<span>'+upd.length+'</span></div><div>Kolom berubah<span>'+nf+'</span></div><div>Unit baru<span>'+add.length+'</span></div><div>Peringatan<span>'+warn.length+'</span></div></div>'+
+      (warn.length?'<div class=&quot;xl-warn&quot;>'+warn.slice(0,15).map(esc).join('<br>')+(warn.length>15?'<br>… dan '+(warn.length-15)+' lainnya':'')+'</div>':'')+
+      (rows?'<div style=&quot;max-height:380px;overflow:auto;border:1px solid var(--bd2);border-radius:10px&quot;><table><thead><tr><th>No RDP</th><th>Kolom</th><th>Sebelum</th><th>Sesudah</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+           :'<div style=&quot;padding:20px;text-align:center&quot;>Tidak ada perubahan data dibanding dashboard saat ini.</div>')+
+      '<div style=&quot;margin-top:10px;font-size:11px;color:var(--t3)&quot;>Unit yang tidak ada di file tidak akan dihapus. Data sensus &amp; foto tidak berubah.</div>'+
+      '</div><div class=&quot;xl-ft&quot;><button onclick=&quot;rdpXlClose()&quot;>Batal</button>'+((upd.length||add.length)?'<button class=&quot;xl-ok&quot; onclick=&quot;rdpXlApply()&quot;>✓ Terapkan &amp; Simpan</button>':'')+'</div></div>';
+    var ov=document.getElementById('rdpXlOv'); ov.innerHTML=html; var off=40; try{ var fe=window.frameElement; if(fe){ var tp=fe.getBoundingClientRect().top; if(tp<0) off=-tp+40; } }catch(e){} ov.style.paddingTop=off+'px'; ov.style.display='flex';
+  }
+  window.rdpXlClose=function(){ document.getElementById('rdpXlOv').style.display='none'; PENDING=null; };
+  window.rdpXlApply=function(){
+    if(!PENDING) return;
+    var nU=0,nA=0;
+    PENDING.upd.forEach(function(u){
+      var id=u.r.id||u.r.no, v={}; Object.keys(u.ch).forEach(function(k){ v[k]=u.ch[k][1]; });
+      var mi=MASTER_DATA.findIndex(function(r){return r.id===id;});
+      if(mi>=0){ EDITS[id]=Object.assign(EDITS[id]||{},v); Object.assign(MASTER_DATA[mi],v); buildDerived(MASTER_DATA[mi]); }
+      else { var c=CUSTOM_RDP.find(function(r){return (r.id||r.no)===id;}); if(c){ Object.assign(c,v); if(v.tipe!==undefined) c.type=v.tipe; buildDerived(c); } }
+      nU++;
+    });
+    var base=Date.now();
+    PENDING.add.forEach(function(a,i){
+      var nid=base+i, v=a.vals;
+      var unit={id:nid,no:nid,no_rdp:v.no_rdp,penghuni:v.penghuni||'Kosong',nik:v.nik||'',jabatan:v.jabatan||'',sub_divisi:v.sub_divisi||'',
+        departemen:v.departemen||'',section:v.section||'',jalan:v.jalan||'-',tipe:v.tipe||'-',type:v.tipe||'-',prl:v.prl||'-',prl_pc:v.prl_pc||'',
+        kondisi:v.kondisi,status:v.status,rencana:v.rencana||'',keterangan:v.keterangan||'',fotos:[],_custom:true,_addedAt:new Date().toISOString(),_addedBy:(fbUser||'user')+' (upload Excel)'};
+      buildDerived(unit); CUSTOM_RDP.push(unit); nA++;
+    });
+    saveEdits(); saveCustom(); rdAll();
+    rdpXlClose();
+    toast('✓ Upload diterapkan: '+nU+' unit diperbarui, '+nA+' unit baru. Tersinkron ke Firebase.','var(--green)');
+  };
+
+  // ── Pasang tombol di header (tanpa mengubah markup asli) ──
+  function mount(){
+    if(document.getElementById('rdpXlBar')) return;
+    var saveBtn=document.querySelector('.hdr button[onclick=&quot;doSave()&quot;]');
+    var bar=document.createElement('div'); bar.id='rdpXlBar';
+    bar.innerHTML='<button class=&quot;xlb&quot; onclick=&quot;rdpXlDownload()&quot; title=&quot;Unduh seluruh data RDP ke Excel&quot;>⬇ Download Excel</button>'+
+                  '<button class=&quot;xlb xlb-up&quot; onclick=&quot;rdpXlPick()&quot; title=&quot;Upload Excel yang sudah diperbarui&quot;>⬆ Upload Excel</button>'+
+                  '<input type=&quot;file&quot; id=&quot;rdpXlFile&quot; accept=&quot;.xlsx,.xls&quot; style=&quot;display:none&quot; onchange=&quot;rdpXlRead(this)&quot;>';
+    if(saveBtn&amp;&amp;saveBtn.parentNode) saveBtn.parentNode.insertBefore(bar,saveBtn);
+    else { var h=document.querySelector('.hdr'); if(h) h.appendChild(bar); }
+    var ov=document.createElement('div'); ov.id='rdpXlOv'; ov.onclick=function(e){ if(e.target===ov) rdpXlClose(); };
+    document.body.appendChild(ov);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
+})();
+</script>
+
 </body>
 </html>"
     style="width:100%;height:2600px;border:none;display:block;overflow:hidden"
