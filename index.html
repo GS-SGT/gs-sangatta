@@ -13953,5 +13953,324 @@ thead tr,thead th,.gs-tcard th,.ang-tcard th,.ang-tcard thead th,.ov-kontrak-tbl
   renderAll(); setInterval(renderAll, 5000);
 })();
 </script>
+
+<!-- ═════════════════════════════════════════════════════════════════
+     ADD-ON: PUSAT PERINGATAN & STATUS SISTEM (GS Command Center v2)
+     Lapisan tambahan — hanya MEMBACA data modul lain; tidak mengubah logic modul manapun.
+═════════════════════════════════════════════════════════════════ -->
+<style>
+.cc-nbtn{position:relative;display:inline-flex;align-items:center;gap:6px}
+.cc-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#E8192C;color:#fff;font-size:10.5px;font-weight:800;display:none;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.cc-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:#94a3b8;flex:0 0 auto}
+.cc-dot.ok{background:#16a34a}.cc-dot.warn{background:#d97706}.cc-dot.bad{background:#dc2626}.cc-dot.run{background:#94a3b8;animation:ccp 1s infinite}
+@keyframes ccp{50%{opacity:.3}}
+#cc-scrim{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:9990;display:none}
+#cc-panel{position:fixed;top:0;right:0;height:100vh;width:min(460px,100vw);background:#fff;z-index:9991;box-shadow:-18px 0 50px rgba(15,23,42,.18);
+  transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f172a}
+#cc-panel.open{transform:none}
+.cc-hd{padding:18px 20px 12px;border-bottom:1px solid #eef0f4}
+.cc-hd h3{margin:0;font-size:17px;font-weight:800;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.cc-hd p{margin:4px 0 0;font-size:12px;color:#64748b}
+.cc-x{border:0;background:#f1f5f9;border-radius:10px;width:32px;height:32px;cursor:pointer;font-size:16px;color:#334155}
+.cc-tabs{display:flex;gap:6px;margin-top:12px;background:#f1f5f9;padding:4px;border-radius:12px}
+.cc-tabs button{flex:1;border:0;background:transparent;padding:8px 6px;border-radius:9px;font:inherit;font-size:12.5px;font-weight:700;color:#475569;cursor:pointer}
+.cc-tabs button[aria-pressed="true"]{background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.cc-bd{flex:1;overflow:auto;padding:14px 16px 24px}
+.cc-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.cc-sum div{border:1px solid #eef0f4;border-radius:12px;padding:10px;text-align:center}
+.cc-sum b{display:block;font-size:22px;line-height:1.1}
+.cc-sum span{font-size:11px;color:#64748b;font-weight:600}
+.cc-sum .r b{color:#dc2626}.cc-sum .y b{color:#d97706}.cc-sum .g b{color:#16a34a}
+.cc-sec{font-size:11px;font-weight:800;letter-spacing:.6px;color:#94a3b8;text-transform:uppercase;margin:14px 2px 6px}
+.cc-it{display:flex;gap:10px;align-items:flex-start;border:1px solid #eef0f4;border-left:4px solid #94a3b8;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.cc-it.merah{border-left-color:#dc2626;background:#fffafa}.cc-it.kuning{border-left-color:#d97706;background:#fffcf5}.cc-it.info{border-left-color:#2563eb}
+.cc-it.done{opacity:.55}
+.cc-it .cc-tx{flex:1;min-width:0}
+.cc-it b{display:block;font-size:13px;line-height:1.35}
+.cc-it small{display:block;font-size:11.5px;color:#64748b;margin-top:2px;word-break:break-word}
+.cc-tag{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;background:#f1f5f9;color:#475569;margin-right:6px;vertical-align:1px}
+.cc-act{display:flex;flex-direction:column;gap:4px}
+.cc-act button{border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:4px 8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;color:#334155;white-space:nowrap}
+.cc-act button:hover{background:#f8fafc}
+.cc-empty{text-align:center;color:#64748b;font-size:13px;padding:22px 8px}
+.cc-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f1f5f9}
+.cc-row .cc-tx{flex:1;min-width:0}
+.cc-row b{font-size:13px;display:block}
+.cc-row small{font-size:11.5px;color:#64748b}
+.cc-ms{font-size:11.5px;color:#64748b;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cc-alert{border-radius:12px;padding:10px 12px;font-size:12.5px;margin-bottom:10px;line-height:1.45}
+.cc-alert.bad{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.cc-alert.ok{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.cc-alert.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.cc-tool{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.cc-tool label{font-size:12px;color:#475569;display:flex;gap:6px;align-items:center}
+.cc-tool input[type=text]{border:1px solid #e2e8f0;border-radius:8px;padding:5px 8px;font:inherit;font-size:12px;width:140px}
+.cc-btn2{border:1px solid #e2e8f0;background:#fff;border-radius:9px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.cc-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;margin:6px 0 4px;color:#334155}
+.cc-kv span:nth-child(odd){color:#64748b}
+@media(max-width:900px){#cc-panel{width:100vw}}
+</style>
+<div id="cc-scrim"></div>
+<aside id="cc-panel" aria-label="Pusat Peringatan" aria-hidden="true">
+  <div class="cc-hd">
+    <h3><span>🛰️ Command Center</span><button class="cc-x" id="cc-close" aria-label="Tutup">✕</button></h3>
+    <p id="cc-sub">Memeriksa semua modul…</p>
+    <div class="cc-tabs" role="tablist">
+      <button data-cctab="alert" aria-pressed="true">🔔 Peringatan</button>
+      <button data-cctab="status" aria-pressed="false">🩺 Status Sistem</button>
+    </div>
+  </div>
+  <div class="cc-bd" id="cc-body"></div>
+</aside>
+<script>
+(function(){
+  'use strict';
+  var DCU_URL='https://script.google.com/macros/s/AKfycbxsFKi0NsN_hvyS5dLyfKwBl9nm3OVuejQOfnL7e8OwArQ8-Dbyk-biEcxU8iFXu7iK/exec';
+  var FB=[
+    ['GS Care (Firebase)','https://gs-care-default-rtdb.asia-southeast1.firebasedatabase.app','gs'],
+    ['KRP Dashboard (Firebase)','https://krp-sangatta-default-rtdb.asia-southeast1.firebasedatabase.app','krp'],
+    ['Data Pekerja & Quick Links (Firebase)','https://data-pekerja-gs-default-rtdb.asia-southeast1.firebasedatabase.app','datapekerja'],
+    ['Lemburan GS (Firebase)','https://lemburan-pep-sgt-default-rtdb.asia-southeast1.firebasedatabase.app','overview'],
+    ['Tagihan Kontrak (Firebase)','https://tagihan-gs-sgt-default-rtdb.asia-southeast1.firebasedatabase.app','overview']
+  ];
+  var S={tab:'alert',server:[],serverErr:'',client:[],status:[],ping:null,showDone:false,busy:false,last:null};
+  var LS_NAMA='cc_nama_v1',LS_TAB='cc_tab_v1';
+  try{S.tab=localStorage.getItem(LS_TAB)||'alert'}catch(e){}
+  function $(id){return document.getElementById(id)}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function g(name){try{return window[name]}catch(e){return undefined}}
+  function call(fn){try{return typeof window[fn]==='function'?window[fn]():null}catch(e){return null}}
+  function pin(){try{return sessionStorage.getItem('p2h-dash-pin')||''}catch(e){return ''}}
+  function nama(){try{return localStorage.getItem(LS_NAMA)||''}catch(e){return ''}}
+  function waktuLalu(iso){if(!iso)return '—';var d=new Date(iso);if(isNaN(d))return String(iso);var m=Math.round((Date.now()-d)/60000);
+    if(m<1)return 'baru saja';if(m<60)return m+' mnt lalu';if(m<1440)return Math.round(m/60)+' jam lalu';return Math.round(m/1440)+' hari lalu'}
+  function go(mod){try{if(typeof switchModule==='function')switchModule(mod)}catch(e){}close()}
+
+  /* ---------- fetch dengan batas waktu; untuk "ping" cukup sampai header (body tidak diunduh) ---------- */
+  function ping(url,headOnly){
+    var ctl=new AbortController(),t0=performance.now(),to=setTimeout(function(){ctl.abort()},15000);
+    return fetch(url,{signal:ctl.signal,redirect:'follow',cache:'no-store'}).then(function(r){
+      var ms=Math.round(performance.now()-t0);
+      if(headOnly){clearTimeout(to);try{ctl.abort()}catch(e){}return {ok:r.ok,code:r.status,ms:ms}}
+      return r.json().then(function(j){clearTimeout(to);return {ok:r.ok,code:r.status,ms:Math.round(performance.now()-t0),json:j}});
+    }).catch(function(e){clearTimeout(to);return {ok:false,code:0,ms:Math.round(performance.now()-t0),err:e.name==='AbortError'?'waktu habis':'tidak terjangkau'}});
+  }
+  function dcuApi(params){
+    var q=new URLSearchParams(Object.assign({},params,{pin:pin(),t:Date.now()}));
+    return ping(DCU_URL+'?'+q.toString(),false);
+  }
+
+  /* ================= PERINGATAN LIVE dari data modul yang sudah dimuat ================= */
+  function hitungClient(){
+    var A=[],now=new Date(),jam=now.getHours(),hk=now.getDay()>=1&&now.getDay()<=5;
+    function add(t,m,mod,j,d){A.push({tingkat:t,modul:m,mod:mod,judul:j,detail:d||'',live:true})}
+    var gs=call('ov_getGS');
+    if(gs){
+      if(gs.pending&&gs.pending.length)add(gs.pending.length>=5?'kuning':'info','GS Care','gs',gs.pending.length+' request hari ini belum selesai',
+        gs.pending.slice(0,4).map(function(r){return (r.nama||r.wo)+' · '+(r.layanan||'')}).join(' | '));
+      if(gs.ratingTotal>=5&&gs.ratingAvg&&gs.ratingAvg<4)add('kuning','GS Care','gs','Rating layanan turun: '+gs.ratingAvg.toFixed(1)+' ⭐','dari '+gs.ratingTotal+' penilaian');
+    }
+    var ang=call('ov_getAng');
+    if(ang){
+      if(ang.kritis)add('merah','Anggaran','anggaran',ang.kritis+' kontrak aktif habis ≤30 hari',
+        (ang.kontrak||[]).filter(function(k){return ang.isAktif(k)&&(k.due||0)>0&&(k.due||0)<=30}).slice(0,4).map(function(k){return (k.nama||k.judul||k.no)+' ('+k.due+' hr)'}).join(', '));
+      if(ang.pct>=0.9)add(ang.pct>=1?'merah':'kuning','Anggaran','anggaran','Prognosa '+Math.round(ang.pct*100)+'% dari Pleno WP&B','');
+      if(ang.ketLabel==='Habis'&&ang.tSAP>0)add('merah','Anggaran','anggaran','Sisa anggaran (SAP) sudah habis','Prognosa sudah melewati nilai upload SAP');
+      else if(ang.blnKosong>0.5)add('merah','Anggaran','anggaran','Anggaran diperkirakan habis '+ang.ketLabel,'±'+ang.blnKosong.toFixed(1)+' bulan tanpa dana sampai Desember');
+    }
+    var dp=call('ov_getDP');
+    if(dp&&dp.kritis&&dp.kritis.length)add('kuning','Data Pekerja','datapekerja',dp.kritis.length+' pekerja masuk zona merah pensiun',
+      dp.kritis.slice(0,4).map(function(r){return r.w&&(r.w.nama||r.w.name)||''}).filter(Boolean).join(', '));
+    var rdp=call('ov_getRDP');
+    if(rdp&&rdp.tidakLayak)add('kuning','RDP','rdp',rdp.tidakLayak+' rumah dinas tidak layak huni','');
+    var krp=call('ov_getKRP');
+    if(krp&&!krp.hasToday&&hk&&jam>=8)add('kuning','KRP','krp','Jadwal KRP hari ini belum diisi','');
+    /* DCU: baca data modul DCU (iframe) */
+    try{
+      var w=$('dcu-iframe')&&$('dcu-iframe').contentWindow;
+      var d=w&&w.eval('typeof st!=="undefined"&&st.data?{p2h:st.data.p2h,mcu:st.data.mcu,gs:st.data.dcuGs,lapor:st.data.lapor,dr:DRIVERS.length}:null');
+      if(d){
+        var t0=new Date();t0.setHours(0,0,0,0);
+        var isT=function(o){return o._t&&o._t>=t0};
+        var sudah={};d.p2h.concat(d.mcu).filter(isT).forEach(function(o){sudah[String(o.Driver||'').trim().toUpperCase()]=1});
+        var n=Object.keys(sudah).length;
+        if(hk&&jam>=7&&n<d.dr)add(n<d.dr*0.8?'merah':'kuning','DCU','dcu','DCU driver KRP baru '+n+'/'+d.dr,'Batas ideal 07.00');
+        var tl=d.p2h.filter(isT).filter(function(o){return String(o.Status||'').toUpperCase().indexOf('TIDAK LAYAK')>=0});
+        if(tl.length)add('merah','KRP','dcu','Unit tidak layak jalan: '+tl.map(function(o){return o.Unit}).join(', '),'dari P2H hari ini');
+        var lama=d.lapor.filter(function(o){return String(o.Status||'Open').toLowerCase()!=='selesai'&&o._t&&(Date.now()-o._t)>3*864e5});
+        if(lama.length)add('merah','KRP','dcu',lama.length+' laporan kerusakan open lebih dari 3 hari',lama.slice(0,5).map(function(o){return o.Unit}).join(', '));
+      }
+    }catch(e){}
+    var ord={merah:0,kuning:1,info:2};A.sort(function(a,b){return ord[a.tingkat]-ord[b.tingkat]});
+    return A;
+  }
+  /* lembur & tagihan (async, sumber Firebase eksternal) */
+  function hitungClientAsync(){
+    var out=[];
+    var p1=(typeof ov_getLemburGS==='function'?ov_getLemburGS():Promise.resolve(null)).then(function(l){
+      if(l&&l.tinggi)out.push({tingkat:'merah',modul:'Lembur GS',mod:'gslembur',judul:l.tinggi+' pekerja GS lembur status TINGGI',detail:'tahun '+l.year,live:true});
+      else if(l&&l.perhatian)out.push({tingkat:'kuning',modul:'Lembur GS',mod:'gslembur',judul:l.perhatian+' pekerja GS lembur perlu perhatian',detail:'',live:true});
+    }).catch(function(){});
+    var p2=(typeof ov_getTagihan==='function'?ov_getTagihan():Promise.resolve(null)).then(function(t){
+      if(t&&t.late)out.push({tingkat:'merah',modul:'Tagihan',mod:'overview',judul:t.late+' tagihan kontrak terlambat',detail:'belum ada progres sama sekali',live:true});
+    }).catch(function(){});
+    return Promise.all([p1,p2]).then(function(){return out});
+  }
+
+  /* ================= STATUS SISTEM ================= */
+  function cekStatus(){
+    var list=[
+      {nama:'GS Care (Apps Script)',url:(g('gsUrl')||g('GS_URL_DEFAULT')||''),mod:'gs',head:true},
+      {nama:'Anggaran & Kontrak (Apps Script)',url:(g('angUrl')||g('ANG_URL_DEFAULT')||''),mod:'anggaran',head:true},
+      {nama:'Rating Layanan (Apps Script)',url:(g('RATING_URL')||''),mod:'gs',head:true}
+    ];
+    try{list[0].url=list[0].url||eval('typeof gsUrl!=="undefined"&&gsUrl||typeof GS_URL_DEFAULT!=="undefined"&&GS_URL_DEFAULT||""');
+        list[1].url=list[1].url||eval('typeof angUrl!=="undefined"&&angUrl||typeof ANG_URL_DEFAULT!=="undefined"&&ANG_URL_DEFAULT||""');
+        list[2].url=list[2].url||eval('typeof RATING_URL!=="undefined"&&RATING_URL||""')}catch(e){}
+    var jobs=list.map(function(x){
+      if(!x.url)return Promise.resolve({nama:x.nama,mod:x.mod,st:'warn',ket:'URL belum diatur'});
+      return ping(x.url+(x.url.indexOf('?')<0?'?':'&')+'t='+Date.now(),true).then(function(r){
+        return {nama:x.nama,mod:x.mod,st:r.ok?'ok':'bad',ms:r.ms,ket:r.ok?'Terhubung':(r.err||('HTTP '+r.code))}});
+    });
+    jobs.push(dcuApi({action:'ping'}).then(function(r){
+      var j=r.json||{};S.ping=j.versi?j:null;
+      var st=!r.ok?'bad':j.versi?'ok':'warn';
+      var ket=!r.ok?(r.err||'HTTP '+r.code):j.versi?('Terhubung · backend '+j.versi+(j.otomatis&&j.otomatis.length?' · otomasi aktif':' · otomasi belum dipasang')):'Terhubung · Code.gs versi lama (belum v2)';
+      if(j.versi&&(!j.otomatis||!j.otomatis.length))st='warn';
+      return {nama:'DCU / P2H KRP (Apps Script)',mod:'dcu',st:st,ms:r.ms,ket:ket}}));
+    FB.forEach(function(f){
+      jobs.push(ping(f[1]+'/.json?shallow=true',true).then(function(r){
+        var ok=r.ok||r.code===401||r.code===403;
+        return {nama:f[0],mod:f[2],st:ok?'ok':'bad',ms:r.ms,ket:ok?(r.ok?'Terhubung':'Terhubung (akses dibatasi aturan)'):(r.err||'HTTP '+r.code)}}));
+    });
+    jobs.push(ping('https://firestore.googleapis.com/v1/projects/rdp-sangatta/databases/(default)/documents?pageSize=1',true).then(function(r){
+      var ok=r.ok||r.code===401||r.code===403;
+      return {nama:'RDP Monitor (Firestore)',mod:'rdp',st:ok?'ok':'bad',ms:r.ms,ket:ok?'Terhubung':(r.err||'HTTP '+r.code)}}));
+    jobs.push(Promise.resolve({nama:'Library grafik (Chart.js)',mod:'overview',st:typeof window.Chart==='function'?'ok':'warn',ket:typeof window.Chart==='function'?'Termuat':'Gagal dimuat — grafik tidak tampil (CDN diblokir jaringan?)'}));
+    jobs.push(Promise.resolve({nama:'Koneksi internet perangkat ini',mod:'overview',st:navigator.onLine?'ok':'bad',ket:navigator.onLine?'Online':'Offline'}));
+    return Promise.all(jobs);
+  }
+
+  /* ================= RENDER ================= */
+  function itemHtml(n,i){
+    var done=n.status==='Ditangani';
+    return '<div class="cc-it '+esc(n.tingkat)+(done?' done':'')+'"><div class="cc-tx"><b><span class="cc-tag">'+esc(n.modul)+'</span>'+esc(n.judul)+'</b>'+
+      (n.detail?'<small>'+esc(n.detail)+'</small>':'')+
+      (n.live?'':'<small>'+esc(waktuLalu(n.waktu))+(done?' · ✔ ditangani '+esc(n.oleh||'')+' '+esc(waktuLalu(n.waktuTangani)):'')+'</small>')+
+      '</div><div class="cc-act">'+(n.mod?'<button data-ccgo="'+esc(n.mod)+'">Buka</button>':'')+
+      (!n.live&&!done?'<button data-ccack="'+esc(n.id)+'">✔ Tangani</button>':'')+'</div></div>';
+  }
+  var MODMAP={'DCU':'dcu','HSSE':'dcu','KRP':'dcu','Anggaran':'anggaran','Tagihan':'overview','Reward':'dcu','Sistem':'overview','GS Care':'gs'};
+  function render(){
+    var b=$('cc-body');if(!b)return;
+    document.querySelectorAll('[data-cctab]').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.cctab===S.tab))});
+    var srvBaru=S.server.filter(function(n){return n.status!=='Ditangani'});
+    var merah=S.client.filter(function(n){return n.tingkat==='merah'}).length+srvBaru.filter(function(n){return n.tingkat==='merah'}).length;
+    var kuning=S.client.filter(function(n){return n.tingkat==='kuning'}).length+srvBaru.filter(function(n){return n.tingkat==='kuning'}).length;
+    var bad=S.status.filter(function(x){return x.st==='bad'}).length;
+    $('cc-sub').textContent=S.busy?'Memeriksa semua modul…':('Diperbarui '+(S.last?S.last.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'—')+' · '+(merah+kuning)+' perlu perhatian'+(bad?' · '+bad+' sumber data gangguan':''));
+    if(S.tab==='alert'){
+      var h='<div class="cc-sum"><div class="r"><b>'+merah+'</b><span>Kritis</span></div><div class="y"><b>'+kuning+'</b><span>Perhatian</span></div><div class="g"><b>'+(S.status.length?S.status.filter(function(x){return x.st==='ok'}).length+'/'+S.status.length:'…')+'</b><span>Sumber data OK</span></div></div>';
+      if(bad)h+='<div class="cc-alert bad"><b>Mode darurat:</b> '+bad+' sumber data gangguan. Catat layanan secara <b>manual (form kertas/WA)</b>, lalu <b>input ulang</b> setelah sistem normal agar tetap terekap. Lihat tab Status Sistem.</div>';
+      h+='<div class="cc-sec">Kondisi saat ini · semua modul</div>';
+      h+=S.client.length?S.client.map(itemHtml).join(''):'<div class="cc-empty">'+(S.busy?'Memeriksa…':'✅ Tidak ada temuan dari data yang sudah dimuat')+'</div>';
+      h+='<div class="cc-sec">Riwayat notifikasi otomatis</div>';
+      h+='<div class="cc-tool"><label>Nama penangan <input type="text" id="cc-nama" placeholder="mis. Iqbal" value="'+esc(nama())+'"></label>'+
+         '<label><input type="checkbox" id="cc-showdone" '+(S.showDone?'checked':'')+'> tampilkan yang sudah ditangani</label></div>';
+      if(S.serverErr)h+='<div class="cc-alert warn">'+esc(S.serverErr)+'</div>';
+      var list=S.server.filter(function(n){return S.showDone||n.status!=='Ditangani'}).slice(0,60).map(function(n){n.mod=n.mod||MODMAP[n.modul]||'';return n});
+      h+=list.length?list.map(itemHtml).join(''):(S.serverErr?'':'<div class="cc-empty">Belum ada notifikasi baru.</div>');
+      b.innerHTML=h;
+    }else{
+      var h2='';
+      if(S.status.length){
+        h2+=bad?'<div class="cc-alert bad">⚠️ '+bad+' sumber data gangguan. Modul terkait mungkin menampilkan data lama. Gunakan pencatatan manual lalu input ulang setelah normal.</div>'
+               :'<div class="cc-alert ok">✅ Semua sumber data terhubung.</div>';
+        h2+=S.status.map(function(x){return '<div class="cc-row"><span class="cc-dot '+x.st+'"></span><div class="cc-tx"><b>'+esc(x.nama)+'</b><small>'+esc(x.ket||'')+'</small></div><span class="cc-ms">'+(x.ms!=null?x.ms+' ms':'')+'</span></div>'}).join('');
+      }else h2+='<div class="cc-empty">Memeriksa…</div>';
+      if(S.ping){
+        var t=S.ping.terakhir||{},o=S.ping.otomatis||[];
+        h2+='<div class="cc-sec">Backend DCU / P2H ('+esc(S.ping.versi)+')</div><div class="cc-kv">'+
+          '<span>P2H terakhir</span><span>'+esc(waktuLalu(t.p2h))+'</span>'+
+          '<span>DCU tim GS terakhir</span><span>'+esc(waktuLalu(t.dcuGs))+'</span>'+
+          '<span>Laporan kerusakan terakhir</span><span>'+esc(waktuLalu(t.lapor))+'</span>'+
+          '<span>Zona waktu</span><span>'+esc(S.ping.zona||'')+(S.ping.zona&&S.ping.zona!=='Asia/Makassar'?' ⚠️ ubah ke Makassar':'')+'</span>'+
+          '<span>Pengingat DCU 06.45</span><span>'+(o.indexOf('jobPengingatDCU')>=0?(S.ping.wa&&S.ping.wa.pengingat?'✅ aktif':'⚠️ aktif, nomor WA belum diisi'):'— belum dipasang')+'</span>'+
+          '<span>Ringkasan pagi 08.00</span><span>'+(o.indexOf('jobRingkasanPagi')>=0?(S.ping.wa&&S.ping.wa.ringkasan?'✅ aktif':'⚠️ aktif, nomor WA belum diisi'):'— belum dipasang')+'</span>'+
+          '<span>Rekap reward tgl 1</span><span>'+(o.indexOf('jobRewardBulanan')>=0?'✅ aktif':'— belum dipasang')+'</span>'+
+          '<span>Backup harian 23.00</span><span>'+(o.indexOf('jobBackup')>=0?'✅ aktif':'— belum dipasang')+'</span>'+
+          '<span>Pantau kejadian (15 mnt)</span><span>'+(o.indexOf('jobPantau')>=0?'✅ aktif':'— belum dipasang')+'</span></div>';
+      }
+      h2+='<div style="margin-top:14px"><button class="cc-btn2" id="cc-recheck">↻ Periksa ulang</button></div>';
+      b.innerHTML=h2;
+    }
+    badge(merah,kuning);
+  }
+  function badge(m,k){
+    var el=$('cc-badge');if(!el)return;var n=m+k;
+    el.style.display=n?'inline-flex':'none';el.textContent=n>99?'99+':n;el.style.background=m?'#E8192C':'#d97706';
+  }
+
+  /* ================= SIKLUS ================= */
+  function muatServer(){
+    return dcuApi({action:'notifGet'}).then(function(r){
+      if(r.json&&r.json.ok&&Array.isArray(r.json.notif)){S.server=r.json.notif;S.serverErr=''}
+      else if(r.json&&r.json.ok){S.server=[];S.serverErr='Notifikasi otomatis belum aktif — perbarui Code.gs DCU ke v2.'}
+      else if(r.json&&r.json.error==='PIN salah'){S.serverErr='Buka modul Dashboard DCU dan masukkan PIN dulu.'}
+      else S.serverErr='Notifikasi otomatis tidak bisa dimuat ('+(r.err||'koneksi')+').';
+    });
+  }
+  function siklus(full){
+    if(S.busy)return;S.busy=true;render();
+    S.client=hitungClient();
+    var p=[hitungClientAsync().then(function(x){S.client=hitungClient().concat(x);var ord={merah:0,kuning:1,info:2};S.client.sort(function(a,b){return ord[a.tingkat]-ord[b.tingkat]})}),muatServer()];
+    if(full!==false)p.push(cekStatus().then(function(s){S.status=s}));
+    Promise.all(p).then(function(){S.busy=false;S.last=new Date();render()},function(){S.busy=false;render()});
+  }
+  function fitZoom(){   /* body memakai zoom → ukuran panel disesuaikan agar tetap penuh layar */
+    var z=parseFloat(getComputedStyle(document.body).zoom)||1,p=$('cc-panel'),sc=$('cc-scrim');
+    p.style.height=(window.innerHeight/z)+'px';p.style.width=Math.min(460,window.innerWidth/z)+'px';
+    sc.style.width=(window.innerWidth/z)+'px';sc.style.height=(window.innerHeight/z)+'px';sc.style.right='auto';sc.style.bottom='auto';
+  }
+  window.addEventListener('resize',function(){if($('cc-panel').classList.contains('open'))fitZoom()});
+  function open(){fitZoom();var p=$('cc-panel');p.classList.add('open');p.setAttribute('aria-hidden','false');$('cc-scrim').style.display='block';siklus(true)}
+  function close(){var p=$('cc-panel');p.classList.remove('open');p.setAttribute('aria-hidden','true');$('cc-scrim').style.display='none'}
+
+  function pasangTombol(){
+    var host=document.querySelector('.cmd-nav-r');if(!host||$('cc-open'))return;
+    var bt=document.createElement('button');bt.className='cmd-btn cc-nbtn';bt.id='cc-open';bt.type='button';bt.title='Peringatan & Status Sistem';
+    bt.innerHTML='🔔 <span class="cc-lbl">Peringatan</span><span class="cc-badge" id="cc-badge"></span>';
+    bt.onclick=open;host.insertBefore(bt,host.firstChild);
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target;if(!t||!t.closest)return;
+    var a;
+    if((a=t.closest('[data-cctab]'))){S.tab=a.dataset.cctab;try{localStorage.setItem(LS_TAB,S.tab)}catch(x){}render();return}
+    if((a=t.closest('[data-ccgo]'))){go(a.dataset.ccgo);return}
+    if((a=t.closest('[data-ccack]'))){
+      var id=a.dataset.ccack;a.disabled=true;a.textContent='…';
+      dcuApi({action:'notifAck',id:id,oleh:nama()||'Dashboard'}).then(function(r){
+        if(r.json&&r.json.ok){var n=S.server.find(function(x){return x.id===id});if(n){n.status='Ditangani';n.oleh=nama()||'Dashboard';n.waktuTangani=new Date().toISOString()}}
+        else{a.disabled=false;a.textContent='✔ Tangani';alert('Gagal menyimpan: '+((r.json&&r.json.error)||r.err||'koneksi'))}
+        render();
+      });return}
+    if(t.id==='cc-recheck'){siklus(true);return}
+    if(t.id==='cc-close'||t.id==='cc-scrim'){close();return}
+  });
+  document.addEventListener('change',function(e){
+    if(e.target.id==='cc-showdone'){S.showDone=e.target.checked;render()}
+    if(e.target.id==='cc-nama'){try{localStorage.setItem(LS_NAMA,e.target.value.trim())}catch(x){}}
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('cc-panel').classList.contains('open'))close()});
+
+  function mulai(){
+    pasangTombol();render();
+    setTimeout(function(){siklus(true)},6000);             /* beri waktu modul lain memuat data dulu */
+    setInterval(function(){if(!document.hidden)siklus(false)},5*60*1000);
+    setInterval(function(){if(!document.hidden)cekStatus().then(function(s){S.status=s;render()})},15*60*1000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mulai);else mulai();
+})();
+</script>
 </body>
 </html>
