@@ -9783,6 +9783,220 @@ startTimer();
 document.addEventListener(&quot;visibilitychange&quot;,()=>{if(!document.hidden&amp;&amp;st.data)load(true)});
 load();
 </script>
+
+<!-- ===================== ADD-ON: Kepatuhan DCU hari kerja + Tuesday Briefing + Skor reward =====================
+     Ditambahkan di akhir; kode asli di atas tidak diubah. Hanya menimpa tampilan menu &quot;Kepatuhan&quot;. -->
+<style>
+.bf-tbl td,.bf-tbl th{text-align:center}
+.bf-tbl td:first-child,.bf-tbl th:first-child{text-align:left}
+.bf-tbl th small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.bf-ck{width:20px;height:20px;accent-color:var(--ok);cursor:pointer}
+.bf-ck:disabled{cursor:not-allowed;opacity:.35}
+.bf-hb{display:flex;gap:4px;justify-content:center;margin-top:4px}
+.bf-hb button{font:inherit;font-size:10.5px;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--muted)}
+.bf-hb button:hover{color:var(--ink,#111)}
+.bf-off{opacity:.45}
+.bf-off .bf-tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:6px;background:var(--sunk);margin-top:3px}
+.sk-w{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.sk-w span{font-size:11.5px;padding:3px 8px;border-radius:99px;background:var(--sunk);border:1px solid var(--line)}
+.sk-big{font-size:30px;font-weight:700;color:var(--ok);margin-top:4px;line-height:1}
+.sk-big small{font-size:13px;color:var(--muted);font-weight:600}
+.sk-parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+.sk-parts div{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:9px;padding:5px 6px;text-align:center;font-size:11px;color:var(--muted)}
+.sk-parts b{display:block;font-size:13.5px;color:var(--ink,#111);white-space:nowrap}
+.sk-chip{display:inline-block;min-width:44px;text-align:center;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--sunk)}
+.sk-chip.top{background:#E7F6EC;color:var(--ok)}
+.tm-d{font-size:11px;color:var(--muted);display:block}
+.rk-strip i.tue{box-shadow:inset 0 -3px 0 rgba(31,56,100,.55)}
+.wk-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);font-weight:600;font-size:13px}
+@media(max-width:560px){.sk-parts{grid-template-columns:repeat(3,1fr)}}
+</style>
+<script>
+(function(){
+  /* ---------- pengaturan skor reward ---------- */
+  const W={dcu:50,jam:30,brief:20};      /* bobot skor (total 100) */
+  const JAM_TARGET=7*60;                  /* 07.00 */
+  const JAM_TOL=120;                      /* selisih 2 jam dari 07.00 = nilai 0 */
+  const BF_KEY=&quot;p2h-dash-brief&quot;;
+  const HARI=[&quot;Minggu&quot;,&quot;Senin&quot;,&quot;Selasa&quot;,&quot;Rabu&quot;,&quot;Kamis&quot;,&quot;Jumat&quot;,&quot;Sabtu&quot;];
+
+  /* ---------- penyimpanan ceklis briefing ---------- */
+  function bfLoad(){try{const o=JSON.parse(localStorage.getItem(BF_KEY)||&quot;{}&quot;);return {hadir:o.hadir||{},off:o.off||{}}}catch(_){return {hadir:{},off:{}}}}
+  function bfSave(b){try{localStorage.setItem(BF_KEY,JSON.stringify(b))}catch(_){}}
+  const bfK=(g,key)=>g+&quot;|&quot;+key;
+
+  /* ---------- sinkron ke Google Sheet (tab &quot;Briefing&quot;) lewat Code.gs ---------- */
+  let bfCloud=null,bfLast=0,bfPend=0;const bfTimer={};
+  const bfMigKey=&quot;p2h-dash-brief-mig&quot;;
+  function bfPull(force){
+    if(typeof apiGet!==&quot;function&quot;||(!force&amp;&amp;Date.now()-bfLast<60000))return;bfLast=Date.now();
+    apiGet({action:&quot;briefingGet&quot;}).then(j=>{
+      if(!(j&amp;&amp;j.ok&amp;&amp;j.briefing)){const was=bfCloud;bfCloud=false;if(was!==false&amp;&amp;st.mod===&quot;rank&quot;)render();return}
+      const was=bfCloud;bfCloud=true;
+      if(bfPend){if(was!==true&amp;&amp;st.mod===&quot;rank&quot;)render();return}
+      const srv={hadir:j.briefing.hadir||{},off:j.briefing.off||{}},loc=bfLoad();
+      /* sekali saja: ceklis lama yang hanya ada di perangkat ini ikut diunggah */
+      let mig=false;try{mig=localStorage.getItem(bfMigKey)===&quot;1&quot;}catch(_){}
+      if(!mig){const up=[];Object.keys(loc.hadir).forEach(k=>{if((loc.hadir[k]||[]).length&amp;&amp;!srv.hadir[k]&amp;&amp;!srv.off[k]){srv.hadir[k]=loc.hadir[k];up.push(k)}});
+        Object.keys(loc.off).forEach(k=>{if(!srv.off[k]&amp;&amp;!srv.hadir[k]){srv.off[k]=1;up.push(k)}});
+        try{localStorage.setItem(bfMigKey,&quot;1&quot;)}catch(_){}
+        bfSave(srv);up.forEach(k=>{const i=k.indexOf(&quot;|&quot;);bfPush(k.slice(0,i),k.slice(i+1),true)})}
+      const changed=JSON.stringify(srv)!==JSON.stringify(loc);
+      if(changed)bfSave(srv);
+      if((changed||was!==true)&amp;&amp;st.mod===&quot;rank&quot;)render();
+    }).catch(()=>{const was=bfCloud;bfCloud=false;if(was!==false&amp;&amp;st.mod===&quot;rank&quot;)render()});
+  }
+  function bfPush(g,key,now){
+    clearTimeout(bfTimer[g+key]);
+    if(!bfTimer[g+key]||now)bfPend++;            /* satu kiriman per Selasa, ditunda sebentar agar klik beruntun digabung */
+    bfTimer[g+key]=setTimeout(()=>{
+      delete bfTimer[g+key];
+      const b=bfLoad(),k=bfK(g,key);
+      apiGet({action:&quot;briefingSet&quot;,g,tgl:key,hadir:(b.hadir[k]||[]).join(&quot;|&quot;),off:b.off[k]?&quot;1&quot;:&quot;&quot;})
+        .then(j=>{if(!j||!j.ok)throw new Error((j&amp;&amp;j.error)||&quot;gagal&quot;);if(j.tgl!==key){bfCloud=false;if(st.mod===&quot;rank&quot;)render()}})
+        .catch(e=>{typeof toast===&quot;function&quot;&amp;&amp;toast(&quot;Ceklis briefing belum masuk Google Sheet (&quot;+(e.message||&quot;koneksi&quot;)+&quot;). Tersimpan di perangkat ini.&quot;)})
+        .finally(()=>{bfPend=Math.max(0,bfPend-1)});
+    },now?0:700);
+  }
+
+  /* ---------- hanya hari kerja (Senin–Jumat); Sabtu &amp; Minggu tidak dihitung dan tidak ditampilkan ---------- */
+  rkDays=function(ym){
+    const y=+ym.slice(0,4),m=+ym.slice(5)-1,last=new Date(y,m+1,0).getDate(),today=new Date();today.setHours(0,0,0,0);
+    const days=[];for(let d=1;d<=last;d++){const dt=new Date(y,m,d),dow=dt.getDay();
+      if(dow===0||dow===6)continue;
+      days.push({d,dt,key:dkey(dt),future:dt>today,wajib:true,dow})}
+    return days;
+  };
+
+  const jamScore=m=>Math.max(0,100-Math.abs(m-JAM_TARGET)*100/JAM_TOL);
+
+  rkCompute=function(g,ym){
+    const days=rkDays(ym),past=days.filter(x=>!x.future),wajibN=past.length||1,wk=new Set(days.map(x=>x.key));
+    const roster=g===&quot;krp&quot;?DRIVERS.map(n=>({n,j:&quot;Driver KRP&quot;})):TIM_GS.map(([n])=>({n,j:&quot;Tim GS&quot;}));
+    const per={};roster.forEach(r=>per[r.n]={n:r.n,j:r.j,days:{},inRoster:true});
+    rkEvents(g).filter(e=>ymOf(e.t)===ym&amp;&amp;wk.has(dkey(e.t))&amp;&amp;!(g===&quot;gs&quot;&amp;&amp;TIM_GS_HAPUS.includes(e.n))).forEach(e=>{
+      const p=per[e.n]||(per[e.n]={n:e.n,j:e.j||(g===&quot;krp&quot;?&quot;Driver KRP&quot;:&quot;Tim GS&quot;),days:{},inRoster:false});
+      const k=dkey(e.t);if(!p.days[k]||e.t<p.days[k])p.days[k]=e.t});   /* kiriman pertama per hari */
+    /* Selasa = hari briefing */
+    const bf=bfLoad();
+    const tues=days.filter(x=>x.dow===2).map(x=>({...x,off:!!bf.off[bfK(g,x.key)],hadir:new Set(bf.hadir[bfK(g,x.key)]||[])}));
+    const tuesCount=tues.filter(t=>!t.future&amp;&amp;!t.off);
+    const rows=Object.values(per).map(p=>{
+      const keys=Object.keys(p.days),filledW=past.filter(x=>p.days[x.key]).length;
+      const mins=keys.map(k=>{const t=p.days[k];return t.getHours()*60+t.getMinutes()});
+      let best=0,cur=0;past.forEach(x=>{if(p.days[x.key]){cur++;best=Math.max(best,cur)}else cur=0});
+      let run=0;for(let i=past.length-1;i>=0;i--){const x=past[i];if(p.days[x.key])run++;else{if(i===past.length-1&amp;&amp;dkey(new Date())===x.key)continue;break}}
+      const pct=Math.min(100,filledW/wajibN*100);
+      const avgMin=mins.length?mins.reduce((a,b)=>a+b,0)/mins.length:null;
+      const devMin=mins.length?mins.reduce((a,b)=>a+Math.abs(b-JAM_TARGET),0)/mins.length:null;
+      const sJam=mins.length?mins.reduce((a,b)=>a+jamScore(b),0)/mins.length:0;
+      const bfH=tuesCount.filter(t=>t.hadir.has(p.n)).length,bfN=tuesCount.length;
+      const sBf=bfN?bfH/bfN*100:null;
+      const wB=bfN?W.brief:0,tot=W.dcu+W.jam+wB;
+      const skor=(pct*W.dcu+sJam*W.jam+(sBf||0)*wB)/tot;
+      return {...p,isi:keys.length,filledW,pct,best,run,avgMin,devMin,sJam,bfH,bfN,sBf,skor,
+        last:keys.length?new Date(Math.max(...keys.map(k=>p.days[k]))):null}
+    }).filter(r=>r.inRoster||r.isi);
+    rows.sort((a,b)=>b.skor-a.skor||b.pct-a.pct||(a.devMin??1e9)-(b.devMin??1e9)||b.bfH-a.bfH||a.n.localeCompare(b.n));
+    let rank=0,prev=null;rows.forEach((r,i)=>{const k=r.skor.toFixed(2);if(k!==prev){rank=i+1;prev=k}r.rank=rank});
+    return {rows,days,past,wajibN,tues,tuesCount};
+  };
+
+  const sel=m=>m==null?&quot;–&quot;:(m<JAM_TARGET-0.5?&quot;−&quot;:&quot;+&quot;)+Math.round(Math.abs(m-JAM_TARGET))+&quot; mnt&quot;;
+  const devTxt=r=>r.devMin==null?&quot;&quot;:`<span class=&quot;tm-d&quot;>± ${Math.round(r.devMin)} mnt dari 07.00</span>`;
+  const sc=v=>Math.round(v);
+
+  renderRank=function(){
+    const months=rkMonths();if(!st.rkM||!months.includes(st.rkM))st.rkM=months[0];
+    bfPull(false);
+    const g=st.rkG,ym=st.rkM,{rows,days,past,wajibN,tues,tuesCount}=rkCompute(g,ym),q=st.q.toLowerCase();
+    const isCur=ym===ymOf(new Date()),n=rows.length,avg=n?rows.reduce((s,r)=>s+r.pct,0)/n:0;
+    const withT=rows.filter(r=>r.avgMin!=null),avgJam=withT.length?withT.reduce((s,r)=>s+r.avgMin,0)/withT.length:null;
+    const bfAvg=tuesCount.length&amp;&amp;n?rows.reduce((s,r)=>s+(r.sBf||0),0)/n:null;
+    const top=rows.filter(r=>r.isi).slice(0,3),never=rows.filter(r=>!r.isi);
+    const low=rows.filter(r=>r.pct<50).sort((a,b)=>a.pct-b.pct);
+    const show=rows.filter(r=>!q||r.n.toLowerCase().includes(q)||String(r.j).toLowerCase().includes(q));
+    const stat=(cls,label,val,sub)=>`<div class=&quot;stat ${cls}&quot; style=&quot;cursor:default&quot;><span class=&quot;sl&quot;>${label}</span><span class=&quot;sv&quot;>${val}</span><span class=&quot;ss&quot;>${sub}</span></div>`;
+    const medal=[&quot;🥇&quot;,&quot;🥈&quot;,&quot;🥉&quot;],who2=g===&quot;krp&quot;?&quot;driver&quot;:&quot;anggota tim GS&quot;,bln=BLN_ID[+ym.slice(5)-1];
+    const strip=r=>`<div class=&quot;rk-strip&quot;>${days.map(x=>{const t=r.days[x.key];const c=x.future?&quot;fu&quot;:t?&quot;ok&quot;:&quot;no&quot;;
+      return `<i class=&quot;${c}${x.dow===2?&quot; tue&quot;:&quot;&quot;}&quot; title=&quot;${HARI[x.dow]} ${x.d} ${bln.slice(0,3)}: ${x.future?&quot;belum lewat&quot;:t?&quot;isi &quot;+t.toLocaleTimeString(&quot;id-ID&quot;,{hour:&quot;2-digit&quot;,minute:&quot;2-digit&quot;}):&quot;tidak isi&quot;}&quot;></i>`}).join(&quot;&quot;)}</div>`;
+    const tShort=t=>`${t.d} ${bln.slice(0,3)}`;
+    const bfCell=r=>tuesCount.length?`${r.bfH}/${r.bfN}`:'<span class=&quot;muted&quot;>–</span>';
+    $(&quot;#app&quot;).innerHTML=`
+    <div class=&quot;topline&quot;><div><h1>Kepatuhan DCU · ${ymName(ym)}</h1>
+      <p class=&quot;muted&quot;>Dihitung hari kerja Senin–Jumat · skor reward = kepatuhan DCU + ketepatan jam 07.00 + hadir Tuesday Briefing${isCur?` · berjalan s.d. ${new Date().toLocaleDateString(&quot;id-ID&quot;,{day:&quot;numeric&quot;,month:&quot;short&quot;})}`:&quot;&quot;}</p></div>
+      <div class=&quot;tbl-tools&quot;>
+        <div class=&quot;seg&quot; role=&quot;group&quot; aria-label=&quot;Kelompok&quot;>${[[&quot;krp&quot;,&quot;Driver KRP&quot;],[&quot;gs&quot;,&quot;Tim GS&quot;]].map(([v,l])=>`<button data-rkg=&quot;${v}&quot; aria-pressed=&quot;${g===v}&quot;>${l}</button>`).join(&quot;&quot;)}</div>
+        <select class=&quot;rk-sel&quot; id=&quot;rkM&quot; aria-label=&quot;Bulan&quot;>${months.map(m=>`<option value=&quot;${m}&quot; ${m===ym?&quot;selected&quot;:&quot;&quot;}>${ymName(m)}</option>`).join(&quot;&quot;)}</select>
+        <span class=&quot;wk-badge&quot; title=&quot;Sabtu &amp; Minggu tidak dihitung&quot;>📅 Senin–Jumat</span>
+      </div></div>
+    <div class=&quot;stats&quot;>
+      ${stat(&quot;&quot;,&quot;Rata-rata kepatuhan DCU&quot;,`${Math.round(avg)}<small>%</small>`,`${n} ${who2} · ${wajibN} hari kerja`)}
+      ${stat(&quot;&quot;,&quot;Rata-rata jam isi DCU&quot;,hhmm(avgJam),avgJam==null?&quot;belum ada data&quot;:`${sel(avgJam)} dari target 07.00`)}
+      ${stat(&quot;&quot;,&quot;Hadir Tuesday Briefing&quot;,bfAvg==null?&quot;–&quot;:`${Math.round(bfAvg)}<small>%</small>`,tuesCount.length?`${tuesCount.length} briefing tercatat`:&quot;belum ada Selasa yang lewat&quot;)}
+      ${stat(low.length?&quot;bad&quot;:&quot;&quot;,&quot;Kepatuhan DCU < 50%&quot;,low.length,never.length?`${never.length} belum pernah isi`:low.length?low.slice(0,3).map(r=>r.n).join(&quot;, &quot;):&quot;Tidak ada&quot;)}
+    </div>
+    <div class=&quot;grid2 rk-grid&quot;>
+      <section class=&quot;card&quot;><div class=&quot;tbl-h&quot;><h3>🏆 Kandidat reward ${ymName(ym)}</h3></div>
+        <div class=&quot;sk-w&quot;><span>DCU hari kerja ${W.dcu}%</span><span>Jam isi dekat 07.00 ${W.jam}%</span><span>Tuesday Briefing ${W.brief}%</span></div>
+        ${top.length?`<div class=&quot;rk-pod&quot;>${top.map((r,i)=>`<div class=&quot;rk-p p${i+1}&quot;><span class=&quot;rk-m&quot;>${medal[r.rank-1]||&quot;🏅&quot;}</span><b>${esc(r.n)}</b><span class=&quot;muted&quot;>${esc(r.j||&quot;&quot;)}</span>
+          <span class=&quot;sk-big&quot;>${sc(r.skor)}<small> / 100</small></span>
+          <div class=&quot;sk-parts&quot;><div><b>${Math.round(r.pct)}%</b>DCU ${r.filledW}/${wajibN}</div><div><b>${hhmm(r.avgMin)}</b>rata² jam</div><div><b>${tuesCount.length?r.bfH+&quot;/&quot;+r.bfN:&quot;–&quot;}</b>briefing</div></div></div>`).join(&quot;&quot;)}</div>`
+          :`<p class=&quot;empty&quot;>Belum ada pengisian DCU pada hari kerja bulan ini.</p>`}
+      </section>
+      <section class=&quot;card&quot;><h3>Perlu dibina</h3>
+        ${low.length?`<div>${low.slice(0,8).map(r=>`<div class=&quot;rk-low&quot;><span>${esc(r.n)}<small>${esc(r.j||&quot;&quot;)}</small></span><span class=&quot;chip bad&quot;>${Math.round(r.pct)}% · ${r.filledW}/${wajibN}</span></div>`).join(&quot;&quot;)}${low.length>8?`<p class=&quot;muted&quot; style=&quot;margin:8px 0 0;font-size:12px&quot;>+${low.length-8} lainnya di tabel</p>`:&quot;&quot;}</div>`
+          :`<div class=&quot;allok&quot;>${IC.ok}<span>Semua ${who2} mengisi DCU ≥ 50% hari kerja.</span></div>`}
+      </section>
+    </div>
+    <section class=&quot;card&quot; style=&quot;display:flex;flex-direction:column;gap:12px&quot;>
+      <div class=&quot;tbl-h&quot;><h3>✅ Ceklis Tuesday Briefing · ${bln}</h3>
+        <span class=&quot;muted&quot; style=&quot;font-size:12px&quot;>Centang yang hadir · ${bfCloud===true?&quot;☁️ tersimpan otomatis ke Google Sheet (tab Briefing)&quot;:bfCloud===false?&quot;⚠️ hanya tersimpan di perangkat ini — Code.gs belum diperbarui / koneksi gagal&quot;:&quot;menyinkronkan…&quot;}</span></div>
+      ${tues.length?`<div class=&quot;tbl-wrap&quot;><table class=&quot;bf-tbl&quot;><thead><tr><th>Nama</th>${tues.map(t=>`<th class=&quot;${t.off?&quot;bf-off&quot;:&quot;&quot;}&quot;>Selasa ${tShort(t)}<small>${t.future?&quot;belum lewat&quot;:t.off?&quot;&quot;:t.hadir.size+&quot; hadir&quot;}</small>
+          ${t.off?`<span class=&quot;bf-tag&quot;>tidak ada briefing</span>`:&quot;&quot;}
+          ${t.future?&quot;&quot;:`<div class=&quot;bf-hb&quot;>${t.off?`<button data-bfon=&quot;${t.key}&quot;>Aktifkan</button>`:`<button data-bfall=&quot;${t.key}&quot; title=&quot;Centang semua&quot;>Semua</button><button data-bfnone=&quot;${t.key}&quot; title=&quot;Kosongkan&quot;>Kosong</button><button data-bfoff=&quot;${t.key}&quot; title=&quot;Selasa ini tidak ada briefing (libur/cuti bersama) — tidak dihitung&quot;>Libur</button>`}</div>`}</th>`).join(&quot;&quot;)}<th>Hadir</th></tr></thead><tbody>
+        ${show.map(r=>`<tr><td>${who(r.n,r.j)}</td>${tues.map(t=>`<td class=&quot;${t.off?&quot;bf-off&quot;:&quot;&quot;}&quot;><input type=&quot;checkbox&quot; class=&quot;bf-ck&quot; data-bf=&quot;${t.key}&quot; data-n=&quot;${esc(r.n)}&quot; ${t.hadir.has(r.n)?&quot;checked&quot;:&quot;&quot;} ${t.future||t.off?&quot;disabled&quot;:&quot;&quot;} aria-label=&quot;${esc(r.n)} hadir Selasa ${tShort(t)}&quot;></td>`).join(&quot;&quot;)}<td class=&quot;mono&quot;><b>${bfCell(r)}</b></td></tr>`).join(&quot;&quot;)||`<tr><td colspan=&quot;${tues.length+2}&quot; class=&quot;empty&quot;>Tidak ada yang cocok.</td></tr>`}
+        </tbody></table></div>`:`<p class=&quot;empty&quot;>Tidak ada hari Selasa di bulan ini.</p>`}
+    </section>
+    <section class=&quot;card&quot; style=&quot;display:flex;flex-direction:column;gap:12px&quot;>
+      <div class=&quot;tbl-h&quot;><h3>Peringkat lengkap</h3>
+        <div class=&quot;tbl-tools&quot;><label class=&quot;search&quot;>${IC.search}<input id=&quot;q&quot; type=&quot;search&quot; placeholder=&quot;Cari nama&quot; value=&quot;${esc(st.q)}&quot; aria-label=&quot;Cari&quot;></label>
+        <button class=&quot;btn sec&quot; id=&quot;rkCsv&quot;>Unduh CSV</button></div></div>
+      <p class=&quot;muted&quot; style=&quot;margin:0;font-size:12px&quot;><span class=&quot;lg&quot; style=&quot;background:var(--ok)&quot;></span>Isi <span class=&quot;lg&quot; style=&quot;background:#F3C7C2&quot;></span>Tidak isi <span class=&quot;lg&quot; style=&quot;background:var(--sunk);border:1px solid var(--line)&quot;></span>Belum lewat · garis bawah = Selasa · Sabtu–Minggu tidak dihitung</p>
+      <div class=&quot;tbl-wrap&quot;><table><thead><tr><th>#</th><th>Nama</th><th>Skor</th><th>Kepatuhan DCU</th><th>Rata-rata jam isi</th><th>Briefing</th><th>Streak terpanjang</th><th>Harian ${bln} (Sen–Jum)</th></tr></thead><tbody>
+      ${show.map(r=>{const [c,l]=rkLvl(r.pct);return `<tr><td class=&quot;mono&quot;><b>${r.rank<=3&amp;&amp;r.isi?medal[r.rank-1]:r.rank}</b></td><td>${who(r.n,r.j)}</td>
+        <td><span class=&quot;sk-chip ${r.rank<=3&amp;&amp;r.isi?&quot;top&quot;:&quot;&quot;}&quot;>${sc(r.skor)}</span></td>
+        <td class=&quot;nowrap&quot;><div class=&quot;rk-bar&quot;><i style=&quot;width:${r.pct}%;background:var(--${c===&quot;bad&quot;?&quot;bad&quot;:c===&quot;warn&quot;?&quot;warn&quot;:&quot;ok&quot;})&quot;></i></div><span class=&quot;chip ${c}&quot;>${Math.round(r.pct)}% · ${r.filledW}/${wajibN}</span></td>
+        <td class=&quot;mono nowrap&quot;>${hhmm(r.avgMin)}${devTxt(r)}</td>
+        <td class=&quot;mono&quot;>${bfCell(r)}</td>
+        <td class=&quot;mono&quot;>${r.best} hari${r.run>1?` <span class=&quot;muted&quot;>(jalan ${r.run})</span>`:&quot;&quot;}</td><td>${strip(r)}</td></tr>`}).join(&quot;&quot;)||`<tr><td colspan=&quot;8&quot; class=&quot;empty&quot;>Tidak ada yang cocok.</td></tr>`}
+      </tbody></table></div>
+    </section>`;
+    bindRank(rows,g,ym,wajibN);
+  };
+
+  bindRank=function(rows,g,ym,wajibN){
+    $(&quot;#q&quot;).oninput=e=>{st.q=e.target.value;const pos=e.target.selectionStart;render();const q=$(&quot;#q&quot;);q.focus();q.setSelectionRange(pos,pos)};
+    document.querySelectorAll(&quot;[data-rkg]&quot;).forEach(b=>b.onclick=()=>{st.rkG=b.dataset.rkg;st.q=&quot;&quot;;rkSave();render()});
+    $(&quot;#rkM&quot;).onchange=e=>{st.rkM=e.target.value;render()};
+    const keep=fn=>{const y=window.scrollY,w=document.querySelector(&quot;.bf-tbl&quot;)?.closest(&quot;.tbl-wrap&quot;),x=w?w.scrollLeft:0;fn();render();window.scrollTo(0,y);const w2=document.querySelector(&quot;.bf-tbl&quot;)?.closest(&quot;.tbl-wrap&quot;);if(w2)w2.scrollLeft=x};
+    const names=()=>[...document.querySelectorAll(&quot;.bf-ck&quot;)].map(c=>c.dataset.n);
+    document.querySelectorAll(&quot;.bf-ck&quot;).forEach(c=>c.onchange=()=>keep(()=>{
+      const b=bfLoad(),k=bfK(g,c.dataset.bf),s=new Set(b.hadir[k]||[]);c.checked?s.add(c.dataset.n):s.delete(c.dataset.n);b.hadir[k]=[...s];bfSave(b);bfPush(g,c.dataset.bf)}));
+    document.querySelectorAll(&quot;[data-bfall]&quot;).forEach(x=>x.onclick=()=>keep(()=>{const b=bfLoad(),k=bfK(g,x.dataset.bfall),s=new Set(b.hadir[k]||[]);names().forEach(n=>s.add(n));b.hadir[k]=[...s];bfSave(b);bfPush(g,x.dataset.bfall)}));
+    document.querySelectorAll(&quot;[data-bfnone]&quot;).forEach(x=>x.onclick=()=>keep(()=>{const b=bfLoad(),k=bfK(g,x.dataset.bfnone),vis=new Set(names());b.hadir[k]=(b.hadir[k]||[]).filter(n=>!vis.has(n));bfSave(b);bfPush(g,x.dataset.bfnone)}));
+    document.querySelectorAll(&quot;[data-bfoff]&quot;).forEach(x=>x.onclick=()=>keep(()=>{const b=bfLoad();b.off[bfK(g,x.dataset.bfoff)]=1;bfSave(b);bfPush(g,x.dataset.bfoff)}));
+    document.querySelectorAll(&quot;[data-bfon]&quot;).forEach(x=>x.onclick=()=>keep(()=>{const b=bfLoad();delete b.off[bfK(g,x.dataset.bfon)];bfSave(b);bfPush(g,x.dataset.bfon)}));
+    $(&quot;#rkCsv&quot;).onclick=()=>{
+      const L=[[&quot;Peringkat&quot;,&quot;Nama&quot;,&quot;Kelompok&quot;,&quot;Skor reward&quot;,&quot;Kepatuhan DCU (%)&quot;,&quot;Hari isi&quot;,&quot;Hari kerja wajib&quot;,&quot;Rata-rata jam isi&quot;,&quot;Selisih rata-rata dari 07.00 (mnt)&quot;,&quot;Nilai ketepatan jam&quot;,&quot;Hadir briefing&quot;,&quot;Jumlah briefing&quot;,&quot;Streak terpanjang&quot;,&quot;Terakhir isi&quot;]]
+        .concat(rows.map(r=>[r.rank,r.n,r.j||&quot;&quot;,sc(r.skor),Math.round(r.pct),r.filledW,wajibN,hhmm(r.avgMin),r.devMin==null?&quot;&quot;:Math.round(r.devMin),Math.round(r.sJam),r.bfH,r.bfN,r.best,r.last?fmtDT(r.last):&quot;&quot;]));
+      const csv=&quot;﻿&quot;+L.map(r=>r.map(v=>`&quot;${String(v).replace(/&quot;/g,'&quot;&quot;')}&quot;`).join(&quot;;&quot;)).join(&quot;\n&quot;);
+      const a=document.createElement(&quot;a&quot;);a.href=URL.createObjectURL(new Blob([csv],{type:&quot;text/csv&quot;}));a.download=`kepatuhan_dcu_${g===&quot;krp&quot;?&quot;driver_krp&quot;:&quot;tim_gs&quot;}_${ym}.csv`;a.click()};
+  };
+
+  if(st.data&amp;&amp;st.mod===&quot;rank&quot;)render();
+})();
+</script>
 </body>
 </html>
 "
