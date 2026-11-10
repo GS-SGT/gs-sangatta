@@ -663,6 +663,8 @@ details.fnote{display:block}details.fnote summary{cursor:pointer;list-style:none
 .tl2 b{display:block;font-size:13.5px}.tl2 small{color:var(--muted);font-size:12px}
 .pick{scroll-margin-top:76px}
 .hero13 .hero-top .av{margin-left:auto}
+.nother{display:flex;align-items:center;gap:12px;width:100%;border:1.5px dashed #b9c9bf;background:#f4faf6;border-radius:14px;padding:12px 14px;margin-bottom:6px;text-align:left;cursor:pointer;font-size:20px}
+.nother b{display:block;font-size:14px;color:var(--g-d)}.nother small{display:block;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -685,7 +687,7 @@ const MASCOT = "data:image/webp;base64,UklGRnhoAABXRUJQVlA4WAoAAAAQAAAAlwEAzAEAQ
 const NAMA_KARYAWAN = ["Aan Arianto","Afandy","Agustinus Damar Wahyu","Arief Akhmad Syarifudin","Anindita Dwi Syaifudin","Anisa Nurjanah","Antonius Blasius Bura D","Andy F P","Ari Sandy","Asbuddin","Asbudillah","Asri","Asziar","Atman Haruna S","Augusto N P","Bambang Suryantono","Bashori Eka Prastyo","Bayu Framana","Benny Kusuma Jaya","Budiman Dwi P","Cahyo Nugroho","Christianus Krisno Mulyono","Daffa K","Damar Patria Senoaji","Danel","Deki Setiawan","Denny Wicaksana K W","Dody Alfianto","Eko Budiyono","Freade Akbar","Hari Utomo","Haryanto","Hasan Asy'ari","Hasbun Hadid","Hissandy Parulyan Nababan","Ilham","Iqbal Fauzi","Iqma Haikal","Katrimo","Krisna Ari Kusuma","Lukas Tri Wandoyo Wilih","Marihot Fernando","Maulana Malik Ibrahim","Mohamad Faruck","Mughni Rachman","Muhammad Asfian Noor","Muhammad Asna","Muhammad Fauzi Hidayat","Muhammad Rifani","Mukanam","Muryono","Muslimin","Nindya Berthy Harlanto","Nugroho Ismubroto","Nur Aprianto","Puspito","Radhintya Danas","Renaldo Parinnusa","Rahmad Taufik H","Risdi Bahalwan","Ruddi Effendi","Rudiyanto","Sair Pirda","Samsul Bahri","Septian Dwi Nurcahyo","Soetikno","Sudarmawan R","Sugeng Raharjo","Sumarlin Rahalan","Suparno","Sutarnudin","Syarifudin","Wahyudi Syahprudin","Wawan Dermawan","Wisma Rumekso","Wiwin Winarso","Wawan Saputra","Yohanes Jawa Wejak"];
 // Daftar nama diambil dari sheet "Nama Karyawan" (lewat Code.gs ?action=names), disimpan di HP 1 hari.
 // Kalau belum tersambung / offline, pakai daftar bawaan di atas.
-function namaList(){ const c=LS.get('names',null); return (c&&c.list&&c.list.length)?c.list:NAMA_KARYAWAN; }
+function namaList(){ return NAMA_KARYAWAN; }   // daftar resmi = sama dengan dropdown Google Form
 async function syncNames(){
   if(!API_URL) return; const c=LS.get('names',null); if(c && Date.now()-c.ts<864e5) return;
   try{ const r=await fetch(API_URL+(API_URL.includes('?')?'&':'?')+'action=names'); const j=await r.json();
@@ -896,7 +898,7 @@ function render(){
   $('#demo').hidden = !!API_URL;
   const app=$('#app');
   app.classList.toggle('nonav', !(S.profile && !S.editingProfile && ['home','history'].includes(S.view)) && !(S.profile && S.editingProfile));
-  if(S.profile && S.profile.status==='Karyawan' && !namaList().includes(S.profile.nama) && !S._fixAsked){ S._fixAsked=true; S.editingProfile=true; }
+  if(S.profile && S.profile.status==='Karyawan' && !S.profile.custom && !namaList().includes(S.profile.nama) && !S._fixAsked){ S._fixAsked=true; S.editingProfile=true; }
   if(!S.profile || S.editingProfile) { renderProfile(); updIdCard(); }
   else ({home:renderHome, svc:renderServices, form:renderForm, done:renderDone, history:renderHistory})[S.view]();
   const m=$('#minihd'); if(m) m.classList.remove('show');
@@ -909,7 +911,8 @@ function renderProfile(){
   const st = p.status || 'Karyawan';
   const isK = st==='Karyawan';
   const fOther = p.fungsi && !FUNGSI.includes(p.fungsi);
-  const needFix = !first && isK && !namaList().includes(p.nama);
+  const custom = isK && !!p.custom;
+  const needFix = !first && isK && !custom && !namaList().includes(p.nama);
   $('#app').innerHTML = `
     ${first ? `<div class="welcome">
       <div class="wbanner"><img src="${WELCOME_IMG}" alt="Pertamina EP Sangatta Field — GS Care" width="900" height="210"></div>
@@ -932,8 +935,12 @@ function renderProfile(){
       <div class="f"><div class="lbl">Saya adalah <span class="req">*</span></div>
         <div class="chips" data-pchoice="status">${['Karyawan','TKJP / Mitra Kerja','Tamu'].map(o=>`<button type="button" class="chip ${st===o?'on':''}" data-val="${o}">${o==='Karyawan'?'Pekerja PEP Sangatta':o}</button>`).join('')}</div></div>
       <div class="f" id="w_nk" ${isK?'':'hidden'}><div class="lbl">Nama Karyawan <span class="req">*</span></div>
-        <button type="button" class="npick" data-act="pickName" id="p_nk_btn"><span>${isK&&namaList().includes(p.nama)?esc(p.nama):'<em>Pilih nama dari daftar</em>'}</span>▾</button>
-        <input type="hidden" id="p_nk" value="${isK&&namaList().includes(p.nama)?esc(p.nama):''}"><div class="msg">Pilih nama Anda</div></div>
+        <button type="button" class="npick" data-act="pickName" id="p_nk_btn"><span>${custom?'✏️ Isi nama sendiri':(isK&&namaList().includes(p.nama)?esc(p.nama):'<em>Pilih nama dari daftar</em>')}</span>▾</button>
+        <input type="hidden" id="p_nk" value="${!custom&&isK&&namaList().includes(p.nama)?esc(p.nama):''}">
+        <input type="hidden" id="p_nk_mode" value="${custom?'custom':'list'}">
+        <input class="in" id="p_nk_custom" style="margin-top:8px" ${custom?'':'hidden'} value="${esc(custom?p.nama:'')}" placeholder="Tulis nama lengkap Anda" autocomplete="name">
+        <div class="help" id="p_nk_help" ${custom?'':'hidden'}>Nama Anda belum ada di daftar, jadi diisi manual.</div>
+        <div class="msg">Pilih nama Anda</div></div>
       <div id="w_luar" ${isK?'hidden':''}>
         <div class="f"><label for="p_nama">Nama TKJP/Mitra Kerja/Tamu <span class="req">*</span></label><input class="in" id="p_nama" value="${esc(isK?'':p.nama)}" autocomplete="name"><div class="help">Diisi Apabila Pemesan di Luar Pekerja PEP Sangatta</div><div class="msg">Wajib diisi</div></div>
         <div class="f"><label for="p_perusahaan">Nama Perusahaan / Asal <span style="color:var(--muted);font-weight:500;font-size:12px">(opsional)</span></label><input class="in" id="p_perusahaan" value="${esc(p.perusahaan)}"><div class="help">Diisi apabila pemesan diluar dari Pekerja Pertamina</div></div>
@@ -953,7 +960,7 @@ function renderProfile(){
 function updIdCard(){
   if(!$('#idcard')) return;
   const st=document.querySelector('[data-pchoice] .chip.on')?.dataset.val||'Karyawan', isK=st==='Karyawan';
-  const nama=isK?($('#p_nk')?.value||''):($('#p_nama')?.value.trim()||'');
+  const nama=isK?(($('#p_nk_mode')?.value==='custom')?($('#p_nk_custom')?.value.trim()||''):($('#p_nk')?.value||'')):($('#p_nama')?.value.trim()||'');
   const fsel=document.querySelector('[data-pfungsi] .chip.on')?.dataset.val||'';
   const fn=fsel==='__other__'?($('#p_fungsi_o')?.value.trim()||''):fsel;
   const hp=($('#p_hp')?.value||'').trim();
@@ -971,8 +978,9 @@ function openNamePicker(){
   const cur=$('#p_nk').value;
   openSheet(`<div class="grab"></div><h3>Pilih Nama Karyawan</h3>
     <div class="nsearch"><input class="in" id="nq" placeholder="🔍 Cari nama…" autocomplete="off"></div>
+    <button type="button" class="nother" data-act="nameOther">✏️ <span><b>Nama saya tidak ada di daftar</b><small>Ketuk untuk isi nama sendiri</small></span></button>
     <div class="nlist" id="nlist">${namaList().map(n=>`<button type="button" class="${n===cur?'on':''}" data-pname="${esc(n)}" data-q="${esc(n.toLowerCase())}"><span class="av">${esc(initials(n))}</span>${esc(n)}${n===cur?' ✓':''}</button>`).join('')}
-    <div class="empty" id="nnone" hidden style="padding:20px">Nama tidak ada di daftar.<br>Kalau Anda bukan pekerja PEP Sangatta, pilih <b>TKJP / Mitra Kerja</b> atau <b>Tamu</b>.</div></div>`);
+    <div class="empty" id="nnone" hidden style="padding:20px">Nama tidak ditemukan.<br><button type="button" class="btn sec" data-act="nameOther" style="margin-top:12px">✏️ Isi nama sendiri</button></div></div>`);
   setTimeout(()=>$('#nq')?.focus({preventScroll:true}),250);
 }
 function saveProfile(){
@@ -980,9 +988,10 @@ function saveProfile(){
   const fsel=document.querySelector('[data-pfungsi] .chip.on')?.dataset.val||'';
   const fungsi = fsel==='__other__' ? $('#p_fungsi_o').value.trim() : fsel;
   const isK=status==='Karyawan';
-  const p={status, nama: isK ? $('#p_nk').value : $('#p_nama').value.trim(), perusahaan: isK?'':$('#p_perusahaan').value.trim(), fungsi, hp:normHP($('#p_hp').value)};
+  const cust = isK && $('#p_nk_mode').value==='custom';
+  const p={status, custom: cust || undefined, nama: isK ? (cust ? $('#p_nk_custom').value.trim() : $('#p_nk').value) : $('#p_nama').value.trim(), perusahaan: isK?'':$('#p_perusahaan').value.trim(), fungsi, hp:normHP($('#p_hp').value)};
   const bad=[];
-  if(isK && !namaList().includes(p.nama)) bad.push('w_nk');
+  if(isK && (cust ? p.nama.length<3 : !namaList().includes(p.nama))) bad.push('w_nk');
   if(!isK && !p.nama) bad.push('p_nama');
   if(!p.fungsi) bad.push('w_fungsi');
   if(!/^08\d{7,12}$/.test(p.hp)) bad.push('p_hp');
@@ -1726,7 +1735,7 @@ document.addEventListener('click', async e=>{
     t.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===t));
     const o=t.dataset.val==='__other__'; $('#p_fungsi_o').hidden=!o; if(o) $('#p_fungsi_o').focus(); $('#w_fungsi').classList.remove('bad'); updIdCard(); return;
   }
-  if(t.dataset.pname){ haptic(5); const n=t.dataset.pname; $('#p_nk').value=n; $('#p_nk_btn').innerHTML='<span>'+esc(n)+'</span>▾'; $('#w_nk').classList.remove('bad'); closeSheet(); updIdCard(); return; }
+  if(t.dataset.pname){ haptic(5); const n=t.dataset.pname; $('#p_nk').value=n; $('#p_nk_mode').value='list'; $('#p_nk_custom').hidden=true; $('#p_nk_help').hidden=true; $('#p_nk_btn').innerHTML='<span>'+esc(n)+'</span>▾'; $('#w_nk').classList.remove('bad'); closeSheet(); updIdCard(); return; }
   if(t.closest('[data-choice]')){ haptic(5);
     const box=t.closest('[data-choice]'), k=box.dataset.choice, f=S.svc.fields.find(x=>x.k===k);
     if(box.dataset.multi==='1'){ const arr=new Set(S.v[k]||[]); arr.has(t.dataset.val)?arr.delete(t.dataset.val):arr.add(t.dataset.val); S.v[k]=[...arr]; t.classList.toggle('on'); }
@@ -1783,6 +1792,7 @@ document.addEventListener('click', async e=>{
     case 'copyWO': navigator.clipboard?.writeText(S.last.wo).then(()=>toast('Nomor order disalin ✓')); return;
     case 'saveProfile': return saveProfile();
     case 'pickName': return openNamePicker();
+    case 'nameOther': { closeSheet(); $('#p_nk_mode').value='custom'; $('#p_nk').value=''; $('#p_nk_btn').innerHTML='<span>✏️ Isi nama sendiri</span>▾'; $('#p_nk_custom').hidden=false; $('#p_nk_help').hidden=false; $('#w_nk').classList.remove('bad'); setTimeout(()=>$('#p_nk_custom').focus(),280); updIdCard(); return; }
   }
 });
 
@@ -1811,7 +1821,7 @@ document.addEventListener('change', async e=>{
 });
 window.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSheet(); });
 
-syncNames();
+try{ localStorage.removeItem('gscare_names'); }catch(e){}
 render();
 </script>
 </body>
