@@ -173,8 +173,19 @@ input[type=date].in,input[type=time].in{min-width:0;max-width:100%;display:block
 
 .toast{position:fixed;left:50%;bottom:140px;transform:translateX(-50%) translateY(20px);background:#26292c;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;transition:all .25s;z-index:80;pointer-events:none;max-width:90%;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%)}
+.offbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom));z-index:80;width:max-content;max-width:calc(100% - 32px);background:rgba(40,44,48,.94);color:#fff;text-align:center;font-size:12px;font-weight:600;padding:8px 14px;border-radius:999px;line-height:1.35;box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none}
+.offbar[hidden]{display:none}
+.dupwarn{background:#fff4e0;color:#7a4b00;border:1px solid #ffd9a0;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.45;margin:4px 0 12px;display:flex;gap:10px}
 .demo{background:var(--or);color:#fff;text-align:center;font-size:11.5px;font-weight:700;padding:5px}
+
 .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+.tmin{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;background:#fff;max-width:300px;transition:border-color .15s}
+.tmin:focus-within{border-color:var(--g);box-shadow:0 0 0 3px var(--g-soft)}
+.tmin span{font-size:18px}
+.tmin input{flex:1;min-width:0;border:0;outline:0;background:none;font:700 18px/1 inherit;padding:14px 0;letter-spacing:.5px;font-family:inherit}
+.tmin input::placeholder{font-weight:500;font-size:14px;letter-spacing:0;color:#9aa0a6}
+.tmin em{font-style:normal;font-size:12px;font-weight:700;color:var(--muted)}
+.spin.dk{display:inline-block;vertical-align:-3px;width:16px;height:16px;border-color:rgba(0,0,0,.12);border-top-color:var(--g)}
 @keyframes sp{to{transform:rotate(360deg)}}
 .intro{background:var(--g);color:#fff;padding:40px 22px 60px}
 .intro h1{font-size:26px;letter-spacing:-.02em;margin:16px 0 6px;line-height:1.15}
@@ -444,6 +455,7 @@ body{overflow-x:clip;max-width:100%}
 .dt.on small,.dt.on em{color:rgba(255,255,255,.85)}
 .dt.more{min-width:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--g-d);border-style:dashed}
 .dt.more span{font-size:18px}
+.dt.more{position:relative;overflow:hidden}
 .dt.more input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .dt.none{min-width:70px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:var(--muted)}
 .tms .dt{min-width:auto;padding:10px 13px}
@@ -569,6 +581,7 @@ details.fnote{display:block}details.fnote summary{cursor:pointer;list-style:none
 .lastcard small{color:var(--muted);font-size:12px}
 .lc-em{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:23px;flex:none}
 .stchip{flex:none;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:#fff4e0;color:#b26a00}
+.stchip.bad{background:var(--err-soft);color:#8f2a17}
 .stchip.ok{background:var(--g-soft);color:var(--g-d)}
 .gsmark{font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--g)}
 .srow .chv{background:none;width:auto;height:auto;color:#a8b0b6;font-size:22px;font-weight:400}
@@ -669,6 +682,7 @@ details.fnote{display:block}details.fnote summary{cursor:pointer;list-style:none
 </head>
 <body>
 <div id="demo" class="demo" hidden>MODE DEMO · isi API_URL agar data terkirim</div>
+<div id="offbar" class="offbar" hidden>📡 Offline — request tetap terkirim otomatis saat sinyal kembali</div>
 <div class="app" id="app"></div>
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
@@ -677,7 +691,7 @@ details.fnote{display:block}details.fnote summary{cursor:pointer;list-style:none
 /* =====================================================================
    CONFIG — sesuaikan di sini
    ===================================================================== */
-const APP_VERSION = "v15 · 10 Nov 2026";
+const APP_VERSION = "v21 · 10 Nov 2026";
 const API_URL = "https://script.google.com/macros/s/AKfycby6L0wFaF5f3K0XLWbO6adfehhRQ1rX4eF_YJMoAT2Y5uDOXLlC6UprZyZb765OZKrooA/exec";
 const ADMIN_WA = "";  // ← opsional: nomor WA admin GS format 62812xxxx untuk tombol "Tanya admin" di Riwayat
 const WELCOME_IMG = "data:image/webp;base64,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";
@@ -806,7 +820,7 @@ const CATS = [
    {name:'Penyediaan Akomodasi Mess',em:'🛏️',desc:'Mess Sangatta, Semberah, Balikpapan',secs:['S1','S27'],
     note:'<b>Aturan Penggunaan Mess Balikpapan</b><br>Mess Balikpapan merupakan fasilitas perusahaan yang bukan merupakan hotel komersial, sehingga tidak dapat dipesan jauh-jauh hari tanpa dasar kebutuhan operasional yang jelas. Pemesanan akan disesuaikan dengan prioritas kepentingan dinas dan ketersediaan ruangan yang ada.<br><br><b>Prioritas Penggunaan:</b><br>• Prioritas 1: Kedinasan (dengan SPD)<br>• Prioritas 2: Transit/Cuti (dengan SIJ)<br>• Prioritas 3: Non-SIJ (keperluan pribadi/lainnya, bersifat opsional jika kamar tersedia)<br><br><b>Ketentuan Pemesanan:</b><br>• Pesan via GS Care<br>• Minimal H-3 dari tanggal inap<br>• Harus dilengkapi dokumen pendukung (SPD/SIJ)',
     fields:[
-     F('lokasi_mess','Lokasi Mess','choice',{req:false,opt:['Mess Sangatta','Mess Semberah','Mess Balikpapan (Room Only)']}),
+     F('lokasi_mess','Lokasi Mess','choice',{req:false,opt:['Mess Sangatta','Mess Semberah','Mess Balikpapan (Room Only)'],rerender:true}),
      F('agenda','Agenda'),
      F('nama_tamu','Nama Tamu'),
      F('no__hp_tamu','No. HP Tamu','tel'),
@@ -817,8 +831,8 @@ const CATS = [
      F('durasi_menginap','Durasi Menginap','number',{sfx:'malam',auto:'durasi'}),
      F('total_orang','Total Orang','number'),
      F('total_kamar','Total Kamar','number'),
-     F('include_konsumsi','Include Konsumsi','choice',{opt:['Ya','Tidak'],rerender:true}),
-     ...catering().map(f=>({...f,show:v=>v.include_konsumsi==='Ya'}))]}
+     F('include_konsumsi','Include Konsumsi','choice',{opt:['Ya','Tidak'],rerender:true,show:v=>!messBpn(v)}),
+     ...catering().map(f=>({...f,...(f.k==='jenis_konsumsi'?{opt:['Nasi Kotak']}:{}),show:v=>v.include_konsumsi==='Ya' && !messBpn(v)}))]}
  ]},
 ];
 /* Catatan: bagian "Penyediaan Tempat Karantina", "Layanan Ticket" dan "Room Hotel" ada di Google Form
@@ -1066,8 +1080,8 @@ function renderHome(){
    ${h.length?(()=>{ const last=h[0], st=stMap[last.wo]||'belum', v=last.go&&svcBy(last.go);
      return `<section class="lastblk"><div class="lb-hd"><b>Request terakhir</b>${h.length>1?`<button data-act="history">Lihat semua (${h.length})</button>`:''}</div>
      <button class="lastcard" data-hist="0"><span class="lc-em ${v?tone(v.c):'c-fm'}">${v?v.s.em:'📝'}</span>
-       <div><b>${esc(last.layanan)}</b><small>${esc(last.wo)} · ${esc(last.at)}</small></div>
-       <span class="stchip ok">● Diproses</span></button></section>`; })()
+       <div><b>${esc(last.layanan)}</b><small>${esc(last.wo||'Nomor menyusul')} · ${esc(last.at)}</small></div>
+       ${chipOf(last)}</button></section>`; })()
    : `<section class="guide"><b>Baru pertama kali? Gampang kok 👇</b>
      <ol><li><span>1</span>Pilih layanan</li><li><span>2</span>Isi detail permintaan</li><li><span>3</span>Nomor WO dikirim ke WhatsApp</li></ol></section>`}
 
@@ -1161,7 +1175,8 @@ function confetti(){
 
 function rateURL(wo){ const n=String((S.profile&&S.profile.hp)||'').replace(/\D/g,'').replace(/^0+|^62/,'');
   return 'https://gs-sgt.github.io/gs-sangatta/r?w='+encodeURIComponent(wo)+'&h=62'+n; }
-function rateBtn(wo,cls){ return /DEMO/.test(wo)?'':`<a class="btn ${cls||''}" style="text-decoration:none" target="_blank" rel="noopener" href="${rateURL(wo)}">⭐ Beri penilaian layanan</a>`; }
+function rateBtn(wo,cls){ return (!wo||/DEMO/.test(wo))?'':`<a class="btn ${cls||''}" style="text-decoration:none" target="_blank" rel="noopener" href="${rateURL(wo)}">⭐ Beri penilaian layanan</a>`; }
+function chipOf(x){ return x.pending ? (x.err&&OUTQ.find(e=>e.cid===x.cid&&e.dead) ? '<span class="stchip bad">⚠ Gagal</span>' : '<span class="stchip">⏳ Mengirim</span>') : '<span class="stchip ok">● Diproses</span>'; }
 function histStatus(x){ return (LS.get('status',{})[x.wo])||'belum'; }
 function renderHistory(){
   const h = LS.get('history',[]);
@@ -1173,7 +1188,7 @@ function renderHistory(){
 }
 function histItem(x,i){
   const v=x.go&&svcBy(x.go), st=histStatus(x);
-  return `<button class="hitem" data-hist="${i}"><span class="lc-em ${v?tone(v.c):'c-fm'}">${v?v.s.em:'📝'}</span><div><b>${esc(x.layanan)}</b><small>${esc(x.wo)} · ${esc(x.at)}</small></div><span class="stchip ok">● Diproses</span></button>`;
+  return `<button class="hitem" data-hist="${i}"><span class="lc-em ${v?tone(v.c):'c-fm'}">${v?v.s.em:'📝'}</span><div><b>${esc(x.layanan)}</b><small>${esc(x.wo||'Nomor menyusul')} · ${esc(x.at)}</small></div>${chipOf(x)}</button>`;
 }
 function openHistDetail(i){
   const x=LS.get('history',[])[i]; if(!x) return;
@@ -1181,10 +1196,11 @@ function openHistDetail(i){
   const waTxt=encodeURIComponent(`Halo Admin GS Care, saya ${S.profile.nama} ingin menanyakan request ${x.wo} (${x.layanan}).`);
   openSheet(`<div class="grab"></div>
     <div class="svc-head"><span class="em ${v?tone(v.c):'c-fm'}">${v?v.s.em:'📝'}</span><div><b>${esc(x.layanan)}</b><small>Dikirim ${esc(x.at)}</small></div></div>
-    <div class="hd-wo"><div><small>Nomor work order</small><b>${esc(x.wo)}</b></div><button data-copy="${esc(x.wo)}">Salin</button></div>
+    ${x.wo?`<div class="hd-wo"><div><small>Nomor work order</small><b>${esc(x.wo)}</b></div><button data-copy="${esc(x.wo)}">Salin</button></div>`
+     :`<div class="hd-wo"><div><small>Nomor work order</small><b style="font-size:15px">${x.err?'Belum terkirim':'Sedang dikirim…'}</b><small>${esc(x.err||'Nomor order muncul otomatis sebentar lagi')}</small></div>${x.err?`<button data-retry="${esc(x.cid)}">Kirim ulang</button>`:''}</div>`}
     <ol class="tl2">
       <li class="ok"><i>✓</i><div><b>Request diterima</b><small>${esc(x.at)}</small></div></li>
-      ${/DEMO/.test(x.wo)?`<li><i>!</i><div><b>WhatsApp tidak dikirim</b><small>Request ini dibuat di mode demo (API_URL belum diisi), jadi tidak masuk ke sistem</small></div></li>`
+      ${x.pending?`<li class="now"><i></i><div><b>Mengirim ke tim GS</b><small>Berjalan otomatis di latar belakang</small></div></li>`:/DEMO/.test(x.wo)?`<li><i>!</i><div><b>WhatsApp tidak dikirim</b><small>Request ini dibuat di mode demo (API_URL belum diisi), jadi tidak masuk ke sistem</small></div></li>`
         :`<li class="ok"><i>✓</i><div><b>Diproses tim GS</b><small>Konfirmasi dikirim ke WhatsApp ${esc(S.profile.hp)}</small></div></li>`}
     </ol>
     ${x.rows&&x.rows.length?x.rows.map(g=>`<div class="rvsec"><h6>${esc(g.t)}</h6><dl class="kv">${g.items.map(([k,val])=>`<div><dt>${esc(k)}</dt><dd>${esc(val)}</dd></div>`).join('')}</dl></div>`).join('')
@@ -1213,21 +1229,22 @@ function renderServices(){
 function visibleFields(){ return S.svc.fields.filter(f=>!f.show || f.show(S.v)); }
 
 function renderDone(){
-  const r = S.last, now=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  const r = S.last, now=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}), demo=/DEMO/.test(r.wo), wait=!r.wo;
+  const hx=(LS.get('history',[]).find(e=>e.cid===r.cid)||{});
   $('#app').innerHTML = `
-   <div class="done-hd"><div class="tick">${IC.check}</div><h2>${/DEMO/.test(r.wo)?'Uji coba berhasil (mode demo)':'Request berhasil dibuat!'}</h2><p>${esc(r.layanan)}</p></div>
+   <div class="done-hd"><div class="tick">${IC.check}</div><h2>${demo?'Uji coba berhasil (mode demo)':'Request berhasil dibuat!'}</h2><p>${esc(r.layanan)}</p></div>
    <div class="order">
-     <div class="top"><div><small>Nomor order</small><b>${esc(r.wo)}</b></div><button data-act="copyWO">Salin</button></div>
+     <div class="top"><div><small>Nomor order</small><b>${wait?'<span class="spin dk"></span> menyusul…':esc(r.wo)}</b></div>${wait?'':'<button data-act="copyWO">Salin</button>'}</div>
      <div class="steps">
-       <div class="st ok"><i>✓</i><div><b>Request diterima</b><small>${now} · tersimpan di sistem GS Care</small></div></div>
-       ${/DEMO/.test(r.wo)?`<div class="st"><i></i><div><b>Mode demo — WhatsApp tidak dikirim</b><small>Isi API_URL di index.html agar request masuk ke sheet & WA terkirim</small></div></div>`
-         :`<div class="st ok"><i>✓</i><div><b>Konfirmasi dikirim ke WhatsApp</b><small>${esc(S.profile.hp)}</small></div></div>`}
-       ${/DEMO/.test(r.wo)?'':`<div class="st ok"><i>✓</i><div><b>Diproses tim GS</b><small>Admin & PIC sudah menerima notifikasi</small></div></div>`}
+       <div class="st ok"><i>✓</i><div><b>Request diterima</b><small>${now} · tersimpan di HP Anda</small></div></div>
+       ${wait?`<div class="st now"><i></i><div><b>${hx.err?'Menunggu sinyal…':'Mengirim ke tim GS…'}</b><small>${hx.err?esc(hx.err):'Tidak perlu menunggu — Anda boleh kembali ke beranda'}</small></div></div>`
+        :demo?`<div class="st"><i></i><div><b>Mode demo — WhatsApp tidak dikirim</b><small>Isi API_URL di index.html agar request masuk ke sheet & WA terkirim</small></div></div>`
+        :`<div class="st ok"><i>✓</i><div><b>Diproses tim GS</b><small>Konfirmasi dikirim ke WhatsApp ${esc(S.profile.hp)}</small></div></div>`}
      </div>
    </div>
    <div class="cta"><div class="cta-in" style="display:grid;gap:10px">
      ${rateBtn(r.wo)}
-     <button class="btn ${/DEMO/.test(r.wo)?'':'sec'}" data-act="home">Kembali ke beranda</button>
+     <button class="btn ${r.wo&&!demo?'sec':''}" data-act="home">Kembali ke beranda</button>
      <button class="btn sec" data-act="history">Lihat riwayat</button>
    </div></div>`;
 }
@@ -1248,15 +1265,8 @@ function secOf(f){
   if(/nama_(tamu|penumpang|pengirim|penerima|pemesan)|nomor_|no__hp|^nik$|jumlah_penumpang|asal_perusahaan|total_orang|total_kamar|nomor_hp/.test(f.k)) return 'orang';
   return 'detail';
 }
-const PHRASES = {
-  alasan_perbaikan:['Mengganggu aktivitas','Membahayakan','Sudah lama rusak','Berdampak ke unit lain'],
-  deskripsi_perbaikan:['AC tidak dingin','AC bocor / menetes','Lampu mati','Stop kontak rusak','Air tidak mengalir','Kran / pipa bocor','Pintu / kunci rusak','Plafon bocor'],
-  alasan_permintaan:['Barang rusak','Belum tersedia','Sudah usang','Penghuni baru'],
-  keperluan:['Operasional kantor','Rapat','Kegiatan lapangan'],
-  indikasi:['WC mampet','Septic tank penuh','Air naik / meluap','Bau tidak sedap'],
-  ucapan:['Turut berduka cita yang mendalam','Selamat & sukses','Selamat menempuh hidup baru'],
-  keterangan_pemesanan:['Tanpa seafood','Ada menu vegetarian','Disajikan di ruang rapat'],
-};
+function messBpn(v){ return /Balikpapan/.test((v||S.v||{}).lokasi_mess||''); }  // Mess Balikpapan = room only, tanpa konsumsi
+const PHRASES = {};  // saran kata cepat dimatikan — user mengetik sendiri
 const OPT_IC = {
   area_perbaikan:{'RDP':'🏠','Kantor':'🏢','Fasilitas Umum':'🌳'},
   kategori_perbaikan:{'Sipil Minor':'🧱','Electrical':'💡','Plumbing':'🚰','Furniture':'🪑','Electronic':'📺','Air Conditioner (AC)':'❄️'},
@@ -1306,9 +1316,8 @@ function fieldHTML(f){
         ${f.k==='tanggal_check_in' && /Balikpapan/.test(S.v.lokasi_mess||'') && v && v<isoAdd(todayISO(),3) ? `<div class="warn">⚠️ Mess Balikpapan dipesan minimal H-3 dari tanggal inap. Permintaan tetap bisa dikirim, namun disesuaikan dengan ketersediaan kamar.</div>`:''}`;
       break; }
     case 'time': {
-      const list = TIMES.slice(); if(v && !list.includes(v)) list.unshift(v);
-      inner = `<div class="dts tms">${list.map(x=>`<button type="button" class="dt ${v===x?'on':''}" data-pick="${f.k}" data-val="${x}"><b>${x}</b></button>`).join('')}
-        <label class="dt more" style="min-width:auto;padding:8px 12px;flex-direction:row;gap:6px"><span style="font-size:15px">🕒</span>Lainnya<input type="time" data-k="${f.k}" data-repaint="1" value="${esc(v)}" aria-label="Pilih jam lain"></label></div>`;
+      inner = `<div class="tmin"><span>🕒</span><input id="${id}" data-k="${f.k}" data-tm="1" inputmode="numeric" maxlength="5" placeholder="Ketik jam, mis. 08:30" value="${esc(v)}" autocomplete="off" enterkeyhint="next"><em>WITA</em></div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Format 24 jam — contoh 07:00, 13:30, 19:00</div>`;
       break; }
     case 'number': {
       tag='label';
@@ -1346,7 +1355,7 @@ function fieldHTML(f){
       if(f.sug) inner += `<div class="sug">${f.sug.map(s=>`<button type="button" data-sug="${f.k}" data-val="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
     }
   }
-  const msg = f.t==='grid'?'Pilih minimal satu barang':f.t==='file'?'Lampiran wajib diunggah':f.k==='nik'?'NIK harus 16 digit angka':(f.t==='date'||f.t==='time'||f.t==='choice')?'Silakan pilih salah satu':'Wajib diisi';
+  const msg = f.t==='grid'?'Pilih minimal satu barang':f.t==='file'?'Lampiran wajib diunggah':f.k==='nik'?'NIK harus 16 digit angka':f.t==='time'?'Ketik jamnya, mis. 08:30':(f.t==='date'||f.t==='choice')?'Silakan pilih salah satu':'Wajib diisi';
   return `<div class="f${f.show?' reveal':''}" data-f="${f.k}">${lbl(f,id,tag)}${inner}${f.help||f.link?`<div class="help">${esc(f.help||'')}${f.link?` <a href="${f.link[1]}" target="_blank" rel="noopener" style="color:var(--g);font-weight:700">${esc(f.link[0])} ↗</a>`:''}</div>`:''}<div class="msg">${msg}</div></div>`;
 }
 function memHTML(f){
@@ -1464,6 +1473,13 @@ function rememberSubmit(){
 }
 
 /* grouped review */
+function dupWarn(){
+  const name=svcName(), lim=Date.now()-30*60*1000;
+  const x=LS.get('history',[]).find(e=>e.layanan===name && e.ts && Date.parse(e.ts)>lim);
+  if(!x) return '';
+  const m=Math.max(1,Math.round((Date.now()-Date.parse(x.ts))/60000));
+  return `<div class="dupwarn"><span>⚠️</span><span><b>Anda sudah mengirim ${esc(name)} ${m} menit lalu${x.wo?' ('+esc(x.wo)+')':''}.</b> Kirim lagi hanya jika ini permintaan baru, supaya tim GS tidak menerima pesanan dobel.</span></div>`;
+}
 function openReview(){
   if(!validate()) return;
   const groups=groupedFields();
@@ -1477,6 +1493,7 @@ function openReview(){
   openSheet(`<div class="grab"></div><h3>Konfirmasi request</h3>
    <div class="svc-head"><span class="em ${tone(S.cat)}">${S.svc.em}</span><div><b>${esc(svcName())}</b><small>${esc(S.cat.name)} · atas nama ${esc(S.profile.nama)}</small></div></div>
    ${groups.map(g=>`<div class="rvsec"><h6>${SECS[g.s].i} ${SECS[g.s].t}<button data-gosec="${g.s}">Ubah</button></h6><dl class="kv">${g.fields.filter(f=>!f.k.startsWith('_')||f.k==='_prl').map(f=>`<div><dt>${esc(f.l)}</dt><dd>${val(f)}</dd></div>`).join('')}</dl></div>`).join('')}
+   ${dupWarn()}
    <div class="info" style="margin-top:14px"><span>💬</span><span>Detail & nomor order dikirim ke WhatsApp <b>${esc(S.profile.hp)}</b></span></div>
    <div style="display:grid;gap:10px"><button class="btn" data-act="send" id="sendbtn">Kirim request</button><button class="btn sec" data-act="closeSheet">Ubah lagi</button></div>`);
 }
@@ -1539,7 +1556,9 @@ function buildPayload(){
     if(f.sfx==='malam' && s) s += ' malam';
     a[f.k]= s || '-';
   }
-  const secs=(S.svc.secs||[]).concat(S.v.include_konsumsi==='Ya'?['S14']:[]);
+  const isMess = S.svc.fields.some(f=>f.k==='include_konsumsi');
+  if(isMess && messBpn(S.v)) a.include_konsumsi='Tidak';
+  const secs=(S.svc.secs||[]).concat(isMess && a.include_konsumsi==='Ya'?['S14']:[]);
   return {answer:a, files, grid, secs};
 }
 
@@ -1558,31 +1577,71 @@ function reviewRows(){
   return rows;
 }
 
-async function send(){
+/* ===== Kirim di latar belakang: user tidak perlu menunggu server =====
+   Request disimpan dulu di HP (antrean), layar sukses langsung tampil,
+   lalu dikirim ke server di belakang. Kalau sinyal putus / aplikasi ditutup,
+   dikirim ulang otomatis saat aplikasi dibuka lagi. cid mencegah WO dobel. */
+const OUTQ = LS.get('outbox',[]);
+function saveQ(){ try{ localStorage.setItem('gscare_outbox',JSON.stringify(OUTQ)); }catch(e){
+  try{ localStorage.setItem('gscare_outbox',JSON.stringify(OUTQ.map(it=>({...it,payload:{...it.payload,files:{}},nofile:1})))); }catch(_){} } }
+function send(){
   if(S.sending) return; S.sending=true;
-  const b=$('#sendbtn'); b.disabled=true; b.innerHTML='<span class="spin"></span> Mengirim…<span class="prog"></span>'; requestAnimationFrame(()=>b.classList.add('going'));
-  const slow=setTimeout(()=>{ if(S.sending) b.firstChild.nextSibling.textContent=' Mengirim notifikasi WhatsApp…'; },3500);
+  const b=$('#sendbtn'); if(b){ b.disabled=true; b.innerHTML='<span class="spin"></span> Mengirim…'; }
   try{
-    const payload=buildPayload(); let res;
-    if(!API_URL){ await new Promise(r=>setTimeout(r,1200)); res={ok:true,wo:'WO-DEMO'}; console.log('DEMO payload',payload); }
-    else{
-      const r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-      res = await r.json();
-    }
-    if(!res.ok) throw new Error(res.error||'Gagal menyimpan');
+    const payload=buildPayload();
+    const cid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); payload.cid=cid;
     const now=new Date();
     rememberSubmit();
-    S.last={wo:res.wo, layanan:svcName()};
-    const h=LS.get('history',[]); h.unshift({wo:res.wo,layanan:svcName(),rows:groupedFields().map(g=>({t:SECS[g.s].t,items:g.fields.filter(f=>!f.k.startsWith('_')).map(f=>[f.l,plainVal(f)]).filter(r=>r[1]!=='-')})).filter(g=>g.items.length),em:S.svc.em,cat:S.cat.id,go:S.cat.id+':'+S.cat.services.indexOf(S.svc),ts:now.toISOString(),at:now.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}); LS.set('history',h.slice(0,30));
+    S.last={wo:'', cid, layanan:svcName()};
+    const h=LS.get('history',[]); h.unshift({wo:'',cid,pending:true,layanan:svcName(),rows:groupedFields().map(g=>({t:SECS[g.s].t,items:g.fields.filter(f=>!f.k.startsWith('_')).map(f=>[f.l,plainVal(f)]).filter(r=>r[1]!=='-')})).filter(g=>g.items.length),em:S.svc.em,cat:S.cat.id,go:S.cat.id+':'+S.cat.services.indexOf(S.svc),ts:now.toISOString(),at:now.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}); LS.set('history',h.slice(0,30));
+    OUTQ.push({cid,payload,tries:0}); saveQ();
     S.sending=false; hideSheetNow(); haptic([12,40,18]); go(()=>{ S.view='done'; }); setTimeout(confetti,300);
+    setTimeout(flushOutbox,50);
   }catch(err){
-    S.sending=false; b.disabled=false; b.classList.remove('going'); b.textContent='Coba kirim lagi'; haptic([30,60,30]);
-    const off=!navigator.onLine || /fetch|network|Failed/i.test(err.message||'');
-    let box=$('#senderr'); if(!box){ box=document.createElement('div'); box.id='senderr'; box.className='senderr'; b.parentNode.parentNode.insertBefore(box,b.parentNode); }
-    box.innerHTML=`<span style="font-size:18px">⚠️</span><div><b>Request belum terkirim</b>${off?'Sinyal internet sedang lemah atau terputus.':esc(err.message||'Terjadi kendala di server.')} Isian Anda tetap tersimpan — tekan <b style="display:inline">Coba kirim lagi</b>.</div>`;
-    box.scrollIntoView({behavior:'smooth',block:'center'});
-  }finally{ clearTimeout(slow); }
+    S.sending=false; if(b){ b.disabled=false; b.textContent='Kirim request'; } toast(err.message||'Gagal menyiapkan request');
+  }
 }
+let FLUSHING=false;
+async function flushOutbox(){
+  if(FLUSHING || !OUTQ.length) return; FLUSHING=true;
+  try{
+    for(const it of [...OUTQ]){
+      if(navigator.onLine===false) break;
+      if(it.dead) continue;
+      try{
+        let res;
+        if(!API_URL){ await new Promise(r=>setTimeout(r,1200)); res={ok:true,wo:'WO-DEMO'}; console.log('DEMO payload',it.payload); }
+        else{
+          const body=JSON.stringify(it.payload);
+          const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,keepalive:body.length<60000});
+          res=await r.json();
+        }
+        if(!res.ok){ const e=new Error(res.error||'Gagal menyimpan'); e.server=true; throw e; }
+        settle(it.cid,{wo:res.wo});
+      }catch(err){
+        it.tries=(it.tries||0)+1;
+        if(err.server && it.tries>=2) it.dead=1;   // ditolak server (mis. data kosong) → jangan diulang terus
+        saveQ(); settle(it.cid,{err:err.server?err.message:'Sinyal lemah — akan dikirim ulang otomatis'});
+        if(!err.server) break;
+      }
+    }
+  }finally{ FLUSHING=false; }
+  if(OUTQ.some(it=>!it.dead)) setTimeout(flushOutbox,15000);
+}
+function settle(cid,{wo,err}){
+  const h=LS.get('history',[]), x=h.find(e=>e.cid===cid);
+  if(wo){ const i=OUTQ.findIndex(e=>e.cid===cid); if(i>-1) OUTQ.splice(i,1); saveQ(); }
+  if(x){ if(wo){ x.wo=wo; x.pending=false; delete x.err; } else x.err=err; LS.set('history',h); }
+  if(S.last && S.last.cid===cid && wo) S.last.wo=wo;
+  if(wo && !/DEMO/.test(wo)) toast('Terkirim ✓ Nomor order '+wo);
+  if(['done','history','home'].includes(S.view) && !$('#ov').classList.contains('show')) render();
+}
+function retrySend(cid){ const it=OUTQ.find(e=>e.cid===cid); if(it){ it.dead=0; it.tries=0; saveQ(); } flushOutbox(); toast('Mengirim ulang…'); }
+function updOff(){ const b=$('#offbar'); if(b) b.hidden=navigator.onLine!==false; }
+window.addEventListener('online',()=>{ updOff(); flushOutbox(); toast('Kembali online ✓'); });
+window.addEventListener('offline',updOff); setTimeout(updOff,0);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) flushOutbox(); });
+setTimeout(flushOutbox,800);
 
 /* compress image client-side → upload lebih cepat di sinyal lapangan */
 function readFile(file){
@@ -1718,7 +1777,7 @@ window.addEventListener('scroll',()=>{ if(ticking) return; ticking=true; request
    EVENTS
    ===================================================================== */
 document.addEventListener('click', async e=>{
-  const t=e.target.closest('[data-sechead],[data-hist],[data-hf],[data-copy],[data-pfungsi] .chip,[data-pname],[data-pick],[data-step],[data-phrase],[data-gosec],[data-act],[data-go],[data-tab],[data-cat],[data-svc],[data-choice] .chip,[data-pchoice] .chip,[data-grid] button,[data-sug],[data-rmfile]');
+  const t=e.target.closest('[data-retry],[data-sechead],[data-hist],[data-hf],[data-copy],[data-pfungsi] .chip,[data-pname],[data-pick],[data-step],[data-phrase],[data-gosec],[data-act],[data-go],[data-tab],[data-cat],[data-svc],[data-choice] .chip,[data-pchoice] .chip,[data-grid] button,[data-sug],[data-rmfile]');
   if(!t) { if(e.target.id==='ov') closeSheet(); return; }
 
   if(t.dataset.cat){ const c=CATS.find(x=>x.id===t.dataset.cat); if(c.services.length===1) return openService(c,c.services[0]); return go(()=>{S.cat=c; S.view='svc';}); }
@@ -1754,6 +1813,7 @@ document.addEventListener('click', async e=>{
   if(t.dataset.sechead){ haptic(5); const sec=t.closest('.fs'), id=t.dataset.sechead; const c=!sec.classList.contains('col');
     if(c){ S.col.add(id); sec.querySelector('.sum').textContent=secSummary(groupedFields().find(g=>g.s===id)); } else S.col.delete(id);
     sec.classList.toggle('col',c); if(!c) sec.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(t.dataset.retry){ haptic(5); hideSheetNow(); return retrySend(t.dataset.retry); }
   if(t.dataset.hist!==undefined){ haptic(5); syncStatus(); return openHistDetail(+t.dataset.hist); }
   if(t.dataset.hf){ haptic(5); S.hf=t.dataset.hf; return renderHistory(); }
   if(t.dataset.copy){ navigator.clipboard?.writeText(t.dataset.copy).then(()=>toast('Nomor WO disalin ✓')); return; }
@@ -1806,19 +1866,34 @@ document.addEventListener('input', e=>{
     return; }
   const k=e.target.dataset.k; if(!k) return;
   if(e.target.dataset.repaint) return;
+  if(e.target.dataset.tm){ const el=e.target; let d=el.value.replace(/\D/g,''); if(d && +d[0]>2) d='0'+d; d=d.slice(0,4); const del=e.inputType&&e.inputType.startsWith('delete');
+    el.value = d.length>2 || (d.length===2 && !del) ? d.slice(0,2)+':'+d.slice(2) : d; }
   S.v[k]=e.target.value; e.target.closest('.f')?.classList.remove('bad');
   if(k==='durasi_menginap') S._durManual=true;
   if(e.target.closest('.stp')){ const b=e.target.closest('.stp').querySelector('[data-d="-1"]'); if(b) b.disabled=!(+e.target.value>0); }
   updateProgress();
 });
+function normTime(raw){ let d=String(raw||'').replace(/\D/g,''); if(!d) return '';
+  let h,m; if(/:/.test(raw)){ const [a,b='0']=String(raw).split(':'); h=+a.replace(/\D/g,''); m=+(b.replace(/\D/g,'')||0); }
+  else if(d.length<=2){ h=+d; m=0; } else if(d.length===3){ h=+d[0]; m=+d.slice(1); } else { h=+d.slice(0,2); m=+d.slice(2,4); }
+  if(isNaN(h)||isNaN(m)||h>23||m>59) return null; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
 document.addEventListener('change', async e=>{
   const k=e.target.dataset.k;
+  if(k && e.target.dataset.tm){ const t=normTime(e.target.value); const f=e.target.closest('.f');
+    if(t===null){ e.target.value=''; S.v[k]=''; f?.classList.add('bad'); toast('Jam tidak valid — gunakan format 00:00 s/d 23:59'); }
+    else { e.target.value=t; S.v[k]=t; f?.classList.remove('bad'); }
+    updateProgress(); return; }
   if(k && e.target.dataset.repaint){ S.v[k]=e.target.value; if(k==='tanggal_check_in'||k==='tanggal_check_out'){ S._durManual=false; autoCalc(); } refreshField(k); S.svc.fields.forEach(f=>{ if(f.t==='date'&&f.k!==k) refreshField(f.k); }); if(S.v.durasi_menginap!==undefined) refreshField('durasi_menginap'); return; }
   if(k && (k==='tanggal_check_in'||k==='tanggal_check_out')){ S._durManual=false; autoCalc(); }
   const fk=e.target.dataset.file; if(!fk || !e.target.files[0]) return;
   try{ S.files[fk]=await readFile(e.target.files[0]); rerenderForm(); }catch(err){ toast(err.message); }
 });
 window.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSheet(); });
+/* "Lainnya" (tanggal lain): di laptop/Chrome, klik kotak tidak membuka kalender → buka manual */
+document.addEventListener('click',e=>{ const box=e.target.closest&&e.target.closest('.dt.more'); if(!box) return;
+  const i=box.querySelector('input'); if(!i) return;
+  if(i.showPicker){ try{ i.showPicker(); }catch(_){} return; }
+  if(e.target!==i) i.click(); });
 
 try{ localStorage.removeItem('gscare_names'); }catch(e){}
 render();
